@@ -37,7 +37,7 @@ Download and extract the package, then run:
 Usage
 =====
 
-First, import FTeikPy and define/import your velocity model (here in 2-D):
+First, import FTeikPy and define (or import) your velocity model (here in 2-D):
 
 .. code-block:: python
 
@@ -54,7 +54,7 @@ Then, initialize the Eikonal solver:
 
     eik = Eikonal(vel2d, grid_size = (dz, dx), n_sweep = 2)
     
-Finally, for a given source point with coordinate (x,z), run the method `solve`:
+Finally, for a given source point with coordinate (x,z), run the method *solve*:
 
 .. code-block:: python
     
@@ -76,7 +76,7 @@ If you got the error:
 
     Error: ValueError: Unknown MS Compiler version 1900
     
-You may need to manually patch the file `cygwinccompiler.py` located in:
+You may need to manually patch the file *cygwinccompiler.py* located in:
 
     <Your Python directory path>/Lib/distutils/
     
