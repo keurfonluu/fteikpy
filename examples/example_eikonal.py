@@ -17,7 +17,7 @@ from fteikpy import Eikonal, lay2vel, lay2tt
 
 if __name__ == "__main__":
     # Parameters
-    sources = np.loadtxt("sources.txt")
+    sources = np.loadtxt("shots.txt")
     receivers = np.loadtxt("stations.txt")
     dz, dx, dy = 5., 5., 5.
     nz, nx, ny = 200, 140, 4
