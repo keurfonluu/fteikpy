@@ -31,19 +31,22 @@ FFLAGS = "-O3 -ffast-math -march=native -funroll-loops -fno-protect-parens -flto
 ext1 = Extension(
     name = "fteikpy._fteik2d",
     sources = ["fteikpy/f90/FTeik2d.f90"],
-    extra_compile_args = [ FFLAGS ],
+    extra_f90_compile_args = FFLAGS.split(),
+    f2py_options = [],
     )
 
 ext2 = Extension(
     name = "fteikpy._fteik3d",
     sources = ["fteikpy/f90/FTeik3d.f90"],
-    extra_compile_args = [ FFLAGS ],
+    extra_f90_compile_args = FFLAGS.split(),
+    f2py_options = [],
     )
 
 ext3 = Extension(
     name = "fteikpy._interpolate",
     sources = ["fteikpy/f90/interpolate.f90"],
-    extra_compile_args = [ FFLAGS ],
+    extra_f90_compile_args = FFLAGS.split(),
+    f2py_options = [],
     )
  
 if __name__ == "__main__":

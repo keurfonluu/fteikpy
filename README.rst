@@ -4,7 +4,7 @@ FTeikPy
 
 .. figure:: examples/marmousi.png
 
-FTeikPy is a Python module that computes accurate first arrival traveltimes in
+FTeikPy is a Python package that computes accurate first arrival traveltimes in
 2-D and 3-D heterogeneous isotropic velocity model, with the possibility to use
 a different grid spacing in Z, X and Y directions. The algorithm handles
 properly the curvature of wavefronts close to the source. The source can be
@@ -20,8 +20,8 @@ placed without any problem between grid points.
 **NOTE**: the 2-D and 3-D Eikonal solvers included in FTeikPy are written in
 Fortran. The original source codes can be found `here <https://github.com/Mark-Noble/FTEIK2D>`__.
 Detailed implementation of local operators and global propagation scheme
-implemented in this module are inspired from [1]. If you find this algorithm
-and/or module useful, citing this paper would be appreciated.
+implemented in this package are inspired from [1]_. If you find this algorithm
+and/or package useful, citing this paper would be appreciated.
 
 
 Installation
@@ -67,10 +67,32 @@ The same can be done on a 3-D velocity model (just a bit slower...).
 Troubleshooting on Windows
 ==========================
 
-A Fortran compiler is required to install this module. While it is
+A Fortran compiler is required to install this package. While it is
 straightforward on Unix systems, it can be quite a pain on Windows. We recommend
 installing `Anaconda <https://www.continuum.io/downloads>`__ that contains all
 the required packages to install FTeikPy on Windows systems.
+
+#. Download `MinGW 64 bits <https://sourceforge.net/projects/mingw-w64/files/>`__
+   (choose *x86_64-posix-sjlj*) and extract the archive in your drive root.
+   
+#. Add MinGW to your system path:
+
+    C:\\<Your MinGW directory>\\bin
+    
+#. Create the file *distutils.cfg* in *<Your Python directory path>\\Lib\\distutils*
+   with the following content to use MinGW compiler:
+   
+.. code-block::
+
+    [build]
+    compiler=mingw32
+    
+#. Open a terminal and install *libpython*:
+
+.. code-block:: batch
+
+    conda install libpython
+
 
 If you got the error:
 
@@ -78,7 +100,7 @@ If you got the error:
     
 You may need to manually patch the file *cygwinccompiler.py* located in:
 
-    <Your Python directory path>/Lib/distutils/
+    <Your Python directory path>\\Lib\\distutils
     
 by replacing:
 
@@ -86,12 +108,30 @@ by replacing:
 
     self.dll_libraries = get_msvcr()
     
-in lines 157 and 318 by the word
+in lines 157 and 318 by (be careful with indentation):
 
 .. code-block:: python
 
     pass
 
+You should also patch the file *mingw32compiler.py* located in:
+
+    <Your Python directory path>\\Lib\\site-packages\\numpy\\distutils
+    
+by commenting out from lines 96 to 104:
+
+.. code-block:: python
+
+    #        msvcr_success = build_msvcr_library()
+    #        msvcr_dbg_success = build_msvcr_library(debug=True)
+    #        if msvcr_success or msvcr_dbg_success:
+    #            # add preprocessor statement for using customized msvcr lib
+    #            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
+    #
+    #        # Define the MSVC version as hint for MinGW
+    #        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
+    #        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
+    
 
 References
 ==========

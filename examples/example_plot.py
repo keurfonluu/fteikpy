@@ -46,3 +46,4 @@ if __name__ == "__main__":
     cb.set_label("P-wave velocity (km/s)")
     
     fig.tight_layout()
+    plt.show()
