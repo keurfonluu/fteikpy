@@ -72,14 +72,14 @@ straightforward on Unix systems, it can be quite a pain on Windows. We recommend
 installing `Anaconda <https://www.continuum.io/downloads>`__ that contains all
 the required packages to install FTeikPy on Windows systems.
 
-#. Download `MinGW 64 bits <https://sourceforge.net/projects/mingw-w64/files/>`__
+1. Download `MinGW 64 bits <https://sourceforge.net/projects/mingw-w64/files/>`__
    (choose *x86_64-posix-sjlj*) and extract the archive in your drive root.
    
-#. Add MinGW to your system path:
+2. Add MinGW to your system path:
 
     C:\\<Your MinGW directory>\\bin
     
-#. Create the file *distutils.cfg* in *<Your Python directory path>\\Lib\\distutils*
+3. Create the file *distutils.cfg* in *<Your Python directory path>\\Lib\\distutils*
    with the following content to use MinGW compiler:
    
 .. code-block::
@@ -87,7 +87,7 @@ the required packages to install FTeikPy on Windows systems.
     [build]
     compiler=mingw32
     
-#. Open a terminal and install *libpython*:
+4. Open a terminal and install *libpython*:
 
 .. code-block:: batch
 
