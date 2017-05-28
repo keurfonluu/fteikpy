@@ -13,12 +13,17 @@ sys.path.append("../")
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-from fteikpy import Eikonal
+try:
+    from fteikpy import Eikonal
+except ImportError:
+    import sys
+    sys.path.append("../")
+    from fteikpy import Eikonal
 
 
 if __name__ == "__main__":
     # Parameters
-    source = ( 5000., 0. )
+    source = ( 0., 5000. )
     marmousi = pickle.load(open("marmousi.pickle", "rb"))
     nz, nx = marmousi.shape
     dz, dx = 10., 10.

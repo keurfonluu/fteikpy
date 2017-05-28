@@ -168,7 +168,7 @@ subroutine FTeik2d(vel,ttout,nz,nx,zsin,xsin,dzin,dxin,nsweep,epsin)
 ! Allocate work array for traveltimes
 !____________________________________
    allocate(tt(nz,nx),stat=ierr)
-   if (ierr .ne. 0) stop "Error FTeik2d_3.f90 in allocating tt array"
+   if (ierr .ne. 0) stop "Error FTeik2d.f90 in allocating tt array"
 !
 ! Set traveltime map to BIG value
 !________________________________
