@@ -1,3 +1,4 @@
 include LICENSE
 include *.rst
 recursive-include fteikpy *
+recursive-include examples *
