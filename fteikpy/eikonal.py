@@ -90,7 +90,7 @@ class Eikonal:
             nz, nx, ny = self._grid_shape
             self._check_3d(zsrc, xsrc, ysrc, dz, dx, dy, nz, nx, ny)
             tt.grid = fteik3d(self._velocity_model, zsrc, xsrc, ysrc, dz, dx, dy,
-                              self._n_sweep, 5.)
+                              self._n_sweep, 5.)[:-1,:-1,:-1]
             tt.zaxis = dz * np.arange(nz)
             tt.xaxis = dx * np.arange(nx)
             tt.yaxis = dy * np.arange(ny)

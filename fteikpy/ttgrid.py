@@ -72,13 +72,18 @@ class TTGrid:
             Traveltime value(s).
         """
         # Check inputs
-        if zq.size != xq.size:
-            raise ValueError("zq should have the same size as xq")
-        if yq is not None and yq.size != xq.size:
-            raise ValueError("yq should have the same size as xq")
+        if not isinstance(zq, (int, float, np.ndarray)):
+            raise ValueError("zq must be a scalar or a ndarray")
+        if not isinstance(xq, (int, float, np.ndarray)):
+            raise ValueError("xq must be a scalar or a ndarray")
+        if yq is not None and not isinstance(yq, (int, float, np.ndarray)):
+            raise ValueError("yq must be a scalar or a ndarray")
             
         # Interpolate
-        nq = zq.size
+        if isinstance(zq, np.ndarray):
+            nq = len(zq)
+        else:
+            nq = 1
         if yq is None:
             if nq > 1:
                 tq = np.zeros(nq)
