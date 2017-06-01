@@ -60,11 +60,11 @@ Then, initialize the Eikonal solver:
 
     eik = Eikonal(vel2d, grid_size = (dz, dx), n_sweep = 2)
     
-Finally, for a given source point with coordinate (x,z), run the method *solve*:
+Finally, for a given source point with coordinate (z,x), run the method *solve*:
 
 .. code-block:: python
     
-    source = (5000., 0.)
+    source = (0., 5000.)
     tt = eik.solve(source)
     
 The same can be done on a 3-D velocity model (just a bit slower...).
