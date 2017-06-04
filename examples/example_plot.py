@@ -10,7 +10,6 @@ License: MIT
 
 import sys
 sys.path.append("../")
-import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 try:
@@ -37,9 +36,9 @@ if __name__ == "__main__":
     fig.patch.set_alpha(0.)
     ax1 = fig.add_subplot(1, 1, 1)
     
-    ax = dx * np.arange(nx)
-    az = dz * np.arange(nz)
-    cax = ax1.contourf(ax, az, marmousi/1e3, 100, cmap = "jet")
+    ax = eik.xaxis
+    az = eik.zaxis
+    cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100, cmap = "jet")
     tt.plot(axes = ax1, n_levels = 30, kwargs = dict(colors = "black", linewidths = 1))
     
     ax1.set_title("Marmousi")

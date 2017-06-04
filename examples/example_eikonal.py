@@ -49,7 +49,8 @@ if __name__ == "__main__":
     start_time = time.time()
     eik3d = Eikonal(vel3d, (dz, dx, dy), n_sweep = 1)
     tt = [ eik3d.solve(sources[i,:]) for i in range(sources.shape[0]) ]
-    tcalc_eik3d = np.array([ grid.get(receivers[:,0], receivers[:,1], receivers[:,2])
+    tcalc_eik3d = np.array([ [ grid.get(z, x, y)
+                                for z, x, y in zip(receivers[:,0], receivers[:,1], receivers[:,2]) ]
                                 for grid in tt ]).transpose()
     print("\nEikonal 3D: %.3f seconds" % (time.time() - start_time))
     print("Mean residual (3D): ", (tcalc_eik3d - tcalc_ray).mean())

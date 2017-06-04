@@ -10,6 +10,7 @@ License: MIT
 import numpy as np
 from ._fteik2d import fteik2d
 from ._fteik3d import fteik3d
+from scipy.interpolate import RegularGridInterpolator
 from .ttgrid import TTGrid
 
 __all__ = [ "Eikonal" ]
@@ -53,6 +54,53 @@ class Eikonal:
             raise ValueError("n_sweep must be a positive integer, got %s" % n_sweep)
         else:
             self._n_sweep = n_sweep
+        self._zaxis = grid_size[0] * np.arange(self._grid_shape[0])
+        self._xaxis = grid_size[1] * np.arange(self._grid_shape[1])
+        if velocity_model.ndim == 3:
+            self._yaxis = grid_size[2] * np.arange(self._grid_shape[2])
+            
+    def rescale(self, new_shape):
+        """
+        Upscale or downscale velocity model.
+        
+        Parameters
+        ----------
+        new_shape: tup
+            New shape.
+        """
+        if len(new_shape) != len(self._grid_shape) \
+            or not np.all([ isinstance(n, int) for n in new_shape ]):
+            raise ValueError("new_shape must be a tuple with %d integers" % len(self._grid_shape))
+        if np.any([ n < 4 for n in new_shape ]):
+            raise ValueError("elements in new_shape must be at least 4")
+            
+        if new_shape == self._grid_shape:
+            pass
+        elif len(new_shape) == 2:
+            fn = RegularGridInterpolator((self._zaxis, self._xaxis), self._velocity_model)
+            zaxis = np.linspace(0., self._zaxis.max(), new_shape[0])
+            xaxis = np.linspace(0., self._xaxis.max(), new_shape[1])
+            Z, X = np.meshgrid(zaxis, xaxis, indexing = "ij")
+            cz, cx = [ new / old for new, old in zip(new_shape, self._grid_shape) ]
+            self._velocity_model = fn([ [ z, x ] for z, x in zip(Z.ravel(), X.ravel()) ]).reshape(new_shape)
+            self._grid_shape = new_shape
+            self._grid_size = (self._grid_size[0] / cz, self._grid_size[1] / cx)
+            self._zaxis = self._grid_size[0] * np.arange(self._grid_shape[0])
+            self._xaxis = self._grid_size[1] * np.arange(self._grid_shape[1])
+        elif len(new_shape) == 3:
+            fn = RegularGridInterpolator((self._zaxis, self._xaxis, self._yaxis), self._velocity_model)
+            zaxis = np.linspace(0., self._zaxis.max(), new_shape[0])
+            xaxis = np.linspace(0., self._xaxis.max(), new_shape[1])
+            yaxis = np.linspace(0., self._yaxis.max(), new_shape[2])
+            Z, X, Y = np.meshgrid(zaxis, xaxis, yaxis, indexing = "ij")
+            cz, cx, cy = [ new / old for new, old in zip(new_shape, self._grid_shape) ]
+            self._velocity_model = fn([ [ z, x, y ] for z, x, y in zip(Z.ravel(), X.ravel(), Y.ravel()) ]).reshape(new_shape)
+            self._grid_shape = new_shape
+            self._grid_size = (self._grid_size[0] / cz, self._grid_size[1] / cx, self._grid_size[2] / cy)
+            self._zaxis = self._grid_size[0] * np.arange(self._grid_shape[0])
+            self._xaxis = self._grid_size[1] * np.arange(self._grid_shape[1])
+            self._yaxis = self._grid_size[2] * np.arange(self._grid_shape[2])
+        return self
             
     def solve(self, source):
         """
@@ -90,10 +138,10 @@ class Eikonal:
             nz, nx, ny = self._grid_shape
             self._check_3d(zsrc, xsrc, ysrc, dz, dx, dy, nz, nx, ny)
             tt.grid = fteik3d(self._velocity_model, zsrc, xsrc, ysrc, dz, dx, dy,
-                              self._n_sweep, 5.)[:-1,:-1,:-1]
-            tt.zaxis = dz * np.arange(nz)
-            tt.xaxis = dx * np.arange(nx)
-            tt.yaxis = dy * np.arange(ny)
+                              self._n_sweep, 5.)
+            tt.zaxis = dz * np.arange(nz+1)
+            tt.xaxis = dx * np.arange(nx+1)
+            tt.yaxis = dy * np.arange(ny+1)
         tt.shape = tt.grid.shape
         tt.n_dim = tt.grid.ndim
         return tt
@@ -158,3 +206,39 @@ class Eikonal:
     @n_sweep.setter
     def n_sweep(self, value):
         self._n_sweep = value
+        
+    @property
+    def zaxis(self):
+        """
+        ndarray of size nz
+        Z coordinates of the grid.
+        """
+        return self._zaxis
+    
+    @zaxis.setter
+    def zaxis(self, value):
+        self._zaxis = value
+    
+    @property
+    def xaxis(self):
+        """
+        ndarray of size nx
+        X coordinates of the grid.
+        """
+        return self._xaxis
+    
+    @xaxis.setter
+    def xaxis(self, value):
+        self._xaxis = value
+    
+    @property
+    def yaxis(self):
+        """
+        ndarray of size ny
+        Y coordinates of the grid.
+        """
+        return self._yaxis
+    
+    @yaxis.setter
+    def yaxis(self, value):
+        self._yaxis = value

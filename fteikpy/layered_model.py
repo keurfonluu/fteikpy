@@ -122,7 +122,7 @@ def lay2tt(eikonal, sources, receivers):
         for j in range(n2):
             dhorz[j] = np.linalg.norm(src[i,1:] - rcv[j,1:])
         tt = eikonal.solve((src[i,0], 0.))
-        tcalc[:,i] = tt.get(rcv[:,0], dhorz)
+        tcalc[:,i] = [ tt.get(zrcv, xrcv) for zrcv, xrcv in zip(rcv[:,0], dhorz) ]
             
     # Transpose to reshape to [ nrcv, nsrc ]
     if n1 == nrcv:

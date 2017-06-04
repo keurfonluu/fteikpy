@@ -51,54 +51,51 @@ class TTGrid:
         self._xaxis = xaxis
         self._yaxis = yaxis
         return
-        
-    def get(self, zq, xq, yq = None):
+    
+    def get(self, zq, xq, yq = None, check = True):
         """
-        Get the traveltime value given grid point coordinates.
+        Get the traveltime value given grid point coordinate.
         
         Parameters
         ----------
-        zq: scalar or ndarray
-            Z coordinate(s) of the grid point(s).
-        xq: scalar or ndarray
-            X coordinate(s) of the grid point(s).
-        yq: scalar or ndarray or None, default None
-            Y coordinate(s) of the grid point(s). yq should be None if grid is
+        zq: scalar
+            Z coordinate of the grid point.
+        xq: scalar
+            X coordinate of the grid point.
+        yq: scalar or None, default None
+            Y coordinate of the grid point. yq should be None if grid is
             a 2-D array.
+        check: bool
+            Check input zq, xq and yq to avoid crashes when interpolating
+            outside the grid (as Fortran interpolation code will try to access
+            inexistent values). Disable checking if you need to call 'get'
+            method a lot of times for better performance.
             
         Returns
         -------
         tq: scalar or ndarray
             Traveltime value(s).
         """
-        # Check inputs
-        if not isinstance(zq, (int, float, np.ndarray)):
-            raise ValueError("zq must be a scalar or a ndarray")
-        if not isinstance(xq, (int, float, np.ndarray)):
-            raise ValueError("xq must be a scalar or a ndarray")
-        if yq is not None and not isinstance(yq, (int, float, np.ndarray)):
-            raise ValueError("yq must be a scalar or a ndarray")
+        if check:
+            if not isinstance(zq, (int, float)):
+                raise ValueError("zq must be a scalar")
+            if not isinstance(xq, (int, float)):
+                raise ValueError("xq must be a scalar")
+            if not 0. <= zq <= self._zaxis[-1]:
+                raise ValueError("zq out of bounds")
+            if not 0. <= xq <= self._xaxis[-1]:
+                raise ValueError("xq out of bounds")
+            if yq is not None:
+                if not isinstance(yq, (int, float)):
+                    raise ValueError("yq must be a scalar")
+                if not 0. <= yq <= self._yaxis[-1]:
+                    raise ValueError("yq out of bounds")
             
-        # Interpolate
-        if isinstance(zq, np.ndarray):
-            nq = len(zq)
-        else:
-            nq = 1
-        if yq is None:
-            if nq > 1:
-                tq = np.zeros(nq)
-                for i in range(nq):
-                    tq[i] = interp2(self.zaxis, self.xaxis, self.grid, zq[i], xq[i])
-            else:
-                tq =  interp2(self.zaxis, self.xaxis, self.grid, zq, xq)
-        else:
-            if nq > 1:
-                tq = np.zeros(nq)
-                for i in range(nq):
-                    tq[i] = interp3(self.zaxis, self.xaxis, self.yaxis, self.grid,
-                                    zq[i], xq[i], yq[i])
-            else:
-                tq =  interp3(self.zaxis, self.xaxis, self.yaxis, self.grid, zq, xq, yq)
+        if self._n_dim == 2:
+            tq = interp2(self._zaxis, self._xaxis, self._grid, zq, xq)
+        elif self._n_dim == 3:
+            tq = interp3(self._zaxis, self._xaxis, self._yaxis, self._grid,
+                         zq, xq, yq)
         return tq
     
     def plot(self, axes = None, n_levels = 20, figsize = (10, 8), kwargs = {}):
