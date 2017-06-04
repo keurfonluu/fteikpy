@@ -93,7 +93,7 @@ class Eikonal:
             xaxis = np.linspace(0., self._xaxis.max(), new_shape[1])
             yaxis = np.linspace(0., self._yaxis.max(), new_shape[2])
             Z, X, Y = np.meshgrid(zaxis, xaxis, yaxis, indexing = "ij")
-            cz, cx, cy = [ new / old for new, old in zip(new_shape, self._grid_shape) ]
+            cz, cx, cy = [ new / (old+1) for new, old in zip(new_shape, self._grid_shape) ]
             self._velocity_model = fn([ [ z, x, y ] for z, x, y in zip(Z.ravel(), X.ravel(), Y.ravel()) ]).reshape(new_shape)
             self._grid_shape = new_shape
             self._grid_size = (self._grid_size[0] / cz, self._grid_size[1] / cx, self._grid_size[2] / cy)
