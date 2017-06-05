@@ -75,6 +75,11 @@ class TTGrid:
         -------
         tq: scalar or ndarray
             Traveltime value(s).
+            
+        Notes
+        -----
+        The method uses velocity interpolation to estimate more accurate
+        traveltimes (should be exact in a homogenous velocity model).
         """
         if check:
             if not isinstance(zq, (int, float)):
@@ -92,9 +97,9 @@ class TTGrid:
                     raise ValueError("yq out of bounds")
             
         if self._n_dim == 2:
-            tq = interp2(self._zaxis, self._xaxis, self._grid, zq, xq)
+            tq = interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
         elif self._n_dim == 3:
-            tq = interp3(self._zaxis, self._xaxis, self._yaxis, self._grid,
+            tq = interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
                          zq, xq, yq)
         return tq
     
