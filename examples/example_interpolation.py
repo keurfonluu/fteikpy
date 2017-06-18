@@ -52,6 +52,7 @@ if __name__ == "__main__":
     
     # Plot traveltime grids
     fig = plt.figure(figsize = (12, 4), facecolor = "white")
+    fig.patch.set_alpha(0.)
     ax1 = fig.add_subplot(1, 3, 1)
     ax2 = fig.add_subplot(1, 3, 2)
     ax3 = fig.add_subplot(1, 3, 3)

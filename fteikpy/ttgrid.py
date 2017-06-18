@@ -8,6 +8,10 @@ License: MIT
 import numpy as np
 import matplotlib.pyplot as plt
 from ._interpolate import interp2, interp3
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 __all__ = [ "TTGrid" ]
 
@@ -18,38 +22,67 @@ class TTGrid:
     
     Parameters
     ----------
-    grid: ndarray of shape (nz, nx[, ny])
+    grid: ndarray of shape (nz, nx[, ny]) or None, default None
         Traveltime grid.
-    source: ndarray
+    grid_size: tuple (dz, dx[, dy]) or None, default None
+        Grid size in meters.
+    source: ndarray or None, default None
         Source coordinates (Z, X[, Y]).
-    zaxis: ndarray
-        Z coordinates of the grid.
-    xaxis: ndarray
-        X coordinates of the grid.
-    yaxis: ndarray
-        Y coordinates of the grid.
+    zmin: int or float, default 0.
+        Z axis first coordinate.
+    xmin: int or float, default 0.
+        X axis first coordinate.
+    ymin: int or float, default 0.
+        Y axis first coordinate. Only used if grid's shape is 3.
     """
     
-    def __init__(self, grid = None, source = None, zaxis = None, xaxis = None,
-                 yaxis = None):
+    def __init__(self, grid = None, grid_size = None, source = None,
+                 zmin = 0., xmin = 0., ymin = 0.):
         if grid is not None and not isinstance(grid, np.ndarray) \
             and not grid.ndim in [ 2, 3 ]:
             raise ValueError("grid must be a 2-D or 3-D ndarray")
-        if grid is not None and np.any(grid <= 0.):
+        if grid is not None and np.any(grid < 0.):
             raise ValueError("grid must be positive")
         else:
             self._grid = grid
             if grid is not None:
-                self._shape = grid.shape
+                self._grid_shape = grid.shape
                 self._n_dim = grid.ndim
-        if grid is not None and len(source) != len(self._shape):
+        if grid_size is not None and len(grid_size) != len(self._grid_shape):
+            raise ValueError("grid_size should be of length %d, got %d" \
+                             % (len(self._grid_shape), len(grid_size)))
+        if grid_size is not None and np.any(np.array(grid_size) <= 0.):
+            raise ValueError("grid_size must be positive")
+        else:
+            self._grid_size = grid_size
+        if grid is not None and len(source) != len(self._grid_shape):
             raise ValueError("source should have %d coordinates, got %d" \
-                             % (len(self._shape), len(source)))
+                             % (len(self._grid_shape), len(source)))
         else:
             self._source = source
-        self._zaxis = zaxis
-        self._xaxis = xaxis
-        self._yaxis = yaxis
+        if not isinstance(zmin, (int, float)):
+            raise ValueError("zmin must be an integer or float")
+        else:
+            self._zmin = zmin
+        if not isinstance(xmin, (int, float)):
+            raise ValueError("xmin must be an integer or float")
+        else:
+            self._xmin = xmin
+        if not isinstance(ymin, (int, float)):
+            raise ValueError("ymin must be an integer or float")
+        else:
+            self._ymin = ymin
+        if grid is not None and grid_size is not None:
+            self._zaxis = zmin + grid_size[0] * np.arange(self._grid_shape[0])
+            self._xaxis = xmin + grid_size[1] * np.arange(self._grid_shape[1])
+            if grid.ndim == 3:
+                self._yaxis = ymin + grid_size[2] * np.arange(self._grid_shape[2])
+            else:
+                self._yaxis = None
+        else:
+            self._zaxis = None
+            self._xaxis = None
+            self._yaxis = None
         return
     
     def get(self, zq, xq, yq = None, check = True):
@@ -131,6 +164,43 @@ class TTGrid:
             return ax1
         else:
             raise ValueError("plot unavailable for 3-D grid")
+            
+    def save(self, filename):
+        """
+        Pickle the traveltime grid to a file.
+        
+        Parameters
+        ----------
+        filename: str
+            Pickle filename.
+        """
+        with open(filename, "wb") as f:
+            pickle.dump(self, f, protocol = pickle.HIGHEST_PROTOCOL)
+            
+    def load(self, filename):
+        """
+        Unpickle a traveltime grid from a file.
+        
+        Parameters
+        ----------
+        filename: str
+            Pickle filename.
+        """
+        with open(filename, "rb") as f:
+            tmp = pickle.load(f)
+        if tmp.n_dim == 2:
+            self.__init__(grid = tmp.grid,
+                          grid_size = tmp.grid_size,
+                          source = tmp.source,
+                          zmin = tmp.zmin,
+                          xmin = tmp.xmin)
+        elif tmp.n_dim == 3:
+            self.__init__(grid = tmp.grid,
+                          grid_size = tmp.grid_size,
+                          source = tmp.source,
+                          zmin = tmp.zmin,
+                          xmin = tmp.xmin,
+                          ymin = tmp.ymin)
 
     @property
     def grid(self):
@@ -145,16 +215,28 @@ class TTGrid:
         self._grid = value
         
     @property
-    def shape(self):
+    def grid_shape(self):
         """
         tuple (nz, nx[, ny])
         Traveltime grid's shape.
         """
-        return self._shape
+        return self._grid_shape
     
-    @shape.setter
-    def shape(self, value):
-        self._shape = value
+    @grid_shape.setter
+    def grid_shape(self, value):
+        self._grid_shape = value
+        
+    @property
+    def grid_size(self):
+        """
+        tuple (dz, dx[, dy])
+        Grid size in meters.
+        """
+        return self._grid_size
+    
+    @grid_size.setter
+    def grid_size(self, value):
+        self._grid_size = value
         
     @property
     def n_dim(self):
@@ -179,6 +261,42 @@ class TTGrid:
     @source.setter
     def source(self, value):
         self._source = value
+        
+    @property
+    def zmin(self):
+        """
+        int or float, default 0.
+        Z axis first coordinate.
+        """
+        return self._zmin
+    
+    @zmin.setter
+    def zmin(self, value):
+        self._zmin = value
+        
+    @property
+    def xmin(self):
+        """
+        int or float, default 0.
+        X axis first coordinate.
+        """
+        return self._xmin
+    
+    @xmin.setter
+    def xmin(self, value):
+        self._xmin = value
+        
+    @property
+    def ymin(self):
+        """
+        int or float, default 0.
+        Y axis first coordinate.
+        """
+        return self._ymin
+    
+    @ymin.setter
+    def ymin(self, value):
+        self._ymin = value
     
     @property
     def zaxis(self):

@@ -25,13 +25,20 @@ class Eikonal:
     ----------
     velocity_model: ndarray of shape (nz, nx[, ny])
         Velocity model grid in m/s.
-    Grid size: tuple (dz, dx[, dy])
+    grid_size: tuple (dz, dx[, dy])
         Grid size in meters.
     n_sweep: int, default 1
         Number of sweeps.
+    zmin: int or float, default 0.
+        Z axis first coordinate.
+    xmin: int or float, default 0.
+        X axis first coordinate.
+    ymin: int or float, default 0.
+        Y axis first coordinate. Only used if velocity model's shape is 3.
     """
     
-    def __init__(self, velocity_model, grid_size, n_sweep = 1):
+    def __init__(self, velocity_model, grid_size, n_sweep = 1,
+                 zmin = 0., xmin = 0., ymin = 0.):
         if not isinstance(velocity_model, np.ndarray) \
             and not velocity_model.ndim in [ 2, 3 ]:
             raise ValueError("velocity_model must be a 2-D or 3-D ndarray")
@@ -54,10 +61,22 @@ class Eikonal:
             raise ValueError("n_sweep must be a positive integer, got %s" % n_sweep)
         else:
             self._n_sweep = n_sweep
-        self._zaxis = grid_size[0] * np.arange(self._grid_shape[0])
-        self._xaxis = grid_size[1] * np.arange(self._grid_shape[1])
+        if not isinstance(zmin, (int, float)):
+            raise ValueError("zmin must be an integer or float")
+        else:
+            self._zmin = zmin
+            self._zaxis = zmin + grid_size[0] * np.arange(self._grid_shape[0])
+        if not isinstance(xmin, (int, float)):
+            raise ValueError("xmin must be an integer or float")
+        else:
+            self._xmin = xmin
+            self._xaxis = xmin + grid_size[1] * np.arange(self._grid_shape[1])
         if velocity_model.ndim == 3:
-            self._yaxis = grid_size[2] * np.arange(self._grid_shape[2])
+            if not isinstance(ymin, (int, float)):
+                raise ValueError("ymin must be an integer or float")
+            else:
+                self._ymin = ymin
+                self._yaxis = ymin + grid_size[2] * np.arange(self._grid_shape[2])
             
     def rescale(self, new_shape):
         """
@@ -78,31 +97,31 @@ class Eikonal:
             pass
         elif len(new_shape) == 2:
             fn = RegularGridInterpolator((self._zaxis, self._xaxis), self._velocity_model)
-            zaxis = np.linspace(0., self._zaxis.max(), new_shape[0])
-            xaxis = np.linspace(0., self._xaxis.max(), new_shape[1])
+            zaxis = np.linspace(self._zmin, self._zaxis[-1], new_shape[0])
+            xaxis = np.linspace(self._xmin, self._xaxis[-1], new_shape[1])
             Z, X = np.meshgrid(zaxis, xaxis, indexing = "ij")
             cz, cx = [ new / old for new, old in zip(new_shape, self._grid_shape) ]
             self._velocity_model = fn([ [ z, x ] for z, x in zip(Z.ravel(), X.ravel()) ]).reshape(new_shape)
             self._grid_shape = new_shape
             self._grid_size = (self._grid_size[0] / cz, self._grid_size[1] / cx)
-            self._zaxis = self._grid_size[0] * np.arange(self._grid_shape[0])
-            self._xaxis = self._grid_size[1] * np.arange(self._grid_shape[1])
+            self._zaxis = self._zmin + self._grid_size[0] * np.arange(self._grid_shape[0])
+            self._xaxis = self._xmin + self._grid_size[1] * np.arange(self._grid_shape[1])
         elif len(new_shape) == 3:
             fn = RegularGridInterpolator((self._zaxis, self._xaxis, self._yaxis), self._velocity_model)
-            zaxis = np.linspace(0., self._zaxis.max(), new_shape[0])
-            xaxis = np.linspace(0., self._xaxis.max(), new_shape[1])
-            yaxis = np.linspace(0., self._yaxis.max(), new_shape[2])
+            zaxis = np.linspace(self._zmin, self._zaxis[-1], new_shape[0])
+            xaxis = np.linspace(self._xmin, self._xaxis[-1], new_shape[1])
+            yaxis = np.linspace(self._ymin, self._yaxis[-1], new_shape[2])
             Z, X, Y = np.meshgrid(zaxis, xaxis, yaxis, indexing = "ij")
             cz, cx, cy = [ new / (old+1) for new, old in zip(new_shape, self._grid_shape) ]
             self._velocity_model = fn([ [ z, x, y ] for z, x, y in zip(Z.ravel(), X.ravel(), Y.ravel()) ]).reshape(new_shape)
             self._grid_shape = new_shape
             self._grid_size = (self._grid_size[0] / cz, self._grid_size[1] / cx, self._grid_size[2] / cy)
-            self._zaxis = self._grid_size[0] * np.arange(self._grid_shape[0])
-            self._xaxis = self._grid_size[1] * np.arange(self._grid_shape[1])
-            self._yaxis = self._grid_size[2] * np.arange(self._grid_shape[2])
+            self._zaxis = self._zmin + self._grid_size[0] * np.arange(self._grid_shape[0])
+            self._xaxis = self._xmin + self._grid_size[1] * np.arange(self._grid_shape[1])
+            self._yaxis = self._ymin + self._grid_size[2] * np.arange(self._grid_shape[2])
         return self
             
-    def solve(self, source):
+    def solve(self, source, dtype = "float32"):
         """
         Compute the traveltime grid associated to a source point.
         
@@ -110,6 +129,8 @@ class Eikonal:
         ----------
         source: ndarray
             Source coordinates (Z, X[, Y]).
+        dtype: {'float32', 'float64'}, default 'float32'
+            Traveltime grid data type.
             
         Returns
         -------
@@ -120,44 +141,53 @@ class Eikonal:
         if len(source) != len(self._grid_shape):
             raise ValueError("source should have %d coordinates, got %d" \
                              % (len(self._grid_shape), len(source)))
+        if dtype not in [ "float32", "float64" ]:
+            raise ValueError("dtype must be 'float32' or 'float64'")
         
         # Call Eikonal solver
-        tt = TTGrid(source = source)
         if len(source) == 2:
-            zsrc, xsrc = source
+            zsrc, xsrc = self._shift(source)
             dz, dx = self._grid_size
             nz, nx = self._grid_shape
             self._check_2d(zsrc, xsrc, dz, dx, nz, nx)
-            tt.grid = fteik2d(self._velocity_model, zsrc, xsrc, dz, dx,
-                              self._n_sweep, 5.)
-            tt.zaxis = dz * np.arange(nz)
-            tt.xaxis = dx * np.arange(nx)
+            grid = fteik2d(self._velocity_model, zsrc, xsrc, dz, dx, self._n_sweep, 5.)
+            tt = TTGrid(grid = np.array(grid, dtype = dtype),
+                        source = source,
+                        grid_size = self._grid_size,
+                        zmin = self._zmin,
+                        xmin = self._xmin)
         elif len(source) == 3:
-            zsrc, xsrc, ysrc = source
+            zsrc, xsrc, ysrc = self._shift(source)
             dz, dx, dy = self._grid_size
             nz, nx, ny = self._grid_shape
             self._check_3d(zsrc, xsrc, ysrc, dz, dx, dy, nz, nx, ny)
-            tt.grid = fteik3d(self._velocity_model, zsrc, xsrc, ysrc, dz, dx, dy,
-                              self._n_sweep, 5.)
-            tt.zaxis = dz * np.arange(nz+1)
-            tt.xaxis = dx * np.arange(nx+1)
-            tt.yaxis = dy * np.arange(ny+1)
-        tt.shape = tt.grid.shape
-        tt.n_dim = tt.grid.ndim
+            grid = fteik3d(self._velocity_model, zsrc, xsrc, ysrc, dz, dx, dy, self._n_sweep, 5.)
+            tt = TTGrid(grid = np.array(grid, dtype = dtype),
+                        source = source,
+                        grid_size = self._grid_size,
+                        zmin = self._zmin,
+                        xmin = self._xmin,
+                        ymin = self._ymin)
         return tt
+    
+    def _shift(self, source):
+        if len(source) == 2:
+            return np.array(source) - np.array([ self._zmin, self._xmin ])
+        elif len(source) == 3:
+            return np.array(source) - np.array([ self._zmin, self._xmin, self._ymin ])
     
     def _check_2d(self, zsrc, xsrc, dz, dx, nz, nx):
         zmax, xmax = (nz-1)*dz, (nx-1)*dx
         if np.logical_or(np.any(zsrc < 0.), np.any(zsrc > zmax)):
-            raise ValueError("zsrc should be in [ 0, %.2f ]" % zmax)
+            raise ValueError("zsrc out of bounds")
         if np.logical_or(np.any(xsrc < 0.), np.any(xsrc > xmax)):
-            raise ValueError("xsrc should be in [ 0, %.2f ]" % xmax)
+            raise ValueError("xsrc out of bounds")
             
     def _check_3d(self, zsrc, xsrc, ysrc, dz, dx, dy, nz, nx, ny):
         self._check_2d(zsrc, xsrc, dz, dx, nz, nx)
         ymax = (ny-1)*dy
         if np.logical_or(np.any(ysrc < 0.), np.any(ysrc > ymax)):
-            raise ValueError("ysrc should be in [ 0, %.2f ]" % ymax)
+            raise ValueError("ysrc out of bounds")
             
     @property
     def velocity_model(self):
