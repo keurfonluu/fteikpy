@@ -119,14 +119,14 @@ class TTGrid:
                 raise ValueError("zq must be a scalar")
             if not isinstance(xq, (int, float)):
                 raise ValueError("xq must be a scalar")
-            if not 0. <= zq <= self._zaxis[-1]:
+            if not self._zaxis[0] <= zq <= self._zaxis[-1]:
                 raise ValueError("zq out of bounds")
-            if not 0. <= xq <= self._xaxis[-1]:
+            if not self._xaxis[0] <= xq <= self._xaxis[-1]:
                 raise ValueError("xq out of bounds")
             if yq is not None:
                 if not isinstance(yq, (int, float)):
                     raise ValueError("yq must be a scalar")
-                if not 0. <= yq <= self._yaxis[-1]:
+                if not self._yaxis[0] <= yq <= self._yaxis[-1]:
                     raise ValueError("yq out of bounds")
             
         if self._n_dim == 2:
