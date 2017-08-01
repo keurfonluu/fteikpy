@@ -7,7 +7,7 @@ License: MIT
 
 import numpy as np
 import matplotlib.pyplot as plt
-from ._interpolate import interp2, interp3
+from ._interpolate import interpolate as interp
 try:
     import cPickle as pickle
 except ImportError:
@@ -22,17 +22,17 @@ class TTGrid:
     
     Parameters
     ----------
-    grid: ndarray of shape (nz, nx[, ny]) or None, default None
+    grid : ndarray of shape (nz, nx[, ny]) or None, default None
         Traveltime grid.
-    grid_size: tuple (dz, dx[, dy]) or None, default None
+    grid_size : tuple (dz, dx[, dy]) or None, default None
         Grid size in meters.
-    source: ndarray or None, default None
+    source : ndarray or None, default None
         Source coordinates (Z, X[, Y]).
-    zmin: int or float, default 0.
+    zmin : int or float, default 0.
         Z axis first coordinate.
-    xmin: int or float, default 0.
+    xmin : int or float, default 0.
         X axis first coordinate.
-    ymin: int or float, default 0.
+    ymin : int or float, default 0.
         Y axis first coordinate. Only used if grid's shape is 3.
     """
     
@@ -91,14 +91,14 @@ class TTGrid:
         
         Parameters
         ----------
-        zq: scalar
+        zq : scalar
             Z coordinate of the grid point.
-        xq: scalar
+        xq : scalar
             X coordinate of the grid point.
-        yq: scalar or None, default None
+        yq : scalar or None, default None
             Y coordinate of the grid point. yq should be None if grid is
             a 2-D array.
-        check: bool
+        check : bool
             Check input zq, xq and yq to avoid crashes when interpolating
             outside the grid (as Fortran interpolation code will try to access
             inexistent values). Disable checking if you need to call 'get'
@@ -106,7 +106,7 @@ class TTGrid:
             
         Returns
         -------
-        tq: scalar or ndarray
+        tq : scalar or ndarray
             Traveltime value(s).
             
         Notes
@@ -130,10 +130,10 @@ class TTGrid:
                     raise ValueError("yq out of bounds")
             
         if self._n_dim == 2:
-            tq = interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
+            tq = interp.interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
         elif self._n_dim == 3:
-            tq = interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
-                         zq, xq, yq)
+            tq = interp.interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
+                                zq, xq, yq)
         return tq
     
     def plot(self, axes = None, n_levels = 20, figsize = (10, 8), kwargs = {}):
@@ -142,16 +142,16 @@ class TTGrid:
         
         Parameters
         ----------
-        axes: matplotlib axes or None, default None
+        axes : matplotlib axes or None, default None
             Axes used for plot.
-        n_levels: int, default 20
+        n_levels : int, default 20
             Number of levels for contour.
-        figsize: tuple, default (8, 8)
+        figsize : tuple, default (8, 8)
             Figure width and height if axes is None.
         
         Returns
         -------
-        ax1: matplotlib axes
+        ax1 : matplotlib axes
             Axes used for plot.
         """
         if self._n_dim == 2:
@@ -171,7 +171,7 @@ class TTGrid:
         
         Parameters
         ----------
-        filename: str
+        filename : str
             Pickle filename.
         """
         with open(filename, "wb") as f:
@@ -183,7 +183,7 @@ class TTGrid:
         
         Parameters
         ----------
-        filename: str
+        filename : str
             Pickle filename.
         """
         with open(filename, "rb") as f:

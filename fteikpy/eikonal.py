@@ -8,8 +8,8 @@ License: MIT
 """
 
 import numpy as np
-from ._fteik2d import fteik2d
-from ._fteik3d import fteik3d
+from ._fteik2d import eikonal2d
+from ._fteik3d import eikonal3d
 from scipy.interpolate import RegularGridInterpolator
 from .ttgrid import TTGrid
 
@@ -23,18 +23,18 @@ class Eikonal:
     
     Parameters
     ----------
-    velocity_model: ndarray of shape (nz, nx[, ny])
+    velocity_model : ndarray of shape (nz, nx[, ny])
         Velocity model grid in m/s.
-    grid_size: tuple (dz, dx[, dy])
+    grid_size : tuple (dz, dx[, dy])
         Grid size in meters.
-    n_sweep: int, default 1
+    n_sweep : int, default 1
         Number of sweeps.
-    zmin: int or float, default 0.
+    zmin : int or float, default 0.
         Z axis first coordinate.
-    xmin: int or float, default 0.
+    xmin : int or float, default 0.
         X axis first coordinate.
-    ymin: int or float, default 0.
-        Y axis first coordinate. Only used if velocity model's shape is 3.
+    ymin : int or float, default 0.
+        Y axis first coordinate. Only used if 3-D velocity model.
     """
     
     def __init__(self, velocity_model, grid_size, n_sweep = 1,
@@ -46,15 +46,18 @@ class Eikonal:
             raise ValueError("velocity_model must be positive")
         else:
             self._velocity_model = np.array(velocity_model)
+            self._n_dim = velocity_model.ndim
         if np.any(np.array(velocity_model.shape) < 4):
-            raise ValueError("grid size should be at least 4")
+            raise ValueError("grid shape must be at least 4")
         else:
             self._grid_shape = velocity_model.shape
-        if len(grid_size) != len(self._grid_shape):
+        if not isinstance(grid_size, (list, tuple, np.ndarray)):
+            raise ValueError("grid_size must be a list, tuple or ndarray")
+        if len(grid_size) != self._n_dim:
             raise ValueError("grid_size should be of length %d, got %d" \
-                             % (len(self._grid_shape), len(grid_size)))
+                             % (self._n_dim, len(grid_size)))
         if np.any(np.array(grid_size) <= 0.):
-            raise ValueError("grid_size must be positive")
+            raise ValueError("elements in grid_size must be positive")
         else:
             self._grid_size = grid_size
         if not isinstance(n_sweep, int) or n_sweep <= 0:
@@ -71,7 +74,7 @@ class Eikonal:
         else:
             self._xmin = xmin
             self._xaxis = xmin + grid_size[1] * np.arange(self._grid_shape[1])
-        if velocity_model.ndim == 3:
+        if self._n_dim == 3:
             if not isinstance(ymin, (int, float)):
                 raise ValueError("ymin must be an integer or float")
             else:
@@ -84,12 +87,12 @@ class Eikonal:
         
         Parameters
         ----------
-        new_shape: tup
+        new_shape : tup
             New shape.
         """
-        if len(new_shape) != len(self._grid_shape) \
+        if len(new_shape) != self._n_dim \
             or not np.all([ isinstance(n, int) for n in new_shape ]):
-            raise ValueError("new_shape must be a tuple with %d integers" % len(self._grid_shape))
+            raise ValueError("new_shape must be a tuple with %d integers" % self._n_dim)
         if np.any([ n < 4 for n in new_shape ]):
             raise ValueError("elements in new_shape must be at least 4")
             
@@ -121,60 +124,85 @@ class Eikonal:
             self._yaxis = self._ymin + self._grid_size[2] * np.arange(self._grid_shape[2])
         return self
             
-    def solve(self, source, dtype = "float32"):
+    def solve(self, sources, dtype = "float32", n_threads = 1):
         """
         Compute the traveltime grid associated to a source point.
         
         Parameters
         ----------
-        source: ndarray
+        sources : list or ndarray
             Source coordinates (Z, X[, Y]).
-        dtype: {'float32', 'float64'}, default 'float32'
+        dtype : {'float32', 'float64'}, default 'float32'
             Traveltime grid data type.
+        n_threads : int, default 1
+            Number of threads to pass to OpenMP.
             
         Returns
         -------
-        tt: TTGrid
+        tt : TTGrid
             Traveltime grid.
         """
         # Check inputs
-        if len(source) != len(self._grid_shape):
-            raise ValueError("source should have %d coordinates, got %d" \
-                             % (len(self._grid_shape), len(source)))
+        if not isinstance(sources, (list, tuple, np.ndarray)):
+            raise ValueError("sources must be a list, tuple or ndarray")
+        if isinstance(sources, np.ndarray) and sources.ndim not in [ 1, 2 ]:
+            raise ValueError("sources must be 1-D or 2-D ndarray")
+        if isinstance(sources, (list, tuple)) and len(sources) != self._n_dim:
+            raise ValueError("sources should have %d coordinates, got %d" \
+                             % (self._n_dim, len(sources)))
+        elif isinstance(sources, np.ndarray) and sources.ndim == 1 and len(sources) != self._n_dim:
+            raise ValueError("sources should have %d coordinates, got %d" \
+                             % (self._n_dim, len(sources)))
+        elif isinstance(sources, np.ndarray) and sources.ndim == 2 and sources.shape[1] != self._n_dim:
+            raise ValueError("sources should have %d coordinates, got %d" \
+                             % (self._n_dim, sources.shape[1]))
         if dtype not in [ "float32", "float64" ]:
             raise ValueError("dtype must be 'float32' or 'float64'")
         
+        # Define src array
+        if isinstance(sources, (list, tuple)) or sources.ndim == 1:
+            src = np.array(sources)[None,:]
+        else:
+            src = np.array(sources)
+        src_shift = np.array([ self._shift(s) for s in src ])
+        nsrc = src.shape[0]
+        
         # Call Eikonal solver
-        if len(source) == 2:
-            zsrc, xsrc = self._shift(source)
+        if self._n_dim == 2:
             dz, dx = self._grid_size
             nz, nx = self._grid_shape
-            self._check_2d(zsrc, xsrc, dz, dx, nz, nx)
-            grid = fteik2d(self._velocity_model, zsrc, xsrc, dz, dx, self._n_sweep, 5.)
-            tt = TTGrid(grid = np.array(grid, dtype = dtype),
-                        source = source,
-                        grid_size = self._grid_size,
-                        zmin = self._zmin,
-                        xmin = self._xmin)
-        elif len(source) == 3:
-            zsrc, xsrc, ysrc = self._shift(source)
+            for i in range(nsrc):
+                self._check_2d(src_shift[i,0], src_shift[i,1], dz, dx, nz, nx)
+            grid = eikonal2d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1],
+                                   dz, dx, self._n_sweep, n_threads)
+            tt = [ TTGrid(grid = np.array(grid[:,:,i], dtype = dtype),
+                          source = src[i,:],
+                          grid_size = self._grid_size,
+                          zmin = self._zmin,
+                          xmin = self._xmin) for i in range(nsrc) ]
+        elif len(self._grid_shape) == 3:
             dz, dx, dy = self._grid_size
             nz, nx, ny = self._grid_shape
-            self._check_3d(zsrc, xsrc, ysrc, dz, dx, dy, nz, nx, ny)
-            grid = fteik3d(self._velocity_model, zsrc, xsrc, ysrc, dz, dx, dy, self._n_sweep, 5.)
-            tt = TTGrid(grid = np.array(grid, dtype = dtype),
-                        source = source,
-                        grid_size = self._grid_size,
-                        zmin = self._zmin,
-                        xmin = self._xmin,
-                        ymin = self._ymin)
-        return tt
+            for i in range(nsrc):
+                self._check_3d(src[i,0], src[i,1], src[i,2], dz, dx, dy, nz, nx, ny)
+            grid = eikonal3d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1], src_shift[:,2],
+                                   dz, dx, dy, self._n_sweep, n_threads)
+            tt = [ TTGrid(grid = np.array(grid[:,:,:,i], dtype = dtype),
+                          source = src[i,:],
+                          grid_size = self._grid_size,
+                          zmin = self._zmin,
+                          xmin = self._xmin,
+                          ymin = self._ymin) for i in range(nsrc) ]
+        if isinstance(sources, (list, tuple)) or sources.ndim == 1:
+            return tt[0]
+        else:
+            return tt
     
-    def _shift(self, source):
-        if len(source) == 2:
-            return np.array(source) - np.array([ self._zmin, self._xmin ])
-        elif len(source) == 3:
-            return np.array(source) - np.array([ self._zmin, self._xmin, self._ymin ])
+    def _shift(self, sources):
+        if len(sources) == 2:
+            return np.array(sources) - np.array([ self._zmin, self._xmin ])
+        elif len(sources) == 3:
+            return np.array(sources) - np.array([ self._zmin, self._xmin, self._ymin ])
     
     def _check_2d(self, zsrc, xsrc, dz, dx, nz, nx):
         zmax, xmax = (nz-1)*dz, (nx-1)*dx
@@ -212,6 +240,18 @@ class Eikonal:
     @grid_shape.setter
     def grid_shape(self, value):
         self._grid_shape = value
+        
+    @property
+    def n_dim(self):
+        """
+        int
+        Number of dimensions (2 or 3).
+        """
+        return self._n_dim
+    
+    @n_dim.setter
+    def n_dim(self, value):
+        self._n_dim = value
         
     @property
     def grid_size(self):

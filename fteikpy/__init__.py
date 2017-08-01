@@ -12,5 +12,5 @@ from .ttgrid import TTGrid
 from .eikonal import Eikonal
 from .layered_model import lay2vel, lay2tt
 
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 __all__ = [ "TTGrid", "Eikonal", "lay2vel", "lay2tt" ]

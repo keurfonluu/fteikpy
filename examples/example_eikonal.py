@@ -23,8 +23,9 @@ if __name__ == "__main__":
     # Parameters
     sources = np.loadtxt("shots.txt")
     receivers = np.loadtxt("stations.txt")
-    dz, dx, dy = 5., 5., 5.
-    nz, nx, ny = 200, 140, 4
+    dz, dx, dy = 2.5, 2.5, 2.5
+    nz, nx, ny = 400, 280, 4
+    n_threads = 8
     
     # Make a layered velocity model
     lay = 1500. + 250. * np.arange(10)
@@ -41,15 +42,15 @@ if __name__ == "__main__":
     # Eikonal 2D
     start_time = time.time()
     eik2d = Eikonal(vel2d, (dz, dx), n_sweep = 2)
-    tcalc_eik2d = lay2tt(eik2d, sources, receivers)
+    tcalc_eik2d = lay2tt(eik2d, sources, receivers, n_threads = n_threads)
     print("\nEikonal 2D: %.3f seconds" % (time.time() - start_time))
     print("Mean residual (2D): ", (tcalc_eik2d - tcalc_ray).mean())
     
     # Eikonal 3D
     start_time = time.time()
     eik3d = Eikonal(vel3d, (dz, dx, dy), n_sweep = 1)
-    tt = [ eik3d.solve(sources[i,:]) for i in range(sources.shape[0]) ]
-    tcalc_eik3d = np.array([ [ grid.get(z, x, y)
+    tt = eik3d.solve(sources, n_threads = n_threads)
+    tcalc_eik3d = np.array([ [ grid.get(z, x, y, check = False)
                                 for z, x, y in zip(receivers[:,0], receivers[:,1], receivers[:,2]) ]
                                 for grid in tt ]).transpose()
     print("\nEikonal 3D: %.3f seconds" % (time.time() - start_time))

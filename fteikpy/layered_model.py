@@ -6,6 +6,7 @@ License: MIT
 """
 
 import numpy as np
+from .eikonal import Eikonal
 
 __all__ = [ "lay2vel", "lay2tt" ]
 
@@ -16,18 +17,18 @@ def lay2vel(lay, dz, grid_shape, smooth = False):
     
     Parameters
     ----------
-    lay: ndarray
+    lay : ndarray
         Layer velocities (first column) and interface depth (second column).
-    dz: float
+    dz : float
         Grid size in Z coordinate in meters.
-    grid_shape: tuple (nz, nx[, ny])
+    grid_shape : tuple (nz, nx[, ny])
         Gris shape.
-    smooth: bool, default False
+    smooth : bool, default False
         If True, smooth the velocity model.
     
     Returns
     -------
-    vel: ndarray
+    vel : ndarray
         Velocity model grid in m/s.
     """
     # Check inputs
@@ -45,7 +46,7 @@ def lay2vel(lay, dz, grid_shape, smooth = False):
     if not isinstance(smooth, bool):
         raise ValueError("smooth must either be True or False")
     
-    # Create velocity model
+    # Create a continuous velocity model
     if len(lay.shape) == 1:
         vel = np.full(grid_shape, lay[0])
     else:
@@ -75,7 +76,7 @@ def lay2vel(lay, dz, grid_shape, smooth = False):
     return vel
 
 
-def lay2tt(eikonal, sources, receivers):
+def lay2tt(eikonal, sources, receivers, n_threads = 1):
     """
     Given a layered velocity model, compute the first arrivel traveltime for
     each source and each receiver. Only useful if working in 3-D as a 2-D
@@ -83,19 +84,23 @@ def lay2tt(eikonal, sources, receivers):
     
     Parameters
     ----------
-    eikonal: Eikonal object
+    eikonal : Eikonal object
         2-D eikonal solver with a layered velocity model.
-    sources: ndarray
-        Sources positions.
-    receivers: ndarray
-        Receivers positions.
+    sources : ndarray
+        Sources coordinates (Z, X[, Y]).
+    receivers : ndarray
+        Receivers coordinates (Z, X[, Y]).
+    n_threads : int, default 1
+        Number of threads to pass to OpenMP.
         
     Returns
     -------
-    tcalc: ndarray of shape (nrcv, nsrc)
+    tcalc : ndarray of shape (nrcv, nsrc)
         Traveltimes for each source and each receiver.
     """
     # Check inputs
+    if not isinstance(eikonal, Eikonal):
+        raise ValueError("eikonal must be an Eikonal object")
     if not hasattr(eikonal, "_velocity_model"):
         raise ValueError("eikonal must have a defined velocity model")
     if not isinstance(sources, np.ndarray) or sources.shape[1] != 3:
@@ -115,14 +120,17 @@ def lay2tt(eikonal, sources, receivers):
         rcv, src = np.array(receivers), np.array(sources)
     else:
         rcv, src = np.array(sources), np.array(receivers)
+        
+    # Compute traveiltime grid using eikonal solver
+    src2d = np.vstack((src[:,0], np.zeros(n1))).transpose()
+    tt = eikonal.solve(src2d, n_threads = n_threads)
     
     # Compute traveltimes using eikonal solver
     dhorz = np.zeros(n2)        
     for i in range(n1):
         for j in range(n2):
             dhorz[j] = np.linalg.norm(src[i,1:] - rcv[j,1:])
-        tt = eikonal.solve((src[i,0], 0.))
-        tcalc[:,i] = [ tt.get(zrcv, xrcv) for zrcv, xrcv in zip(rcv[:,0], dhorz) ]
+        tcalc[:,i] = [ tt[i].get(zrcv, xrcv, check = False) for zrcv, xrcv in zip(rcv[:,0], dhorz) ]
             
     # Transpose to reshape to [ nrcv, nsrc ]
     if n1 == nrcv:
