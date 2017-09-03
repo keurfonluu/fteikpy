@@ -29,6 +29,7 @@ if __name__ == "__main__":
     
     # Compute traveltimes using a 2D Eikonal solver
     eik = Eikonal(marmousi, grid_size = (dz, dx), n_sweep = 2)
+    eik.smooth(10)
     tt = eik.solve(source)
     
     # Plot velocity model and isochrones

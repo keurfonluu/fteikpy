@@ -11,6 +11,7 @@ import numpy as np
 from ._fteik2d import eikonal2d
 from ._fteik3d import eikonal3d
 from scipy.interpolate import RegularGridInterpolator
+from scipy.ndimage import gaussian_filter
 from .ttgrid import TTGrid
 
 __all__ = [ "Eikonal" ]
@@ -122,6 +123,21 @@ class Eikonal:
             self._zaxis = self._zmin + self._grid_size[0] * np.arange(self._grid_shape[0])
             self._xaxis = self._xmin + self._grid_size[1] * np.arange(self._grid_shape[1])
             self._yaxis = self._ymin + self._grid_size[2] * np.arange(self._grid_shape[2])
+        return self
+    
+    def smooth(self, sigma, mode = "reflect", cval = 0., truncate = 4.):
+        """
+        Smooth velocity model. This method uses SciPy's gaussian_filter
+        function.
+        
+        Parameters
+        ----------
+        sigma : int, float or tuple
+            Standard deviation for Gaussian kernel. The standard deviations of
+            the Gaussian filter are given for each axis as a sequence, or as a
+            single number, in which case it is equal for all axes.
+        """
+        self._velocity_model = gaussian_filter(self._velocity_model, sigma)
         return self
             
     def solve(self, sources, dtype = "float32", n_threads = 1):

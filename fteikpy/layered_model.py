@@ -6,12 +6,13 @@ License: MIT
 """
 
 import numpy as np
-from .eikonal import Eikonal
+from ._fteik2d import eikonal2d
+from ._lay2vel import lay2vel as l2vf
 
 __all__ = [ "lay2vel", "lay2tt" ]
 
 
-def lay2vel(lay, dz, grid_shape, smooth = False):
+def lay2vel(lay, dz, grid_shape):
     """
     Convert a layered model to a continuous velocity model.
     
@@ -23,8 +24,6 @@ def lay2vel(lay, dz, grid_shape, smooth = False):
         Grid size in Z coordinate in meters.
     grid_shape : tuple (nz, nx[, ny])
         Gris shape.
-    smooth : bool, default False
-        If True, smooth the velocity model.
     
     Returns
     -------
@@ -43,40 +42,17 @@ def lay2vel(lay, dz, grid_shape, smooth = False):
         raise ValueError("last layer depth must be %.2f" % zmax)
     if not np.all([isinstance(n, int) for n in grid_shape]) or len(grid_shape) not in [ 1, 2, 3 ]:
         raise ValueError("grid_shape must be a tuple of integers of size 1, 2 or 3")
-    if not isinstance(smooth, bool):
-        raise ValueError("smooth must either be True or False")
     
     # Create a continuous velocity model
-    if len(lay.shape) == 1:
-        vel = np.full(grid_shape, lay[0])
-    else:
-        nlayer = lay.shape[0]
-        vel1d = np.zeros(grid_shape[0])
-        ztop = 0
-        zbot = int(np.floor(lay[0,1]/dz)) - 1
-        if smooth:
-            vel1d[ztop:zbot+1] = np.linspace(lay[0,0], lay[1,0], zbot-ztop+1)
-            for i in range(1, nlayer-1):
-                ztop = zbot + 1
-                zbot = int(np.floor(lay[i,1]/dz)) - 1
-                vel1d[ztop:zbot+1] = np.linspace(lay[i,0], lay[i+1,0], zbot-ztop+1)
-        else:
-            vel1d[ztop:zbot+1].fill(lay[0,0])
-            for i in range(1, nlayer-1):
-                ztop = zbot + 1
-                zbot = int(np.floor(lay[i,1]/dz)) - 1
-                vel1d[ztop:zbot+1].fill(lay[i,0])
-        vel1d[zbot+1:].fill(lay[-1,0])
-        
-        vel = vel1d
-        if len(grid_shape) > 1:
-            vel = np.tile(vel[:,None], grid_shape[1])
-        if len(grid_shape) > 2:
-            vel = np.tile(vel[:,:,None], grid_shape[2])
-    return vel
+    if len(grid_shape) == 1:
+        return l2vf.lay2vel1(lay, dz, *grid_shape)
+    elif len(grid_shape) == 2:
+        return l2vf.lay2vel2(lay, dz, *grid_shape)
+    elif len(grid_shape) == 3:
+        return l2vf.lay2vel3(lay, dz, *grid_shape)
 
 
-def lay2tt(eikonal, sources, receivers, n_threads = 1):
+def lay2tt(velocity_model, grid_size, sources, receivers, n_sweep, n_threads = 1):
     """
     Given a layered velocity model, compute the first arrivel traveltime for
     each source and each receiver. Only useful if working in 3-D as a 2-D
@@ -84,12 +60,16 @@ def lay2tt(eikonal, sources, receivers, n_threads = 1):
     
     Parameters
     ----------
-    eikonal : Eikonal object
-        2-D eikonal solver with a layered velocity model.
+    velocity_model : ndarray of shape (nz, nx)
+        Velocity model grid in m/s.
+    grid_size : tuple (dz, dx)
+        Grid size in meters.
     sources : ndarray
         Sources coordinates (Z, X[, Y]).
     receivers : ndarray
         Receivers coordinates (Z, X[, Y]).
+    n_sweep : int, default 1
+        Number of sweeps.
     n_threads : int, default 1
         Number of threads to pass to OpenMP.
         
@@ -99,41 +79,26 @@ def lay2tt(eikonal, sources, receivers, n_threads = 1):
         Traveltimes for each source and each receiver.
     """
     # Check inputs
-    if not isinstance(eikonal, Eikonal):
-        raise ValueError("eikonal must be an Eikonal object")
-    if not hasattr(eikonal, "_velocity_model"):
-        raise ValueError("eikonal must have a defined velocity model")
+    if not isinstance(velocity_model, np.ndarray) or velocity_model.ndim != 2:
+        raise ValueError("velocity_model must be a 2-D ndarray")
+    if np.any(velocity_model <= 0.):
+        raise ValueError("velocity_model must be positive")
+    if not isinstance(grid_size, (list, tuple, np.ndarray)):
+        raise ValueError("grid_size must be a list, tuple or ndarray")
+    if len(grid_size) != 2:
+        raise ValueError("grid_size should be of length 2, got %d" % len(grid_size))
+    if np.any(np.array(grid_size) <= 0.):
+        raise ValueError("elements in grid_size must be positive")
     if not isinstance(sources, np.ndarray) or sources.shape[1] != 3:
         raise ValueError("sources must be ndarray with 3 columns")
     if not isinstance(receivers, np.ndarray) or receivers.shape[1] != 3:
         raise ValueError("receivers must be ndarray with 3 columns")
+    if not isinstance(n_sweep, int) or n_sweep <= 0:
+        raise ValueError("n_sweep must be a positive integer, got %s" % n_sweep)
+    if not isinstance(n_threads, int) or n_threads <= 1:
+        raise ValueError("n_threads must be atleast 1, got %s" % n_threads)
     
-    # Parameters
-    nrcv = receivers.shape[0]
-    nsrc = sources.shape[0]
-    
-    # Switch sources and receivers to minimize calls to eikonals
-    n1 = min(nrcv, nsrc)
-    n2 = max(nrcv, nsrc)
-    tcalc = np.zeros((n2, n1))
-    if n1 == nsrc:
-        rcv, src = np.array(receivers), np.array(sources)
-    else:
-        rcv, src = np.array(sources), np.array(receivers)
-        
-    # Compute traveiltime grid using eikonal solver
-    src2d = np.vstack((src[:,0], np.zeros(n1))).transpose()
-    tt = eikonal.solve(src2d, n_threads = n_threads)
-    
-    # Compute traveltimes using eikonal solver
-    dhorz = np.zeros(n2)        
-    for i in range(n1):
-        for j in range(n2):
-            dhorz[j] = np.linalg.norm(src[i,1:] - rcv[j,1:])
-        tcalc[:,i] = [ tt[i].get(zrcv, xrcv, check = False) for zrcv, xrcv in zip(rcv[:,0], dhorz) ]
-            
-    # Transpose to reshape to [ nrcv, nsrc ]
-    if n1 == nrcv:
-        return tcalc.transpose()
-    else:
-        return tcalc
+    dz, dx = grid_size
+    tcalc = eikonal2d.lay2tt(velocity_model, dz, dx, sources[:,0], sources[:,1], sources[:,2],
+                             receivers[:,0], receivers[:,1], receivers[:,2], n_sweep, n_threads)
+    return tcalc

@@ -9,4 +9,4 @@ set F90DIR=f90/
 :: COMMANDS
 call %F2PY% -c -m _fteik2d --fcompiler=%FC% --f90flags=%FFLAGS% -lgomp %F90DIR%FTeik2d.f90
 call %F2PY% -c -m _fteik3d --fcompiler=%FC% --f90flags=%FFLAGS% -lgomp %F90DIR%FTeik3d.f90
-call %F2PY% -c -m _interpolate --fcompiler=%FC% --f90flags=%FFLAGS% %F90DIR%interpolate.f90
+call %F2PY% -c -m _lay2vel --fcompiler=%FC% --f90flags=%FFLAGS% %F90DIR%lay2vel.f90

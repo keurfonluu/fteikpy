@@ -3,7 +3,7 @@
 from setuptools import find_packages
 from numpy.distutils.core import setup, Extension
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 DISTNAME = "fteikpy"
 DESCRIPTION = "FTeikPy"
 LONG_DESCRIPTION = """FTeikPy is a Python module that computes accurate first arrival traveltimes in 2-D and 3-D heterogeneous isotropic velocity model."""
@@ -43,8 +43,8 @@ ext2 = Extension(
     )
 
 ext3 = Extension(
-    name = "fteikpy._interpolate",
-    sources = ["fteikpy/f90/interpolate.f90"],
+    name = "fteikpy._lay2vel",
+    sources = ["fteikpy/f90/lay2vel.f90"],
     extra_f90_compile_args = FFLAGS.split(),
     f2py_options = [],
     )

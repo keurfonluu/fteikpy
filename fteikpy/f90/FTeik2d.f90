@@ -537,5 +537,107 @@ contains
     !$omp end parallel
     return
   end subroutine solve
+  
+  function interp2(source, x, y, v, xq, yq) result(vq)
+    real :: vq
+    real, intent(in) :: xq, yq
+    real, dimension(:), intent(in) :: source, x, y
+    real, dimension(:,:), intent(in) :: v
+    integer :: nx, ny, i1, i2, j1, j2
+    real :: x1, x2, y1, y2, v11, v21, v12, v22, d11, d21, d12, d22
+    real :: N(4), ax(4), ay(4), av(4), ad(4)
+
+    nx = size(v, 1)
+    ny = size(v, 2)
+    i1 = minloc(xq - x, dim = 1, mask = xq .ge. x)
+    j1 = minloc(yq - y, dim = 1, mask = yq .ge. y)
+    i2 = i1 + 1
+    j2 = j1 + 1
+
+    if ( i1 .eq. nx .and. j1 .ne. ny ) then
+      x1 = x(i1); x2 = 2.*x1 - x(nx-1); y1 = y(j1); y2 = y(j2)
+      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = 0.
+      d12 = sqrt(sum((source-[x1,y2])**2)); d22 = 0.
+      v11 = v(i1,j1); v21 = 1.; v12 = v(i1,j2); v22 = 1.
+    else if ( i1 .ne. nx .and. j1 .eq. ny ) then
+      x1 = x(i1); x2 = x(i2); y1 = y(j1); y2 = 2.*y1 - y(ny-1)
+      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = sqrt(sum((source-[x2,y1])**2))
+      d12 = 0.; d22 = 0.
+      v11 = v(i1,j1); v21 = v(i2,j1); v12 = 1.; v22 = 1.
+    else if ( i1 .eq. nx .and. j1 .eq. ny ) then
+      x1 = x(i1); x2 = 2.*x1 - x(nx-1); y1 = y(j1); y2 = 2.*y1 - y(ny-1)
+      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = 0.
+      d12 = 0.; d22 = 0.
+      v11 = v(i1,j1); v21 = 1.; v12 = 1.; v22 = 1.
+    else
+      x1 = x(i1); x2 = x(i2); y1 = y(j1); y2 = y(j2)
+      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = sqrt(sum((source-[x2,y1])**2))
+      d12 = sqrt(sum((source-[x1,y2])**2)); d22 = sqrt(sum((source-[x2,y2])**2))
+      v11 = v(i1,j1); v21 = v(i2,j1); v12 = v(i1,j2); v22 = v(i2,j2)
+    end if
+
+    ax = [ x2, x1, x2, x1 ]
+    ay = [ y2, y2, y1, y1 ]
+    av = [ v11, v21, v12, v22 ]
+    ad = [ d11, d21, d12, d22 ]
+    N = abs( (ax - xq) * (ay - yq) ) / abs( (x2 - x1) * (y2 - y1) )
+    vq = sqrt(sum((source-[xq,yq])**2)) / dot_product(ad / av, N)
+    return
+  end function interp2
+  
+  subroutine lay2tt(vel, ttout, nz, nx, dzin, dxin, zsin, xsin, ysin, nsrc, &
+                    zrin, xrin, yrin, nrcv, nsweep, n_threads)
+    integer, intent(in) :: nz, nx, nsrc, nrcv, nsweep, n_threads
+    real, intent(in) :: vel(nz,nx), dzin, dxin, zsin(nsrc), xsin(nsrc), ysin(nsrc), &
+      zrin(nrcv), xrin(nrcv), yrin(nrcv)
+    real, intent(out) :: ttout(nrcv,nsrc)
+    integer :: i, j, k, n1, n2, nmax
+    real :: dhorz, dmax
+    real, dimension(:), allocatable :: ax, az
+    real, dimension(:,:), allocatable :: tt, tcalc, rcv, src
+    
+    call omp_set_num_threads(n_threads)
+    
+    ! Switch sources and stations to minimize calls to eikonals
+    n1 = min(nrcv, nsrc)
+    n2 = max(nrcv, nsrc)
+    if (n1 .eq. nsrc) then
+      rcv = reshape([ xrin, yrin, zrin ], shape = [ n2, 3 ], order = [ 1, 2 ])
+      src = reshape([ xsin, ysin, zsin ], shape = [ n1, 3 ], order = [ 1, 2 ])
+    else
+      rcv = reshape([ xsin, ysin, zsin ], shape = [ n2, 3 ], order = [ 1, 2 ])
+      src = reshape([ xrin, yrin, zrin ], shape = [ n1, 3 ], order = [ 1, 2 ])
+    end if
+    
+    ! Initialize ttout
+    allocate(tcalc(n2,n1))
+    
+    ! Compute traveltimes using an eikonal solver
+    az = dzin * [ ( k-1, k = 1, nz ) ]
+    !$omp parallel default(shared) private(tt, dmax, nmax, ax, j, k, dhorz)
+    !$omp do schedule(runtime)
+    do i = 1, n1
+      dmax = maxval( sqrt( ( src(i,1) - rcv(:,1) )**2 + &
+                           ( src(i,2) - rcv(:,2) )**2 ) )
+      nmax = floor( dmax / dxin ) + 2
+      allocate(tt(nz,nmax))
+      ax = dxin * [ ( k-1, k = 1, nmax ) ]
+      call FTeik2D(vel(:,:nmax), tt, nz, nmax, src(i,3), 0., dzin, dxin, 5, nsweep)
+      do j = 1, n2
+        dhorz = sqrt( sum( ( src(i,1:2) - rcv(j,1:2) )**2 ) )
+        tcalc(j,i) = interp2([ 0., src(i,3) ], az, ax, tt, rcv(j,3), dhorz)
+      end do
+      deallocate(tt)
+    end do
+    !$omp end parallel
+    
+    ! Transpose to reshape to [ nrcv, nsrc ]
+    if (n1 .eq. nrcv) then
+      ttout = transpose(tcalc)
+    else
+      ttout = tcalc
+    end if
+    return
+  end subroutine lay2tt
 
 end module eikonal2d

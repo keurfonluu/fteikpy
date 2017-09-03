@@ -41,8 +41,7 @@ if __name__ == "__main__":
     
     # Eikonal 2D
     start_time = time.time()
-    eik2d = Eikonal(vel2d, (dz, dx), n_sweep = 2)
-    tcalc_eik2d = lay2tt(eik2d, sources, receivers, n_threads = n_threads)
+    tcalc_eik2d = lay2tt(vel2d, (dz, dx), sources, receivers, n_sweep = 2, n_threads = n_threads)
     print("\nEikonal 2D: %.3f seconds" % (time.time() - start_time))
     print("Mean residual (2D): ", (tcalc_eik2d - tcalc_ray).mean())
     
