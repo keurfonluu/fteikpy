@@ -88,10 +88,10 @@ class Eikonal:
         
         Parameters
         ----------
-        new_shape : tup
+        new_shape : list or ndarray
             New shape.
         """
-        if len(new_shape) != self._n_dim \
+        if not isinstance(new_shape, (list, tuple, np.ndarray)) or len(new_shape) != self._n_dim \
             or not np.all([ isinstance(n, int) for n in new_shape ]):
             raise ValueError("new_shape must be a tuple with %d integers" % self._n_dim)
         if np.any([ n < 4 for n in new_shape ]):
@@ -123,7 +123,6 @@ class Eikonal:
             self._zaxis = self._zmin + self._grid_size[0] * np.arange(self._grid_shape[0])
             self._xaxis = self._xmin + self._grid_size[1] * np.arange(self._grid_shape[1])
             self._yaxis = self._ymin + self._grid_size[2] * np.arange(self._grid_shape[2])
-        return self
     
     def smooth(self, sigma, mode = "reflect", cval = 0., truncate = 4.):
         """
@@ -138,7 +137,6 @@ class Eikonal:
             single number, in which case it is equal for all axes.
         """
         self._velocity_model = gaussian_filter(self._velocity_model, sigma)
-        return self
             
     def solve(self, sources, dtype = "float32", n_threads = 1):
         """

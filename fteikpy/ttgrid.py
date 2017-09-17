@@ -7,6 +7,7 @@ License: MIT
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from ._fteik2d import eikonal2d
 from ._fteik3d import eikonal3d
 try:
@@ -137,31 +138,42 @@ class TTGrid:
                                    zq, xq, yq)
         return tq
     
-    def plot(self, axes = None, n_levels = 20, figsize = (10, 8), kwargs = {}):
+    def plot(self, n_levels = 20, axes = None, figsize = (10, 8), cont_kws = {}):
         """
         Plot the traveltime grid.
         
         Parameters
         ----------
-        axes : matplotlib axes or None, default None
-            Axes used for plot.
         n_levels : int, default 20
             Number of levels for contour.
+        axes : matplotlib axes or None, default None
+            Axes used for plot.
         figsize : tuple, default (8, 8)
             Figure width and height if axes is None.
+        cont_kws : dict
+            Keyworded arguments passed to contour plot.
         
         Returns
         -------
         ax1 : matplotlib axes
             Axes used for plot.
         """
+        if not isinstance(n_levels) or n_levels < 1:
+            raise ValueError("n_levels must be a positive integer")
+        if axes is not None and not isinstance(axes, Axes):
+            raise ValueError("axes must be Axes")
+        if not isinstance(figsize, (list, tuple)) or len(figsize) != 2:
+            raise ValueError("figsize must be a tuple with 2 elements")
+        if not isinstance(cont_kws, dict):
+            raise ValueError("cont_kws must be a dictionary")
+        
         if self._n_dim == 2:
             if axes is None:
                 fig = plt.figure(figsize = figsize, facecolor = "white")
                 ax1 = fig.add_subplot(1, 1, 1)
             else:
                 ax1 = axes
-            ax1.contour(self._xaxis, self._zaxis, self._grid, n_levels, **kwargs)
+            ax1.contour(self._xaxis, self._zaxis, self._grid, n_levels, **cont_kws)
             return ax1
         else:
             raise ValueError("plot unavailable for 3-D grid")
