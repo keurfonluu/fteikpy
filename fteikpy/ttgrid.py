@@ -158,7 +158,7 @@ class TTGrid:
         ax1 : matplotlib axes
             Axes used for plot.
         """
-        if not isinstance(n_levels) or n_levels < 1:
+        if not isinstance(n_levels, int) or n_levels < 1:
             raise ValueError("n_levels must be a positive integer")
         if axes is not None and not isinstance(axes, Axes):
             raise ValueError("axes must be Axes")

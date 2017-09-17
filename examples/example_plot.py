@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ax = eik.xaxis
     az = eik.zaxis
     cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100, cmap = "jet")
-    tt.plot(axes = ax1, n_levels = 30, kwargs = dict(colors = "black", linewidths = 1))
+    tt.plot(n_levels = 30, axes = ax1, cont_kws = dict(colors = "black", linewidths = 1))
     
     ax1.set_title("Marmousi")
     ax1.set_xlabel("X (m)")
