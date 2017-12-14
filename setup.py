@@ -3,7 +3,7 @@
 from setuptools import find_packages
 from numpy.distutils.core import setup, Extension
 
-VERSION = "1.2.3"
+VERSION = "1.3.0"
 DISTNAME = "fteikpy"
 DESCRIPTION = "FTeikPy"
 LONG_DESCRIPTION = """FTeikPy is a Python module that computes accurate first arrival traveltimes in 2-D and 3-D heterogeneous isotropic velocity model."""
@@ -26,18 +26,18 @@ CLASSIFIERS = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-FFLAGS = "-O3 -ffast-math -march=native -funroll-loops -fno-protect-parens -flto -fopenmp"
+FFLAGS = "-O3 -ffast-math -funroll-loops -fno-protect-parens -fopenmp"
 
 ext1 = Extension(
     name = "fteikpy._fteik2d",
-    sources = ["fteikpy/f90/FTeik2d.f90"],
+    sources = ["fteikpy/f90/fteik2d.f90"],
     extra_f90_compile_args = FFLAGS.split(),
     extra_link_args = [ "-lgomp" ],
     )
 
 ext2 = Extension(
     name = "fteikpy._fteik3d",
-    sources = ["fteikpy/f90/FTeik3d.f90"],
+    sources = ["fteikpy/f90/fteik3d.f90"],
     extra_f90_compile_args = FFLAGS.split(),
     extra_link_args = [ "-lgomp" ],
     )
@@ -48,7 +48,7 @@ ext3 = Extension(
     extra_f90_compile_args = FFLAGS.split(),
     f2py_options = [],
     )
- 
+
 if __name__ == "__main__":
     setup(
         name = DISTNAME,

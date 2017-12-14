@@ -1,551 +1,422 @@
-module eikonal2d
+!=======================================================================
+! Created by
+!     Keurfon Luu <keurfon.luu@mines-paristech.fr>
+!     MINES ParisTech - Centre de Géosciences
+!     PSL - Research University
+!=======================================================================
+
+module fteik2d
 
   use omp_lib
 
   implicit none
-  
+
+  integer(kind = 4), parameter :: nmax = 15000
+  real(kind = 8), parameter :: Big = 99999.d0, zerr = 1.d-4
+
 contains
-!
-!   Copyright or Copr. Mines Paristech, France - Mark NOBLE, Alexandrine GESRET
-!   FTeik3d_2.0.f90 - First release Aug 2011
-! 
-!   FTeik3d has been written by:
-!     - Mark Noble <mark.noble@mines-paristech.fr>
-!     - Alexandrine Gesret <alexandrine.gesret@mines-paristech.fr>
-! 
-!   This software is a computer program (subroutine) whose purpose is to
-!   compute traveltimes in a 2D heterogeneous velocity model by solving
-!   by finite difference approximation the Eikonal equation. This package
-!   is written in fortran 90 and is composed of 4 elements, the functions
-!   "t_ana", "t_anad", the subroutine "FTeik2d_3" and an include file
-!   "include_FTeik2d_3".
-! 
-!   This software is governed by the CeCILL-C license under French law and
-!   abiding by the rules of distribution of free software.  You can  use,
-!   modify and/ or redistribute the software under the terms of the CeCILL-C
-!   license as circulated by CEA, CNRS and INRIA at the following URL
-!   "http://www.cecill.info".
-! 
-!   As a counterpart to the access to the source code and  rights to copy,
-!   modify and redistribute granted by the license, users are provided only
-!   with a limited warranty  and the software's author,  the holder of the
-!   economic rights,  and the successive licensors  have only  limited
-!   liability.
-! 
-!   In this respect, the user's attention is drawn to the risks associated
-!   with loading,  using,  modifying and/or developing or reproducing the
-!   software by the user in light of its specific status of free software,
-!   that may mean  that it is complicated to manipulate,  and  that  also
-!   therefore means  that it is reserved for developers  and  experienced
-!   professionals having in-depth computer knowledge. Users are therefore
-!   encouraged to load and test the software's suitability as regards their
-!   requirements in conditions enabling the security of their systems and/or
-!   data to be ensured and,  more generally, to use and operate it in the
-!   same conditions as regards security.
-! 
-!   The fact that you are presently reading this means that you have had
-!   knowledge of the CeCILL-C license and that you accept its terms.
-!   For more information, see the file COPYRIGHT-GB or COPYRIGHT-FR.
-!
-!________________________________________________________________________
-!            ARGUMENTS REQUIRED TO CALL THE SUBROUTINE FTeik3d_2
-!     call FTeik2d_3(vel,ttout,nz,nx,zsin,xsin,dzin,dxin,epsin,nsweep)
-! 
-!     WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
-! 
-!     WARNING        :Time field array and velocity field array have
-!                     the same dimension. Velocities are defined at center of
-!                     cell, whereas times are computed on the corners. The last row
-!                     and last column of velocity field are not used in the computation
-! 
-!     integer - nz,nx  :Dimensions of the time field array tt
-!                           tt(nz,nx)
-!                           No dimension may be lower than 3.
-! 
-!     real - dzin,dxin :Mesh spacing along the 3 axis
-! 
-!     real - ttout                :Travel time field array: ttout(nz,nx)
-! 
-!     real - vel               :Velocity field array: vel(nz,nx)
-! 
-!     real - zsin,xsin :Point source coordinates referred expressed in meters
-!                         Licit ranges: [0.0,(nz-1.)*dzin][0.0,(nx-1.)*dxin]
-! 
-!     integer - nsweep         :Number of sweeps over model. 1 is in general enough
-! 
-!     integer - epsin :  radius in number of grid points arround source where then
-!                     spherical approximation will be used
-!
-!________________________________________________________________________
-!
-  subroutine FTeik2d(vel,ttout,nz,nx,zsin,xsin,dzin,dxin,nsweep,epsin)
 
-     implicit none
-  !
-  ! Parameter for double precision
-  !_______________________________
-     integer,parameter   :: PRES=kind(1.d0)
-  !
-  ! Size of traveltime map
-  !_______________________
-     integer,intent(in)   ::   nz,nx
-  !
-  ! Number of sweeps to do
-  !_______________________
-     integer,intent(in)   ::   nsweep
-     real,intent(in)   ::   dzin,dxin
-     real,intent(in)   ::   zsin,xsin
-     integer,intent(in)   ::   epsin
+  subroutine solver2d(slow, tt, nz, nx, zsrc, xsrc, dz, dx, n_sweep, ttgrad)
+    real(kind = 8), dimension(nz,nx), intent(in) :: slow
+    real(kind = 8), dimension(nz,nx), intent(out) :: tt
+    real(kind = 8), dimension(nz,nx,2), intent(out), optional :: ttgrad
+    integer(kind = 4), intent(in) :: nz, nx, n_sweep
+    real(kind = 8), intent(in) :: zsrc, xsrc, dz, dx
 
-     real,intent(out),dimension(nz,nx)   ::   ttout
-     real,intent(in),dimension(nz,nx)    ::   vel
-  !
-  ! Work array to do all calculations in double
-  !___________________________________________
-     real(kind=PRES),allocatable,dimension(:,:)  :: tt
+    integer(kind = 4) :: imin, i, j, kk, i1, j1, ierr, iflag
+    integer(kind = 4) :: zsi, xsi
+    integer(kind = 4) :: sgntz, sgntx, sgnvz, sgnvx
 
-     integer   ::   i,j,kk,i1,j1
-     integer   :: ierr,iflag
+    real(kind = 8) :: ttz(nz,nx), ttx(nz,nx)
+    real(kind = 8) :: t1d1, t1d2, time_sol(4), td(nmax)
+    real(kind = 8) :: dzu, dzd, dxw, dxe
+    real(kind = 8) :: zsa, xsa
+    real(kind = 8) :: vzero, vref
+    real(kind = 8) :: t1d, t2d, t1, t2, t3, tdiag, ta, tb
+    real(kind = 8) :: tv, te, tev
+    real(kind = 8) :: tauv, taue, tauev
+    real(kind = 8) :: dzi, dxi, dz2i, dx2i, dsum, dz2dx2
+    real(kind = 8) :: sgnrz, sgnrx
+    real(kind = 8) :: t0c, tzc, txc
+    real(kind = 8) :: apoly, bpoly, cpoly, dpoly
+    integer(kind = 4) :: epsin = 5
 
-     real(kind=PRES), parameter   ::   Big = 99999.d0
-     real(kind=PRES), parameter   ::   zerr = 1.d-04
-     integer,parameter ::   nmax=15000
-     real(kind=PRES)   ::   td(nmax)
+    ! Check inputs
+    if ( nz .lt. 3 .or. nx .lt. 3 ) stop "Error: grid size nz, nx too small"
+    if ( max(nz, nx) .gt. nmax ) stop "Error: must increase size of NMAX"
+    if ( dz .le. 0.d0 .or. dx .le. 0.d0 ) stop "Error: grid spacing dz, dx too small"
+    if ( n_sweep .lt. 1 ) stop "Error: wrong sweep number"
+    if ( minval(slow) .le. 0.d0 .or. maxval(slow) .ge. 1.d0 ) stop "Error: slownesses are strange"
+    if ( zsrc .lt. 0.d0 .or. zsrc .gt. dfloat(nz-1) * dz &
+         .or. xsrc .lt. 0.d0 .or. xsrc .gt. dfloat(nx-1) * dx ) &
+      stop "Error: source out of bounds"
 
-     real(kind=PRES)   ::   dz,dx,dzu,dzd,dxw,dxe
-     real(kind=PRES)   ::   zsrc,xsrc,zsa,xsa
-     integer   ::   zsi,xsi
-     integer   ::   sgntz,sgntx,sgnvz,sgnvx
+    ! Convert src to grid position and try and take into account machine precision
+    zsa = zsrc / dz + 1.d0
+    xsa = xsrc / dx + 1.d0
 
-     real(kind=PRES)   :: vzero,vref
-     real(kind=PRES)   :: t1d,t2d,t1,t2,t3,tdiag,ta,tb
-     real(kind=PRES)   :: tv,te,tev
-     real(kind=PRES)   :: tauv,taue,tauev
+    ! Try to handle edges simply for source due to precision
+    if ( zsa .ge. dfloat(nz) ) zsa = zsa - zerr
+    if ( xsa .ge. dfloat(nx) ) xsa = xsa - zerr
 
-     real(kind=PRES)   ::   dzi,dxi,dz2i,dx2i,dsum,dz2dx2
+    ! Grid points to initialize source
+    zsi = int(zsa)
+    xsi = int(xsa)
+    vzero = slow(zsi,xsi)
 
-     real(kind=PRES)   ::   sgnrz,sgnrx
-     real(kind=PRES)   ::   t0c,tzc,txc
-     real(kind=PRES)   ::   apoly,bpoly,cpoly,dpoly
-  !
-  !  Check grid size
-  !_________________
-     if (nz < 3 .or. nx < 3 ) goto 993
-     if (max(nz,nx) > nmax) goto 996
-  !   
-  !  Check grid spacing
-  !____________________
-     dz=dble(dzin) ; dx=dble(dxin)
-     if (dz <= 0. .or. dx <= 0. ) goto 994
-  !
-  ! Check sweep
-  !____________
-     if (nsweep < 1) goto 995
-  !   
-  ! Check velocity field
-  !_____________________
-     if (minval(vel) <= 0.) goto 992
-  !   
-  ! Check source position
-  !______________________
-     zsrc=dble(zsin) ; xsrc=dble(xsin)
-     if ( zsrc < 0.d0 .or. zsrc > (dfloat(nz-1)*dz) ) goto 990
-     if ( xsrc < 0.d0 .or. xsrc > (dfloat(nx-1)*dx) ) goto 990
-  !
-  ! Convert src pos to grid position and try and take into account machine precision
-  !_________________________________
-     zsa = (zsrc/dz)+1.d0 ; xsa=(xsrc/dx)+1.d0
-  !
-  ! Try to handle edges simply for source due to precision
-  !________________________________________
-     if ( zsa >= dfloat(nz) ) zsa=zsa - zerr
-     if ( xsa >= dfloat(nx) ) xsa=xsa - zerr
+    ! Allocate work array for traveltimes
+    tt = Big
 
-  !
-  !  Grid points to initialise source
-  !__________________________________
-     zsi = int(zsa)
-     xsi = int(xsa)
+    ! Do our best to initialize source
+    dzu = dabs( zsa - dfloat(zsi) )
+    dzd = dabs( dfloat(zsi+1) - zsa )
+    dxw = dabs( xsa - dfloat(xsi) )
+    dxe = dabs( dfloat(xsi+1) - xsa )
+    iflag = 0
 
-     vzero=1.d0 / dble(vel(zsi,xsi))
-  !
-  ! Allocate work array for traveltimes
-  !____________________________________
-     allocate(tt(nz,nx),stat=ierr)
-     if (ierr .ne. 0) stop "Error FTeik2d.f90 in allocating tt array"
-  !
-  ! Set traveltime map to BIG value
-  !________________________________
-     tt=Big
-  !
-  ! do our best to initialize source
-  !________________________________
-      dzu=abs( zsa-dfloat(zsi) )  ; dzd=abs( dfloat(zsi+1)-zsa )
-      dxw=abs( xsa-dfloat(xsi) )  ; dxe=abs( dfloat(xsi+1)-xsa )
-      iflag=0
-  ! source seems close enough to a grid point in X and Y direction
-      if (min(dzu,dzd) < zerr .and. min(dxw,dxe) < zerr) then
-          zsa=dnint(zsa)  ;  xsa=dnint(xsa)    
-          iflag=1
-      endif
-  !
-  ! At least one of coordinates not close to any grid point in X and Y direction
-      if (min(dzu,dzd) > zerr .or. min(dxw,dxe) > zerr) then
-         if (min(dzu,dzd) < zerr) zsa=dnint(zsa)
-         if (min(dxw,dxe) < zerr) xsa=dnint(xsa)
-         iflag=2
-      endif
-  !
-  ! Oups we are lost, not sure this happens - fixe Src to nearest grid point
-      if (iflag /= 1 .and. iflag /= 2) then
-         zsa=dnint(zsa)  ;  xsa=dnint(xsa)    
-         iflag=3
-      endif
+    ! Source seems close enough to a grid point in X and Y direction
+    if ( min(dzu, dzd) .lt. zerr .and. min(dxw, dxe) .lt. zerr) then
+      zsa = dnint(zsa)
+      xsa = dnint(xsa)
+      iflag = 1
+    end if
 
-  ! We know where src is - start first propagation
-      select case(iflag)
-        case(1)
-          tt(nint(zsa),nint(xsa))=0.d0
-        case(3)
-          tt(nint(zsa),nint(xsa))=0.d0
-        case(2)
-            dzu=abs( zsa-dfloat(zsi) )  ; dzd=abs( dfloat(zsi+1)-zsa )
-            dxw=abs( xsa-dfloat(xsi) )  ; dxe=abs( dfloat(xsi+1)-xsa )
-            ! first initialize 4 points around source
-            tt(zsi,xsi) =  t_ana(zsi,xsi,dz,dx,zsa,xsa,vzero)
-            tt(zsi+1,xsi) = t_ana(zsi+1,xsi,dz,dx,zsa,xsa,vzero)
-            tt(zsi,xsi+1) =  t_ana(zsi,xsi+1,dz,dx,zsa,xsa,vzero)
-            tt(zsi+1,xsi+1) = t_ana(zsi+1,xsi+1,dz,dx,zsa,xsa,vzero)
+    ! At least one of coordinates not close to any grid point in X and Y direction
+    if ( min(dzu, dzd) .gt. zerr .or. min(dxw, dxe) .gt. zerr) then
+      if ( min(dzu, dzd) .lt. zerr) zsa = dnint(zsa)
+      if ( min(dxw, dxe) .lt. zerr) xsa = dnint(xsa)
+      iflag = 2
+    end if
 
-                ! X
-                td=Big
-                td(xsi+1)= vzero * dxe * dx
-                dx2i = 1.d0 / (dx**2.d0)
+    ! Oops we are lost, not sure this happens - fix src to nearest grid point
+    if ( iflag .ne. 1 .and. iflag .ne. 2 ) then
+      zsa = dnint(zsa)
+      xsa = dnint(xsa)
+      iflag = 3
+    end if
 
-                do j = xsi+2,nx
-                vref=1.d0 / dble( vel(zsi,j-1) )
-                td(j)=td(j-1) + dx * vref
-                tv = td(j) ; tev=td(j-1)
-                tauv = tv - vzero * abs((dfloat(j)-xsa)) * dx
-                tauev = tev - vzero * abs((dfloat(j-1)-xsa)) * dx
-                !
-                te=tt(zsi+1,j-1)
-                taue = te - t_ana(zsi+1,j-1,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,zsi+1,j,dz,dx,zsa,xsa,vzero)
-                sgntz=1 ; sgntx=1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dz2i = 1.d0 / (dzd**2.d0) * dz
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dx+sgnrz*tzc/dzd)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dx*ta+sgnrz*tzc/dzd*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(zsi+1,j)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                !
-                te=tt(zsi,j-1)
-                taue = te - t_ana(zsi,j-1,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,zsi,j,dz,dx,zsa,xsa,vzero)
-                sgntz=-1 ; sgntx=1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dz2i = 1.d0 / (dzu**2.d0) * dz
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dx+sgnrz*tzc/dzu)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dx*ta+sgnrz*tzc/dzu*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(zsi,j)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                enddo
+    ! We know where src is - start first propagation
+    select case(iflag)
+    case(1)
+      tt(nint(zsa),nint(xsa)) = 0.d0
+    case(3)
+      tt(nint(zsa),nint(xsa)) = 0.d0
+    case(2)
+      dzu = dabs( zsa - dfloat(zsi) )
+      dzd = dabs( dfloat(zsi+1) - zsa )
+      dxw = dabs( xsa - dfloat(xsi) )
+      dxe = dabs( dfloat(xsi+1) - xsa )
 
+      ! First initialize 4 points around source
+      tt(zsi,xsi) = t_ana(zsi, xsi, dz, dx, zsa, xsa, vzero)
+      tt(zsi+1,xsi) = t_ana(zsi+1, xsi, dz, dx, zsa, xsa, vzero)
+      tt(zsi,xsi+1) = t_ana(zsi, xsi+1, dz, dx, zsa, xsa, vzero)
+      tt(zsi+1,xsi+1) = t_ana(zsi+1 ,xsi+1, dz, dx, zsa, xsa, vzero)
 
-               ! X
-                td(xsi)= vzero * dxw * dx
-                do j=xsi-1,1,-1
-                vref=1.d0 / dble( vel(zsi,j) )
-                td(j)=td(j+1) + dx * vref
-                tv = td(j) ; tev=td(j+1)
-                tauv = tv - vzero * abs((dfloat(j)-xsa)) * dx
-                tauev = tev - vzero * abs((dfloat(j+1)-xsa)) * dx
-                !
-                te=tt(zsi+1,j+1)
-                taue = te - t_ana(zsi+1,j+1,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,zsi+1,j,dz,dx,zsa,xsa,vzero)
-                sgntz=1 ; sgntx=-1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dz2i = 1.d0 / (dzd**2.d0) * dz
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dx+sgnrz*tzc/dzd)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dx*ta+sgnrz*tzc/dzd*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(zsi+1,j)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                !
-                te=tt(zsi,j+1)
-                taue = te - t_ana(zsi,j+1,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,zsi,j,dz,dx,zsa,xsa,vzero)
-                sgntz=-1 ; sgntx=-1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dz2i = 1.d0 / (dzu**2.d0) * dz
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dx+sgnrz*tzc/dzu)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dx*ta+sgnrz*tzc/dzu*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(zsi,j)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                enddo
+      td = Big
+      td(xsi+1) = vzero * dxe * dx
+      dx2i = 1.d0 / (dx*dx)
 
-                ! Z
-                td=Big
-                td(zsi+1)= vzero * dzd * dz
-                dz2i = 1.d0 / (dz**2.d0)
-                do i = zsi+2,nz
-                vref=1.d0 / dble( vel(i-1,xsi) )
-                td(i)=td(i-1) + dz * vref
-                te = td(i) ; tev=td(i-1)
-                taue = te - vzero * abs((dfloat(i)-zsa)) * dz
-                tauev = tev - vzero * abs((dfloat(i-1)-zsa)) * dz
-                !
-                tv=tt(i-1,xsi+1)
-                tauv = tv - t_ana(i-1,xsi+1,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,i,xsi+1,dz,dx,zsa,xsa,vzero)
-                sgntz=1 ; sgntx=1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dx2i = 1.d0 / (dxe**2.d0) * dx
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dxe+sgnrz*tzc/dz)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dxe*ta+sgnrz*tzc/dz*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(i,xsi+1)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                !
-                tv=tt(i-1,xsi)
-                tauv = tv - t_ana(i-1,xsi,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,i,xsi,dz,dx,zsa,xsa,vzero)
-                sgntz=1 ; sgntx=-1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dx2i = 1.d0 / (dxw**2.d0) * dx
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dxw+sgnrz*tzc/dz)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dxw*ta+sgnrz*tzc/dz*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(i,xsi)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                enddo
+      do j = xsi+2, nx
+        vref = slow(zsi,j-1)
+        td(j) = td(j-1) + dx * vref
+        tauv = td(j) - vzero * dabs( dfloat(j) - xsa ) * dx
+        tauev = td(j-1) - vzero * dabs( dfloat(j-1) - xsa ) * dx
 
-            ! Z
-                td(zsi)= vzero * dzu * dz
-                do i = zsi-1,1,-1
-                vref=1.d0 / dble( vel(i,xsi) )
-                td(i)=td(i+1) + dz * vref
-                te = td(i) ; tev=td(i+1)
-                taue = te - vzero * abs((dfloat(i)-zsa)) * dz
-                tauev = tev - vzero * abs((dfloat(i+1)-zsa)) * dz
+        sgntz = 1
+        sgntx = 1
+        taue = tt(zsi+1,j-1) - t_ana(zsi+1, j-1, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, zsi+1, j, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dz2i = 1.d0 / (dzd*dzd) * dz
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dx + sgnrz * tzc / dzd ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dx * ta + sgnrz * tzc / dzd * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(zsi+1,j) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
 
-                tv=tt(i+1,xsi+1)
-                tauv = tv - t_ana(i+1,xsi+1,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,i,xsi+1,dz,dx,zsa,xsa,vzero)
-                sgntz=-1 ; sgntx=1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dx2i = 1.d0 / (dxe**2.d0) * dx
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dxe+sgnrz*tzc/dz)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dxe*ta+sgnrz*tzc/dz*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(i,xsi+1)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
+        sgntz = -1
+        sgntx = 1
+        taue = tt(zsi,j-1) - t_ana(zsi, j-1, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, zsi, j, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dz2i = 1.d0 / (dzu*dzu) * dz
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dx + sgnrz * tzc / dzu ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dx * ta + sgnrz * tzc / dzu * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(zsi,j) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
+      end do
 
-                tv=tt(i+1,xsi)
-                tauv = tv - t_ana(i+1,xsi,dz,dx,zsa,xsa,vzero)
-                t0c = t_anad(tzc,txc,i,xsi,dz,dx,zsa,xsa,vzero)
-                sgntz=-1 ; sgntx=-1 ; sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-                ta = tauev+taue-tauv; tb = tauev-taue+tauv ; dx2i = 1.d0 / (dxw**2.d0) * dx
-                apoly=dz2i+dx2i
-                bpoly=4.d0 *(sgnrx*txc/dxw+sgnrz*tzc/dz)-2.d0*(ta*dx2i + tb*dz2i)
-                cpoly=((ta**2.d0)*dx2i)+((tb**2.d0)*dz2i) &
-                      -4.d0*(sgnrx*txc/dxw*ta+sgnrz*tzc/dz*tb)+4.d0*(vzero**2.d0-vref**2.d0)
-                dpoly=(bpoly**2.d0)-4.d0*apoly*cpoly
-                if (dpoly >= 0.d0) tt(i,xsi)=(sqrt(dpoly)-bpoly)/2.d0/apoly+t0c
-                enddo
+      td(xsi) = vzero * dxw * dx
+      do j = xsi-1, 1, -1
+        vref = slow(zsi,j)
+        td(j) = td(j+1) + dx * vref
+        tauv = td(j) - vzero * dabs( dfloat(j) - xsa ) * dx
+        tauev = td(j+1) - vzero * dabs( dfloat(j+1) - xsa ) * dx
 
-        end select
-  ! 
-  ! Pre-calculate a few constants concerning mesh spacing
-  !______________________________________________________
-      dzi = 1.d0 /dz
-      dxi = 1.d0 /dx
-      dz2i = 1.d0 / (dz**2.d0)
-      dx2i = 1.d0 / (dx**2.d0)
-      dsum = dz2i + dx2i
-      dz2dx2 = 1.d0/(dz**2.d0 * dx**2.d0)
-  !
-  ! Ready to do at least one global sweep
-     do kk = 1,nsweep
-  !
-  ! First sweeping: Top->Bottom ; West->East
-  ! Set direction variables
-  !________________________________________________________
-      sgntz=1 ; sgntx=1 
-      sgnvz=1 ; sgnvx=1
-      sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
+        sgntz = 1
+        sgntx = -1
+        taue = tt(zsi+1,j+1) - t_ana(zsi+1, j+1, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, zsi+1, j, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dz2i = 1.d0 / (dzd*dzd) * dz
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dx + sgnrz * tzc / dzd ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dx * ta + sgnrz * tzc / dzd * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(zsi+1,j) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
 
-      do j = 2,nx
-      do i = 2,nz
-           include 'Include_FTeik2d.f'
-      enddo
-      enddo
-  !goto 911
-  !
-  ! Second sweeping: Top->Bottom; East->West
-  ! Set direction variables
-  !________________________________________________________
-      sgntz=1 ; sgntx=-1
-      sgnvz=1 ; sgnvx=0
-      sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-      do j = nx-1,1,-1
-      do i = 2,nz
-           include 'Include_FTeik2d.f'
-      enddo
-      enddo
-  !
-  ! Third sweep: Bottom->Top ; West->East
-  ! Set direction variables
-  !________________________________________________________
-      sgntz=-1 ; sgntx=1
-      sgnvz=0 ; sgnvx=1
-      sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-      do j = 2,nx
-      do i = nz-1,1,-1
-           include 'Include_FTeik2d.f'
-      enddo
-      enddo
-  !
-  ! Fourth sweeping: Bottom->Top; East->West
-  ! Set direction variables
-  !________________________________________________________
-      sgntz=-1 ; sgntx=-1
-      sgnvz=0 ; sgnvx=0
-      sgnrz=dfloat(sgntz) ; sgnrx=dfloat(sgntx)
-      do j = nx-1,1,-1
-      do i = nz-1,1,-1
-           include 'Include_FTeik2d.f'
-      enddo
-      enddo
-  !911 continue
-  !
-  ! End loop for global sweeps
-  enddo
-     ttout=sngl(tt)
-     deallocate(tt)
-  !
-  ! That's all
-  ! It's easy
-     return
-  !
-  990   continue
-        write(*,'(/)')
-        write(*,'(''=================================================='')')
-        write(*,'(5x,''ERROR FTeik2d, source out of bounds '')')
-        write(*,'(''=================================================='')')
-        stop
-  !
-  992   continue
-        write(*,'(/)')
-        write(*,'(''=================================================='')')
-        write(*,'(5x,''ERROR FTeik2d, Velocities are strange '')')
-        write(*,'(10x,''EQUAL or SMALLER to ZERO '')')
-        write(*,'(''=================================================='')')
-        stop
-        
-  993   continue
-        write(*,'(/)')
-        write(*,'(''=================================================='')')
-        write(*,'(5x,''ERROR FTeik2d, Grid size nz,nx too small '')')
-        write(*,'(''=================================================='')')
-        stop
-              
-  994   continue
-        write(*,'(/)')
-        write(*,'(''================================================='')')
-        write(*,'(5x,''ERROR FTeik2d, Grid spacing dz,dx too small '')')
-        write(*,'(''================================================='')')
-        stop
-                    
-  995   continue
-        write(*,'(/)')
-        write(*,'(''================================================='')')
-        write(*,'(5x,''ERROR FTeik2d, Sweep number wrong '')')
-        write(*,'(''================================================='')')
-        stop
-                    
-  996   continue
-        write(*,'(/)')
-        write(*,'(''================================================='')')
-        write(*,'(5x,''ERROR FTeik2d, Must increase size of NMAX '')')
-        write(*,'(10x,'' Need to recompile routine'')')
-        write(*,'(''================================================='')')
-        stop
-        
+        sgntz = -1
+        sgntx = -1
+        taue = tt(zsi+1,j+1) - t_ana(zsi+1, j+1, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, zsi, j, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dz2i = 1.d0 / (dzu*dzu) * dz
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dx + sgnrz * tzc / dzu ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dx * ta + sgnrz * tzc / dzu * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(zsi,j) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
+      end do
+
+      td = Big
+      td(zsi+1) = vzero * dzd * dz
+      dz2i = 1.d0 / (dz*dz)
+      do i = zsi+2, nz
+        vref = slow(i-1,xsi)
+        td(i) = td(i-1) + dz * vref
+        taue = td(i) - vzero * dabs(dfloat(i) - zsa) * dz
+        tauev = td(i-1) - vzero * dabs(dfloat(i-1) - zsa) * dz
+
+        sgntz = 1
+        sgntx = 1
+        tauv = tt(i-1,xsi+1) - t_ana(i-1, xsi+1, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, i, xsi+1, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dx2i = 1.d0 / (dxe*dxe) * dx
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dxe + sgnrz * tzc / dz ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dxe * ta + sgnrz * tzc / dz * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(i,xsi+1) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
+
+        sgntz = 1
+        sgntx = -1
+        tauv = tt(i-1,xsi) - t_ana(i-1, xsi, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, i, xsi, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dx2i = 1.d0 / (dxw*dxw) * dx
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dxw + sgnrz * tzc / dz ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dxw * ta + sgnrz * tzc / dz * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(i,xsi) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
+      end do
+
+      td(zsi) = vzero * dzu * dz
+      do i = zsi-1,1,-1
+        vref = slow(i,xsi)
+        td(i) = td(i+1) + dz * vref
+        taue = td(i) - vzero * dabs( dfloat(i) - zsa ) * dz
+        tauev = td(i+1) - vzero * dabs( dfloat(i+1) - zsa) * dz
+
+        sgntz = -1
+        sgntx = 1
+        tauv = tt(i+1,xsi+1) - t_ana(i+1, xsi+1, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, i, xsi+1, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dx2i = 1.d0 / (dxe*dxe) * dx
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dxe + sgnrz * tzc / dz ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dxe * ta + sgnrz * tzc / dz * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(i,xsi+1) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
+
+        sgntz = -1
+        sgntx = -1
+        tauv = tt(i+1,xsi) - t_ana(i+1, xsi, dz, dx, zsa, xsa, vzero)
+        t0c = t_anad(tzc, txc, i, xsi, dz, dx, zsa, xsa, vzero)
+        sgnrz = dfloat(sgntz)
+        sgnrx = dfloat(sgntx)
+        ta = tauev + taue - tauv
+        tb = tauev - taue + tauv
+        dx2i = 1.d0 / (dxw*dxw) * dx
+        apoly = dz2i + dx2i
+        bpoly = 4.d0 * ( sgnrx * txc / dxw + sgnrz * tzc / dz ) - 2.d0 * ( ta * dx2i + tb * dz2i )
+        cpoly = ( ta*ta * dx2i ) + ( tb*tb * dz2i ) &
+                - 4.d0 * ( sgnrx * txc / dxw * ta + sgnrz * tzc / dz * tb ) &
+                + 4.d0 * ( vzero*vzero - vref*vref )
+        dpoly = bpoly*bpoly - 4.d0 * apoly * cpoly
+        if ( dpoly .ge. 0.d0 ) tt(i,xsi) = 0.5d0 * ( sqrt(dpoly) - bpoly ) / apoly + t0c
+      end do
+    end select
+
+    ! Precalculate constants
+    dzi = 1.d0 / dz
+    dxi = 1.d0 / dx
+    dz2i = 1.d0 / (dz*dz)
+    dx2i = 1.d0 / (dx*dx)
+    dsum = dz2i + dx2i
+    dz2dx2 = dz2i * dx2i
+
+    ! Ready to do at least one global sweep
+    do kk = 1, n_sweep
+      ! First sweeping: Top->Bottom ; West->East
+      sgntz = 1
+      sgntx = 1
+      sgnvz = 1
+      sgnvx = 1
+      sgnrz = dfloat(sgntz)
+      sgnrx = dfloat(sgntx)
+
+      do j = 2, nx
+        do i = 2, nz
+          include "Include_FTeik2d_grad.f"
+        end do
+      end do
+
+      ! Second sweeping: Top->Bottom ; East->West
+      sgntz = 1
+      sgntx = -1
+      sgnvz = 1
+      sgnvx = 0
+      sgnrz = dfloat(sgntz)
+      sgnrx = dfloat(sgntx)
+      do j = nx-1, 1, -1
+        do i = 2, nz
+          include "Include_FTeik2d_grad.f"
+        end do
+      end do
+
+      ! Third sweep: Bottom->Top ; West->East
+      sgntz = -1
+      sgntx = 1
+      sgnvz = 0
+      sgnvx = 1
+      sgnrz = dfloat(sgntz)
+      sgnrx = dfloat(sgntx)
+      do j = 2, nx
+        do i = nz-1, 1, -1
+          include "Include_FTeik2d_grad.f"
+        end do
+      end do
+
+      ! Fourth sweeping: Bottom->Top ; East->West
+      sgntz = -1
+      sgntx = -1
+      sgnvz = 0
+      sgnvx = 0
+      sgnrz = dfloat(sgntz)
+      sgnrx = dfloat(sgntx)
+      do j = nx-1, 1, -1
+        do i = nz-1, 1, -1
+          include "Include_FTeik2d_grad.f"
+        end do
+      end do
+
+    end do
+
+    if ( present(ttgrad) ) then
+      ttgrad(:,:,1) = ttz
+      ttgrad(:,:,2) = ttx
+    end if
+    return
   contains
-  
-    ! Functions to calculate analytical times in homgeneous model
-    real(kind=kind(1.d0)) function t_ana(i,j,dz,dx,zsa,xsa,vzero)
 
-      implicit none
+    ! Functions to calculate analytical times in homgenous model
+    real(kind = 8) function t_ana(i, j, dz, dx, zsa, xsa, vzero)
+      integer(kind = 4), intent(in) :: i, j
+      real(kind = 8), intent(in) :: dz, dx, zsa, xsa, vzero
 
-      integer,parameter  :: PRES=kind(1.d0)
-      integer, intent(in)  :: i,j
-
-      real(kind=PRES),intent(in)  :: dz,dx,zsa,xsa,vzero
-
-      t_ana =vzero*(((dfloat(i)-zsa)*dz)**2.d0+((dfloat(j)-xsa)*dx)**2.d0)**0.5d0
-
+      t_ana = vzero * ( ( ( dfloat(i) - zsa ) * dz )**2.d0 &
+                      + ( ( dfloat(j) - xsa ) * dx )**2.d0 )**0.5d0
+      return
     end function t_ana
-   
-    ! Functions to calculate analytical times in homogeneous model, + derivative of times
-    real(kind=kind(1.d0)) function t_anad(tzc,txc,i,j,dz,dx,zsa,xsa,vzero)
 
-      implicit none
+    ! Functions to calculate analytical times in homgenous model + derivatives of times
+    real(kind = 8) function t_anad(tzc, txc, i, j, dz, dx, zsa, xsa, vzero)
+      integer(kind = 4), intent(in) :: i, j
+      real(kind = 8), intent(in) :: dz, dx, zsa, xsa, vzero
+      real(kind = 8) :: d0
+      real(kind = 8), intent(out) :: tzc, txc
 
-      integer,parameter  :: PRES=kind(1.d0)
-      integer, intent(in)  :: i,j
-
-      real(kind=PRES),intent(in)  :: dz,dx,zsa,xsa,vzero
-      real(kind=PRES)  :: d0
-      real(kind=PRES),intent(out)   :: tzc,txc
-
-      d0= ((dfloat(i)-zsa)*dz)**2.d0+((dfloat(j)-xsa)*dx)**2.d0
-
+      d0 = ( ( dfloat(i) - zsa ) *dz )**2.d0 &
+           + ( ( dfloat(j) - xsa ) *dx )**2.d0
       t_anad = vzero * (d0**0.5d0)
-
-      if ( d0 > 0.d0) then
-        tzc = (d0**(-0.5d0)) *(dfloat(i)-zsa)*dz * vzero
-        txc = (d0**(-0.5d0)) *(dfloat(j)-xsa)*dx * vzero
+      if ( d0 .gt. 0.d0 ) then
+        tzc = ( d0**(-0.5d0) ) * ( dfloat(i) - zsa ) * dz * vzero
+        txc = ( d0**(-0.5d0) ) * ( dfloat(j) - xsa ) * dx * vzero
       else
         tzc = 0.d0
         txc = 0.d0
-      endif
-
+      end if
+      return
     end function t_anad
-   
-  end subroutine FTeik2d
-  
-  subroutine solve(vel, ttout, nz, nx, zsin, xsin, nsrc, dzin, dxin, nsweep, n_threads)
-    integer, intent(in) :: nz, nx, nsrc, nsweep, n_threads
-    real, intent(in) :: vel(nz,nx), zsin(nsrc), xsin(nsrc), dzin, dxin
-    real, intent(out) :: ttout(nz, nx, nsrc)
-    integer :: k
-    
-    call omp_set_num_threads(n_threads)
-    
+
+  end subroutine solver2d
+
+  subroutine solve(slow, tt, nz, nx, zs, xs, dz, dx, n_sweep, nsrc, n_threads)
+    integer(kind = 4), intent(in) :: nz, nx, n_sweep, nsrc
+    integer(kind = 4), intent(in), optional :: n_threads
+    real(kind = 8), intent(in) :: slow(nz,nx), zs(nsrc), xs(nsrc), dz, dx
+    real(kind = 8), intent(out) :: tt(nz, nx, nsrc)
+    integer(kind = 4) :: k
+
+    if ( present(n_threads) ) call omp_set_num_threads(n_threads)
+
     !$omp parallel default(shared)
     !$omp do schedule(runtime)
     do k = 1, nsrc
-      call FTeik2d(vel, ttout(:,:,k), nz, nx, zsin(k), xsin(k), dzin, dxin, nsweep, 5)
+      call solver2d(slow, tt(:,:,k), nz, nx, zs(k), xs(k), dz, dx, n_sweep)
     end do
     !$omp end parallel
     return
   end subroutine solve
-  
+
   function interp2(source, x, y, v, xq, yq) result(vq)
-    real :: vq
-    real, intent(in) :: xq, yq
-    real, dimension(:), intent(in) :: source, x, y
-    real, dimension(:,:), intent(in) :: v
-    integer :: nx, ny, i1, i2, j1, j2
-    real :: x1, x2, y1, y2, v11, v21, v12, v22, d11, d21, d12, d22
-    real :: N(4), ax(4), ay(4), av(4), ad(4)
+    real(kind = 8) :: vq
+    real(kind = 8), intent(in) :: xq, yq
+    real(kind = 8), dimension(:), intent(in) :: source, x, y
+    real(kind = 8), dimension(:,:), intent(in) :: v
+    integer(kind = 4) :: nx, ny, i1, i2, j1, j2
+    real(kind = 8) :: N(4), ax(4), ay(4), av(4), ad(4)
+    real(kind = 8) :: x1, x2, y1, y2, v11, v21, v12, v22, d11, d21, d12, d22
 
     nx = size(v, 1)
     ny = size(v, 2)
@@ -555,89 +426,122 @@ contains
     j2 = j1 + 1
 
     if ( i1 .eq. nx .and. j1 .ne. ny ) then
-      x1 = x(i1); x2 = 2.*x1 - x(nx-1); y1 = y(j1); y2 = y(j2)
-      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = 0.
-      d12 = sqrt(sum((source-[x1,y2])**2)); d22 = 0.
-      v11 = v(i1,j1); v21 = 1.; v12 = v(i1,j2); v22 = 1.
+      x1 = x(i1)
+      x2 = 2.d0 * x1 - x(nx-1)
+      y1 = y(j1)
+      y2 = y(j2)
+      d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+      d21 = 0.d0
+      d12 = dsqrt( sum( ( source - [x1,y2] ) * ( source - [x1,y2] ) ) )
+      d22 = 0.d0
+      v11 = v(i1,j1)
+      v21 = 1.d0
+      v12 = v(i1,j2)
+      v22 = 1.d0
     else if ( i1 .ne. nx .and. j1 .eq. ny ) then
-      x1 = x(i1); x2 = x(i2); y1 = y(j1); y2 = 2.*y1 - y(ny-1)
-      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = sqrt(sum((source-[x2,y1])**2))
-      d12 = 0.; d22 = 0.
-      v11 = v(i1,j1); v21 = v(i2,j1); v12 = 1.; v22 = 1.
+      x1 = x(i1)
+      x2 = x(i2)
+      y1 = y(j1)
+      y2 = 2.d0 * y1 - y(ny-1)
+      d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+      d21 = dsqrt( sum( ( source - [x2,y1] ) * ( source - [x2,y1] ) ) )
+      d12 = 0.d0
+      d22 = 0.d0
+      v11 = v(i1,j1)
+      v21 = v(i2,j1)
+      v12 = 1.d0
+      v22 = 1.d0
     else if ( i1 .eq. nx .and. j1 .eq. ny ) then
-      x1 = x(i1); x2 = 2.*x1 - x(nx-1); y1 = y(j1); y2 = 2.*y1 - y(ny-1)
-      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = 0.
-      d12 = 0.; d22 = 0.
-      v11 = v(i1,j1); v21 = 1.; v12 = 1.; v22 = 1.
+      x1 = x(i1)
+      x2 = 2.d0 * x1 - x(nx-1)
+      y1 = y(j1)
+      y2 = 2.d0 * y1 - y(ny-1)
+      d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+      d21 = 0.d0
+      d12 = 0.d0
+      d22 = 0.d0
+      v11 = v(i1,j1)
+      v21 = 1.d0
+      v12 = 1.d0
+      v22 = 1.d0
     else
-      x1 = x(i1); x2 = x(i2); y1 = y(j1); y2 = y(j2)
-      d11 = sqrt(sum((source-[x1,y1])**2)); d21 = sqrt(sum((source-[x2,y1])**2))
-      d12 = sqrt(sum((source-[x1,y2])**2)); d22 = sqrt(sum((source-[x2,y2])**2))
-      v11 = v(i1,j1); v21 = v(i2,j1); v12 = v(i1,j2); v22 = v(i2,j2)
+      x1 = x(i1)
+      x2 = x(i2)
+      y1 = y(j1)
+      y2 = y(j2)
+      d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+      d21 = dsqrt( sum( ( source - [x2,y1] ) * ( source - [x2,y1] ) ) )
+      d12 = dsqrt( sum( ( source - [x1,y2] ) * ( source - [x1,y2] ) ) )
+      d22 = dsqrt( sum( ( source - [x2,y2] ) * ( source - [x2,y2] ) ) )
+      v11 = v(i1,j1)
+      v21 = v(i2,j1)
+      v12 = v(i1,j2)
+      v22 = v(i2,j2)
     end if
 
     ax = [ x2, x1, x2, x1 ]
     ay = [ y2, y2, y1, y1 ]
     av = [ v11, v21, v12, v22 ]
     ad = [ d11, d21, d12, d22 ]
-    N = abs( (ax - xq) * (ay - yq) ) / abs( (x2 - x1) * (y2 - y1) )
-    vq = sqrt(sum((source-[xq,yq])**2)) / dot_product(ad / av, N)
+    N = dabs( (ax - xq) * (ay - yq) ) / dabs( (x2 - x1) * (y2 - y1) )
+    vq = dsqrt( sum( ( source - [xq,yq] ) * ( source - [xq,yq] ) ) ) / dot_product(ad / av, N)
     return
   end function interp2
-  
-  subroutine lay2tt(vel, ttout, nz, nx, dzin, dxin, zsin, xsin, ysin, nsrc, &
-                    zrin, xrin, yrin, nrcv, nsweep, n_threads)
-    integer, intent(in) :: nz, nx, nsrc, nrcv, nsweep, n_threads
-    real, intent(in) :: vel(nz,nx), dzin, dxin, zsin(nsrc), xsin(nsrc), ysin(nsrc), &
-      zrin(nrcv), xrin(nrcv), yrin(nrcv)
-    real, intent(out) :: ttout(nrcv,nsrc)
-    integer :: i, j, k, n1, n2, nmax
-    real :: dhorz, dmax
-    real, dimension(:), allocatable :: ax, az
-    real, dimension(:,:), allocatable :: tt, tcalc, rcv, src
-    
-    call omp_set_num_threads(n_threads)
-    
+
+  function lay2tt(slow, nz, nx, dz, dx, zs, xs, ys, zr, xr, yr, &
+                    n_sweep, nsrc, nrcv, n_threads) result(tt)
+    real(kind = 8) :: tt(nrcv,nsrc)
+    integer(kind = 4), intent(in) :: nz, nx, n_sweep, nsrc, nrcv
+    integer(kind = 4), intent(in), optional :: n_threads
+    real(kind = 8), intent(in) :: slow(nz,nx), dz, dx, zs(nsrc), xs(nsrc), ys(nsrc), &
+      zr(nrcv), xr(nrcv), yr(nrcv)
+    integer(kind = 4) :: i, j, k, n1, n2, nmax
+    real(kind = 8) :: dhorz, dmax
+    real(kind = 8), dimension(:), allocatable :: ax, az
+    real(kind = 8), dimension(:,:), allocatable :: tmp, tcalc, rcv, src
+
+    if ( present(n_threads) ) call omp_set_num_threads(n_threads)
+
     ! Switch sources and stations to minimize calls to eikonals
     n1 = min(nrcv, nsrc)
     n2 = max(nrcv, nsrc)
     if (n1 .eq. nsrc) then
-      rcv = reshape([ xrin, yrin, zrin ], shape = [ n2, 3 ], order = [ 1, 2 ])
-      src = reshape([ xsin, ysin, zsin ], shape = [ n1, 3 ], order = [ 1, 2 ])
+      rcv = reshape([ xr, yr, zr ], shape = [ n2, 3 ], order = [ 1, 2 ])
+      src = reshape([ xs, ys, zs ], shape = [ n1, 3 ], order = [ 1, 2 ])
     else
-      rcv = reshape([ xsin, ysin, zsin ], shape = [ n2, 3 ], order = [ 1, 2 ])
-      src = reshape([ xrin, yrin, zrin ], shape = [ n1, 3 ], order = [ 1, 2 ])
+      rcv = reshape([ xs, ys, zs ], shape = [ n2, 3 ], order = [ 1, 2 ])
+      src = reshape([ xr, yr, zr ], shape = [ n1, 3 ], order = [ 1, 2 ])
     end if
-    
-    ! Initialize ttout
+
+    ! Initialize tcalc
     allocate(tcalc(n2,n1))
-    
+
     ! Compute traveltimes using an eikonal solver
-    az = dzin * [ ( k-1, k = 1, nz ) ]
-    !$omp parallel default(shared) private(tt, dmax, nmax, ax, j, k, dhorz)
+    az = dz * [ ( dfloat(k-1), k = 1, nz ) ]
+    !$omp parallel default(shared) private(tmp, dmax, nmax, ax, j, k, dhorz)
     !$omp do schedule(runtime)
     do i = 1, n1
-      dmax = maxval( sqrt( ( src(i,1) - rcv(:,1) )**2 + &
-                           ( src(i,2) - rcv(:,2) )**2 ) )
-      nmax = floor( dmax / dxin ) + 2
-      allocate(tt(nz,nmax))
-      ax = dxin * [ ( k-1, k = 1, nmax ) ]
-      call FTeik2D(vel(:,:nmax), tt, nz, nmax, src(i,3), 0., dzin, dxin, 5, nsweep)
+      dmax = maxval( dsqrt( ( src(i,1) - rcv(:,1) ) * ( src(i,1) - rcv(:,1) ) + &
+                            ( src(i,2) - rcv(:,2) ) * ( src(i,2) - rcv(:,2) ) ) )
+      nmax = floor( dmax / dx ) + 2
+      allocate(tmp(nz,nmax))
+      ax = dx * [ ( dfloat(k-1), k = 1, nmax ) ]
+      call solver2d(slow(:,:nmax), tmp, nz, nmax, src(i,3), 0.d0, dz, dx, n_sweep)
       do j = 1, n2
-        dhorz = sqrt( sum( ( src(i,1:2) - rcv(j,1:2) )**2 ) )
-        tcalc(j,i) = interp2([ 0., src(i,3) ], az, ax, tt, rcv(j,3), dhorz)
+        dhorz = dsqrt( sum( ( src(i,1:2) - rcv(j,1:2) ) * ( src(i,1:2) - rcv(j,1:2) ) ) )
+        tcalc(j,i) = interp2([ 0.d0, src(i,3) ], az, ax, tmp, rcv(j,3), dhorz)
       end do
-      deallocate(tt)
+      deallocate(tmp)
     end do
     !$omp end parallel
-    
+
     ! Transpose to reshape to [ nrcv, nsrc ]
     if (n1 .eq. nrcv) then
-      ttout = transpose(tcalc)
+      tt = transpose(tcalc)
     else
-      ttout = tcalc
+      tt = tcalc
     end if
     return
-  end subroutine lay2tt
+  end function lay2tt
 
-end module eikonal2d
+end module fteik2d

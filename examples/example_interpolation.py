@@ -60,3 +60,7 @@ if __name__ == "__main__":
     ax1.imshow(tt_true); ax1.set_title("Analytical solution")
     ax2.imshow(tt_time); ax2.set_title("Time interpolation")
     ax3.imshow(tt_vel); ax3.set_title("Velocity interpolation")
+    
+    ax1.grid(True, linestyle = ":")
+    ax2.grid(True, linestyle = ":")
+    ax3.grid(True, linestyle = ":")

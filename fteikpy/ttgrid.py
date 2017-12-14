@@ -8,8 +8,8 @@ License: MIT
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
-from ._fteik2d import eikonal2d
-from ._fteik3d import eikonal3d
+from ._fteik2d import fteik2d
+from ._fteik3d import fteik3d
 try:
     import cPickle as pickle
 except ImportError:
@@ -132,10 +132,10 @@ class TTGrid:
                     raise ValueError("yq out of bounds")
             
         if self._n_dim == 2:
-            tq = eikonal2d.interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
+            tq = fteik2d.interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
         elif self._n_dim == 3:
-            tq = eikonal3d.interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
-                                   zq, xq, yq)
+            tq = fteik3d.interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
+                                 zq, xq, yq)
         return tq
     
     def plot(self, n_levels = 20, axes = None, figsize = (10, 8), cont_kws = {}):

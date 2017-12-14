@@ -6,7 +6,7 @@ License: MIT
 """
 
 import numpy as np
-from ._fteik2d import eikonal2d
+from ._fteik2d import fteik2d
 from ._lay2vel import lay2vel as l2vf
 
 __all__ = [ "lay2vel", "lay2tt" ]
@@ -52,7 +52,7 @@ def lay2vel(lay, dz, grid_shape):
         return l2vf.lay2vel3(lay, dz, *grid_shape)
 
 
-def lay2tt(velocity_model, grid_size, sources, receivers, n_sweep, n_threads = 1):
+def lay2tt(velocity_model, grid_size, sources, receivers, n_sweep = 1, n_threads = 1):
     """
     Given a layered velocity model, compute the first arrivel traveltime for
     each source and each receiver. Only useful if working in 3-D as a 2-D
@@ -95,10 +95,10 @@ def lay2tt(velocity_model, grid_size, sources, receivers, n_sweep, n_threads = 1
         raise ValueError("receivers must be ndarray with 3 columns")
     if not isinstance(n_sweep, int) or n_sweep <= 0:
         raise ValueError("n_sweep must be a positive integer, got %s" % n_sweep)
-    if not isinstance(n_threads, int) or n_threads <= 1:
+    if not isinstance(n_threads, int) or n_threads < 1:
         raise ValueError("n_threads must be atleast 1, got %s" % n_threads)
     
     dz, dx = grid_size
-    tcalc = eikonal2d.lay2tt(velocity_model, dz, dx, sources[:,0], sources[:,1], sources[:,2],
-                             receivers[:,0], receivers[:,1], receivers[:,2], n_sweep, n_threads)
+    tcalc = fteik2d.lay2tt(1./velocity_model, dz, dx, sources[:,0], sources[:,1], sources[:,2],
+                           receivers[:,0], receivers[:,1], receivers[:,2], n_sweep, n_threads = n_threads)
     return tcalc

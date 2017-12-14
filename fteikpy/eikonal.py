@@ -8,8 +8,8 @@ License: MIT
 """
 
 import numpy as np
-from ._fteik2d import eikonal2d
-from ._fteik3d import eikonal3d
+from ._fteik2d import fteik2d
+from ._fteik3d import fteik3d
 from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage import gaussian_filter
 from .ttgrid import TTGrid
@@ -187,8 +187,8 @@ class Eikonal:
             nz, nx = self._grid_shape
             for i in range(nsrc):
                 self._check_2d(src_shift[i,0], src_shift[i,1], dz, dx, nz, nx)
-            grid = eikonal2d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1],
-                                   dz, dx, self._n_sweep, n_threads)
+            grid = fteik2d.solve(1./self._velocity_model, src_shift[:,0], src_shift[:,1],
+                                 dz, dx, self._n_sweep, n_threads = n_threads)
             tt = [ TTGrid(grid = np.array(grid[:,:,i], dtype = dtype),
                           source = src[i,:],
                           grid_size = self._grid_size,
@@ -199,8 +199,8 @@ class Eikonal:
             nz, nx, ny = self._grid_shape
             for i in range(nsrc):
                 self._check_3d(src[i,0], src[i,1], src[i,2], dz, dx, dy, nz, nx, ny)
-            grid = eikonal3d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1], src_shift[:,2],
-                                   dz, dx, dy, self._n_sweep, n_threads)
+            grid = fteik3d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1], src_shift[:,2],
+                                 dz, dx, dy, self._n_sweep, n_threads)
             tt = [ TTGrid(grid = np.array(grid[:,:,:,i], dtype = dtype),
                           source = src[i,:],
                           grid_size = self._grid_size,

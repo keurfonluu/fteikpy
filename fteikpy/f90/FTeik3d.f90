@@ -1,37 +1,37 @@
-module eikonal3d
+module fteik3d
 
   use omp_lib
-  
+
   implicit none
-  
+
 contains
   !
   !   Copyright or Copr. Mines Paristech, France - Mark NOBLE, Alexandrine GESRET
   !   FTeik3d_2.0.f90 - First release Aug 2011
-  ! 
+  !
   !   FTeik3d has been written by:
   !     - Mark Noble <mark.noble@mines-paristech.fr>
   !     - Alexandrine Gesret <alexandrine.gesret@mines-paristech.fr>
-  ! 
+  !
   !   This software is a computer program (subroutine) whose purpose is to
   !   compute traveltimes in a 3D heterogenious velocity model by solving
   !   by finite difference approximation the Eikonal equation. This package
   !   is written in fortran 90 and is composed of 4 elements, the functions
   !   "t_ana", "t_anad", the subroutine "FTeik3d_2" and an include file
   !   "include_FTeik3d_2".
-  ! 
+  !
   !   This software is governed by the CeCILL-C license under French law and
   !   abiding by the rules of distribution of free software.  You can  use,
   !   modify and/ or redistribute the software under the terms of the CeCILL-C
   !   license as circulated by CEA, CNRS and INRIA at the following URL
   !   "http://www.cecill.info".
-  ! 
+  !
   !   As a counterpart to the access to the source code and  rights to copy,
   !   modify and redistribute granted by the license, users are provided only
   !   with a limited warranty  and the software's author,  the holder of the
   !   economic rights,  and the successive licensors  have only  limited
   !   liability.
-  ! 
+  !
   !   In this respect, the user's attention is drawn to the risks associated
   !   with loading,  using,  modifying and/or developing or reproducing the
   !   software by the user in light of its specific status of free software,
@@ -42,7 +42,7 @@ contains
   !   requirements in conditions enabling the security of their systems and/or
   !   data to be ensured and,  more generally, to use and operate it in the
   !   same conditions as regards security.
-  ! 
+  !
   !   The fact that you are presently reading this means that you have had
   !   knowledge of the CeCILL-C license and that you accept its terms.
   !   For more information, see the file COPYRIGHT-GB or COPYRIGHT-FR.
@@ -50,34 +50,34 @@ contains
   !________________________________________________________________________
   !            ARGUMENTS REQUIRED TO CALL THE SUBROUTINE FTeik3d_2
   !     call FTeik3d_2(vel,tt,nz,nx,ny,zsin,xsin,ysin,dzin,dxin,dyin,nsweep,epsin)
-  ! 
+  !
   !     WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
-  ! 
+  !
   !     WARNING        :Time field array and velocity field array do not have
   !                     the same dimension. Velocities are defined at center of
   !                     cell, whereas times are computed on the corners.
-  ! 
+  !
   !     integer - nz,nx,ny  :Dimensions of the time field array tt
   !                           tt(nz,nx,ny)
   !                           No dimension may be lower than 3.
-  ! 
+  !
   !     integer - dzin,dxin,dyin :Mesh spacing along the 3 axis
-  ! 
+  !
   !     real - tt                :Travel time field array: tt(nz,nx,ny)
-  ! 
+  !
   !     real - vel               :Velocity field array: vel(nz-1,nx-1,ny-1)
-  ! 
+  !
   !     real - zsin,xsin,ysin :Point source coordinates referred expressed in meters
   !                         Licit ranges: [0.0,(nz-1.)*dz][0.0,(nx-1.)*dx] [0.,(ny-1.)*dy]
-  ! 
+  !
   !     integer - nsweep         :Number of sweeps over model. 1 is in general enough
-  ! 
+  !
   !     real - epsin :  radius in number of grid points arround source where then
   !                     spherical approximation will be used
   !
   !________________________________________________________________________
   !
-  subroutine FTeik3d(vel,tt,nz,nx,ny,zsin,xsin,ysin,dzin,dxin,dyin,nsweep,epsin)
+  subroutine solver3d(vel,tt,nz,nx,ny,zsin,xsin,ysin,dzin,dxin,dyin,nsweep,epsin)
 
      implicit none
   !
@@ -123,7 +123,7 @@ contains
   !  Check grid size
   !_________________
      if (nz < 3 .or. nx < 3 .or. ny < 3 ) goto 993
-  !   
+  !
   !  Check grid spacing
   !____________________
      dz=dble(dzin) ; dx=dble(dxin) ; dy=dble(dyin)
@@ -132,11 +132,11 @@ contains
   ! Check sweep
   !____________
      if (nsweep < 0) goto 995
-  !   
+  !
   ! Check velocity field
   !_____________________
      if (minval(vel) <= 0.) goto 992
-  !   
+  !
   ! Check source position
   !______________________
      zsrc=dble(zsin) ; xsrc=dble(xsin) ; ysrc=dble(ysin)
@@ -185,7 +185,7 @@ contains
      tt(zsi+1,xsi,ysi+1) = sngl( t_ana(zsi+1,xsi,ysi+1,dz,dx,dy,zsa,xsa,ysa,vzero) )
      tt(zsi,xsi+1,ysi+1) = sngl( t_ana(zsi,xsi+1,ysi+1,dz,dx,dy,zsa,xsa,ysa,vzero) )
      tt(zsi+1,xsi+1,ysi+1) = sngl( t_ana(zsi+1,xsi+1,ysi+1,dz,dx,dy,zsa,xsa,ysa,vzero) )
-  ! 
+  !
   ! Pre-calculate a few constants concerning mesh spacing
   !______________________________________________________
       dzi = 1.d0 /dz
@@ -461,21 +461,21 @@ contains
         write(*,'(5x,''ERROR FTAeik3d, Velocities are strange '')')
         write(*,'(''=================================================='')')
         stop
-        
+
   993   continue
         write(*,'(/)')
         write(*,'(''=================================================='')')
         write(*,'(5x,''ERROR FTAeik3d, Grid size nz,nx,ny too small '')')
         write(*,'(''=================================================='')')
         stop
-              
+
   994   continue
         write(*,'(/)')
         write(*,'(''================================================='')')
         write(*,'(5x,''ERROR FTAeik3d, Grid spacing dz,dx,dy too small '')')
         write(*,'(''================================================='')')
         stop
-                    
+
   995   continue
         write(*,'(/)')
         write(*,'(''================================================='')')
@@ -491,7 +491,7 @@ contains
         stop
 
   contains
-  
+
     ! Functions to calculate analytical times in homgeneous model
     real(kind=kind(1.d0)) function t_ana(i,j,k,dz,dx,dy,zsa,xsa,ysa,vzero)
 
@@ -505,7 +505,7 @@ contains
       t_ana =vzero*(((dfloat(i)-zsa)*dz)**2.+((dfloat(j)-xsa)*dx)**2.+((dfloat(k)-ysa)*dy)**2.)**0.5
 
     end function t_ana
-   
+
     ! Functions to calculate analytical times in homgeneous model, + derivative of times
     real(kind=kind(1.d0)) function t_anad(tzc,txc,tyc,i,j,k,dz,dx,dy,zsa,xsa,ysa,vzero)
 
@@ -533,27 +533,27 @@ contains
       endif
 
     end function t_anad
-    
-  end subroutine FTeik3d
-  
+
+  end subroutine solver3d
+
   subroutine solve(vel, ttout, nz, nx, ny, zsin, xsin, ysin, nsrc, dzin, dxin, dyin, nsweep, n_threads)
     integer, intent(in) :: nz, nx, ny, nsrc, nsweep, n_threads
     real, intent(in) :: vel(nz-1,nx-1,ny-1), zsin(nsrc), xsin(nsrc), ysin(nsrc), dzin, dxin, dyin
     real, intent(out) :: ttout(nz, nx, ny, nsrc)
     integer :: k
-    
+
     call omp_set_num_threads(n_threads)
-    
+
     !$omp parallel default(shared)
     !$omp do schedule(runtime)
     do k = 1, nsrc
-      call FTeik3d(vel, ttout(:,:,:,k), nz, nx, ny, zsin(k), xsin(k), ysin(k), &
+      call solver3d(vel, ttout(:,:,:,k), nz, nx, ny, zsin(k), xsin(k), ysin(k), &
                    dzin, dxin, dyin, nsweep, 5.)
     end do
     !$omp end parallel
     return
   end subroutine solve
-  
+
   function interp3(source, x, y, z, v, xq, yq, zq) result(vq)
       real :: vq
       real, intent(in) :: xq, yq, zq
@@ -649,5 +649,5 @@ contains
       vq = sqrt(sum((source-[xq,yq,zq])**2)) / dot_product(ad / av, N)
       return
     end function interp3
-  
-end module eikonal3d
+
+end module fteik3d
