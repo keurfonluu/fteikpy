@@ -3,7 +3,7 @@
 from setuptools import find_packages
 from numpy.distutils.core import setup, Extension
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 DISTNAME = "fteikpy"
 DESCRIPTION = "FTeikPy"
 LONG_DESCRIPTION = """FTeikPy is a Python module that computes accurate first arrival traveltimes in 2-D and 3-D heterogeneous isotropic velocity model."""

@@ -10,7 +10,7 @@ a different grid spacing in Z, X and Y directions. The algorithm handles
 properly the curvature of wavefronts close to the source. The source can be
 placed without any problem between grid points.
 
-:Version: 1.3.0
+:Version: 1.3.1
 :Author: Mark Noble
 :Maintainer: Keurfon Luu
 :Web site: https://github.com/keurfonluu/fteikpy
@@ -32,13 +32,13 @@ The recommended way to install FTeikPy is through pip (internet required):
 .. code-block:: bash
 
     pip install fteikpy
-    
+
 Otherwise, download and extract the package, then run:
 
 .. code-block:: bash
 
     python setup.py install
-    
+
 
 Usage
 =====
@@ -49,27 +49,27 @@ First, import FTeikPy and define (or import) your velocity model (here in 2-D):
 
     import numpy as np
     from fteikpy import Eikonal
-    
+
     nz, nx = 351, 1000
     dz, dx = 10., 10.
     vel2d = np.full((nz, nx), 1500.)
-    
+
 Then, initialize the Eikonal solver:
 
 .. code-block:: python
 
     eik = Eikonal(vel2d, grid_size = (dz, dx), n_sweep = 2)
-    
+
 Finally, for a given source point with coordinate (z,x), run the method *solve*:
 
 .. code-block:: python
-    
+
     source = (0., 5000.)
     tt = eik.solve(source)
-    
+
 The same can be done on a 3-D velocity model (just a bit slower...).
 
-    
+
 Troubleshooting on Windows
 ==========================
 
@@ -80,19 +80,19 @@ the required packages to install FTeikPy on Windows systems.
 
 1. Download `MinGW 64 bits <https://sourceforge.net/projects/mingw-w64/files/>`__
    (choose *x86_64-posix-sjlj*) and extract the archive in your drive root.
-   
+
 2. Add MinGW to your system path:
 
     C:\\<Your MinGW directory>\\bin
-    
+
 3. Create the file *distutils.cfg* in *<Your Python directory path>\\Lib\\distutils*
    with the following content to use MinGW compiler:
-   
+
 .. code-block::
 
     [build]
     compiler=mingw32
-    
+
 4. Open a terminal and install *libpython*:
 
 .. code-block:: batch
@@ -103,17 +103,17 @@ the required packages to install FTeikPy on Windows systems.
 If you got the error:
 
     Error: ValueError: Unknown MS Compiler version 1900
-    
+
 You may need to manually patch the file *cygwinccompiler.py* located in:
 
     <Your Python directory path>\\Lib\\distutils
-    
+
 by replacing:
 
 .. code-block:: python
 
     self.dll_libraries = get_msvcr()
-    
+
 in lines 157 and 318 by (be careful with indentation):
 
 .. code-block:: python
@@ -123,7 +123,7 @@ in lines 157 and 318 by (be careful with indentation):
 You should also patch the file *mingw32compiler.py* located in:
 
     <Your Python directory path>\\Lib\\site-packages\\numpy\\distutils
-    
+
 by commenting out from lines 96 to 104:
 
 .. code-block:: python
@@ -137,7 +137,7 @@ by commenting out from lines 96 to 104:
     #        # Define the MSVC version as hint for MinGW
     #        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
     #        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
-    
+
 
 References
 ==========

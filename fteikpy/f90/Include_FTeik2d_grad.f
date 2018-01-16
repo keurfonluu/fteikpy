@@ -30,7 +30,7 @@
   tt(i,j) = time_sol(imin)
 
   ! Compute gradient according to minimum time direction
-  if ( present(ttgrad)) then
+  if ( present(ttgrad) ) then
     select case (imin)
     case (2)
       ttx(i,j) = 0.d0
