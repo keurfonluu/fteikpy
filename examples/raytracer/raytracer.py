@@ -20,7 +20,6 @@ class Ray3D:
         self.arrival = arrival
         self.positions = positions
         self.traveltime = traveltime
-        return
         
     def trace(self, src, rcv, vel, zint):
         # Check src and rcv
@@ -102,8 +101,6 @@ class Ray3D:
         
         # Unshift
         self._unshift()
-        
-        return
     
     def lay2tt(self, src, rcv, vel, zint):
         # Parameters
@@ -136,13 +133,11 @@ class Ray3D:
         if pos is True:
             for i in range(self.positions.shape[0]):
                 self.positions[i,:2] -= self.source[:2]
-        return
         
     def _unshift(self):
         self.receiver[:2] += self.source[:2]
         for i in range(self.positions.shape[0]):
             self.positions[i,:2] += self.source[:2]        
-        return
         
     def _rotate(self, pos = False):
         self.theta = -np.arctan2(self.receiver[1], self.receiver[0])
@@ -155,7 +150,6 @@ class Ray3D:
             y = self.positions[:,0] * np.sin(self.theta) + self.positions[:,1] * np.cos(self.theta)
             self.positions[:,0] = x
             self.positions[:,1] = y
-        return
         
     def _unrotate(self):
         x = self.receiver[0] * np.cos(-self.theta) - self.receiver[1] * np.sin(-self.theta)
@@ -166,4 +160,3 @@ class Ray3D:
         y = self.positions[:,0] * np.sin(-self.theta) + self.positions[:,1] * np.cos(-self.theta)
         self.positions[:,0] = x
         self.positions[:,1] = y
-        return
