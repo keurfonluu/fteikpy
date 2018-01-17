@@ -10,7 +10,7 @@ a different grid spacing in Z, X and Y directions. The algorithm handles
 properly the curvature of wavefronts close to the source. The source can be
 placed without any problem between grid points.
 
-:Version: 1.3.1
+:Version: 1.4.0
 :Author: Mark Noble
 :Maintainer: Keurfon Luu
 :Web site: https://github.com/keurfonluu/fteikpy
@@ -42,6 +42,8 @@ Otherwise, download and extract the package, then run:
 
 Usage
 =====
+
+**New in 1.4.0**: added a posteriori ray tracer for 2-D velocity models.
 
 First, import FTeikPy and define (or import) your velocity model (here in 2-D):
 

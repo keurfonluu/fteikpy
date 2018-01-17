@@ -10,7 +10,8 @@ License: MIT
 
 from .ttgrid import TTGrid
 from .eikonal import Eikonal
+from .ray import Ray
 from .layered_model import lay2vel, lay2tt
 
-__version__ = "1.3.1"
-__all__ = [ "TTGrid", "Eikonal", "lay2vel", "lay2tt" ]
+__version__ = "1.4.0"
+__all__ = [ "TTGrid", "Eikonal", "Ray", "lay2vel", "lay2tt" ]

@@ -8,6 +8,7 @@ Author: Keurfon Luu <keurfon.luu@mines-paristech.fr>
 License: MIT
 """
 
+import numpy as np
 import sys
 sys.path.append("../")
 import matplotlib.pyplot as plt
@@ -22,15 +23,21 @@ except ImportError:
 
 if __name__ == "__main__":
     # Parameters
-    source = ( 0., 5000. )
+    source = ( 0., 0. )
     marmousi = pickle.load(open("marmousi.pickle", "rb"))
     nz, nx = marmousi.shape
     dz, dx = 10., 10.
     
     # Compute traveltimes using a 2D Eikonal solver
     eik = Eikonal(marmousi, grid_size = (dz, dx), n_sweep = 2)
-    eik.smooth(10)
+    eik.smooth(5)
     tt = eik.solve(source)
+    
+    # Trace ray from receivers to source
+    nrcv = 200
+    receivers = np.zeros((nrcv, 2))
+    receivers[:,1] = np.linspace(3000., eik.xaxis[-1], nrcv)
+    rays = eik.raytracer(source, receivers)
     
     # Plot velocity model and isochrones
     fig = plt.figure(figsize = (10, 3.5), facecolor = "white")
@@ -40,7 +47,9 @@ if __name__ == "__main__":
     ax = eik.xaxis
     az = eik.zaxis
     cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100, cmap = "jet")
-    tt.plot(n_levels = 30, axes = ax1, cont_kws = dict(colors = "black", linewidths = 1))
+    tt.plot(n_levels = 30, axes = ax1, cont_kws = dict(colors = "black", linewidths = 0.5))
+    for ray in rays:
+        ray.plot(axes = ax1, plt_kws = dict(color = "black", linewidth = 0.5))
     
     ax1.set_title("Marmousi")
     ax1.set_xlabel("X (m)")
