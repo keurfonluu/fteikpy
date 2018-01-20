@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from ._fteik2d import fteik2d
 from ._fteik3d import fteik3d
+from .ray import Ray
 try:
     import cPickle as pickle
 except ImportError:
@@ -138,6 +139,125 @@ class TTGrid:
                                  zq, xq, yq)
         return tq
     
+    def raytracer(self, receivers, ray_step = 1., max_ray = 10000):
+        """
+        A posteriori ray tracer.
+        
+        Parameters
+        ----------
+        receivers : list or ndarray
+            Receivers coordinates (Z, X).
+        ray_step : scalar, default 1.
+            Ray stepsize (normalized).
+        max_ray : int, default 1e4
+            Maximum number of points to trace the ray.
+            
+        Returns
+        -------
+        rays : list of Ray
+            Rays from receivers to source.
+        
+        Note
+        ----
+        Currently only available in 2-D.
+        """
+        # Check inputs
+        if self._n_dim == 3:
+            raise ValueError("ray tracing not yet available in 3-D")
+        if not isinstance(receivers, (list, tuple, np.ndarray)):
+            raise ValueError("receiverss must be a list, tuple or ndarray")
+        if isinstance(receivers, np.ndarray) and receivers.ndim not in [ 1, 2 ]:
+            raise ValueError("receivers must be 1-D or 2-D ndarray")
+        if isinstance(receivers, (list, tuple)) and len(receivers) != self._n_dim:
+            raise ValueError("receivers should have %d coordinates, got %d" \
+                             % (self._n_dim, len(receivers)))
+        elif isinstance(receivers, np.ndarray) and receivers.ndim == 1 and len(receivers) != self._n_dim:
+            raise ValueError("receivers should have %d coordinates, got %d" \
+                             % (self._n_dim, len(receivers)))
+        elif isinstance(receivers, np.ndarray) and receivers.ndim == 2 and receivers.shape[1] != self._n_dim:
+            raise ValueError("receivers should have %d coordinates, got %d" \
+                             % (self._n_dim, receivers.shape[1]))
+        if not isinstance(ray_step, (int, float)) or ray_step < 0:
+            raise ValueError("ray_step must be positive, got %f" % ray_step)
+        if not isinstance(max_ray, int) or max_ray < 3:
+            raise ValueError("max_ray must be an integer greater than 2, got %d" % max_ray)
+        
+        # Call ray tracer
+        if self._n_dim == 2:
+            if isinstance(receivers, (list, tuple)) or receivers.ndim == 1:
+                return self._trace_ray2d(receivers, ray_step, max_ray)
+            else:
+                return [ self._trace_ray2d(receiver, ray_step, max_ray) for receiver in receivers ]
+    
+    def _trace_ray2d(self, receiver, ray_step = 1., max_ray = 10000):
+        zsrc, xsrc = self._shift(self._source) / self._grid_size
+        zcur, xcur = self._shift(receiver) / self._grid_size
+        nz, nx = self._grid_shape
+        tt = self._grid
+        
+        ray = [ (zcur, xcur) ]
+        count = 0
+        while np.sqrt((zsrc - zcur)**2+(xsrc-xcur)**2) > ray_step \
+            and count < min(max_ray-2, 2*(nz+nx)/ray_step):
+            # Compute gradient
+            grad = np.zeros(2)
+            i = I = int(zcur)
+            j = J = int(xcur)
+            if i == nz-1:
+                i -= 1
+                I -= 1
+            if j == nx-1:
+                j -= 1
+                J -= 1
+            if i < 0 or I >= nz-1 or J < 0 or J >= nx-1:
+                raise ValueError("ray out of bounds")
+            
+            dz = zcur - I
+            dx = xcur - J
+            if dz > 0.5:
+                i += 1
+                dz = 1. - dz
+            if dx > 0.5:
+                j += 1
+                dx = 1. - dx
+            
+            if (zcur-i)**2+(xcur-j)**2 < (zcur-I-0.5)**2+(xcur-J-0.5)**2:
+                if i and i < nz-1:
+                    grad[0] = tt[i+1,j] - tt[i-1,j]
+                elif i:
+                    grad[0] = 2. * (tt[i,j] - tt[i-1,j])
+                else:
+                    grad[0] = 2. * (tt[i+1,j] - tt[i,j])
+                if j and j < nx-1:
+                    grad[1] = tt[i,j+1] -  tt[i,j-1]
+                elif j:
+                    grad[1] = 2. * (tt[i,j] - tt[i,j-1])
+                else:
+                    grad[1] = 2. * (tt[i,j+1] - tt[i,j])
+            else:
+                grad[0] = tt[I+1,J] - tt[I,J] + tt[I+1,J+1] - tt[I,J+1] \
+                        + tt[I+1,J] - tt[I,J] + tt[I+1,J+1] - tt[I,J+1]
+                grad[1] = tt[I,J+1] - tt[I,J] + tt[I+1,J+1] - tt[I+1,J] \
+                        + tt[I,J+1] - tt[I,J] + tt[I+1,J+1] - tt[I+1,J]
+            grad /= np.linalg.norm(grad)
+            if np.isnan(grad[0]):
+                break
+            
+            # Compute next point
+            zcur -= grad[0] * ray_step
+            xcur -= grad[1] * ray_step
+            zcur = np.clip(zcur, 0, nz-1)
+            xcur = np.clip(xcur, 0, nx-1)
+            
+            # Append current point and go to next
+            ray.append((zcur, xcur))
+            count += 1
+        
+        if zcur != zsrc or xcur != xsrc:
+            ray.append((zsrc, xsrc))
+        ray_z, ray_x = (np.array(ray)*self._grid_size).transpose()
+        return Ray(z = ray_z + self._zmin, x = ray_x + self._xmin)
+    
     def plot(self, n_levels = 20, axes = None, figsize = (10, 8), cont_kws = {}):
         """
         Plot the traveltime grid.
@@ -214,6 +334,25 @@ class TTGrid:
                           zmin = tmp.zmin,
                           xmin = tmp.xmin,
                           ymin = tmp.ymin)
+            
+    def _shift(self, coord):
+        if self._n_dim == 2:
+            return np.array(coord) - np.array([ self._zmin, self._xmin ])
+        elif self._n_dim == 3:
+            return np.array(coord) - np.array([ self._zmin, self._xmin, self._ymin ])
+    
+    def _check_2d(self, z, x, dz, dx, nz, nx):
+        zmax, xmax = (nz-1)*dz, (nx-1)*dx
+        if np.logical_or(np.any(z < 0.), np.any(z > zmax)):
+            raise ValueError("z out of bounds")
+        if np.logical_or(np.any(x < 0.), np.any(x > xmax)):
+            raise ValueError("x out of bounds")
+            
+    def _check_3d(self, z, x, y, dz, dx, dy, nz, nx, ny):
+        self._check_2d(z, x, dz, dx, nz, nx)
+        ymax = (ny-1)*dy
+        if np.logical_or(np.any(y < 0.), np.any(y > ymax)):
+            raise ValueError("y out of bounds")
 
     @property
     def grid(self):

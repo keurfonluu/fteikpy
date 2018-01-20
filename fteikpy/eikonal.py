@@ -10,10 +10,9 @@ License: MIT
 import numpy as np
 from ._fteik2d import fteik2d
 from ._fteik3d import fteik3d
-from scipy.interpolate import RegularGridInterpolator, interp2d
+from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage import gaussian_filter
 from .ttgrid import TTGrid
-from .ray import Ray
 
 __all__ = [ "Eikonal" ]
 
@@ -212,156 +211,25 @@ class Eikonal:
             return tt[0]
         else:
             return tt
-        
-    def raytracer(self, source, receivers):
-        """
-        A posteriori ray tracer.
-        
-        Parameters
-        ----------
-        source : ndarray
-            Source coordinates (Z, X).
-        receivers : list or ndarray
-            Receivers coordinates (Z, X).
-            
-        Returns
-        -------
-        rays : list of Ray
-            Rays from receivers to source.
-        
-        Note
-        ----
-        Currently only available in 2-D.
-        """
-        # Check inputs
-        if self._n_dim == 3:
-            raise ValueError("ray tracing not yet available in 3-D")
-        if not isinstance(source, (np.ndarray, list)) and np.asarray(source).ndim != 1 \
-            and len(source) not in [ 2 ]:
-            raise ValueError("source must be a 1-D ndarray or list of length 2")
-        if not isinstance(receivers, (list, tuple, np.ndarray)):
-            raise ValueError("receiverss must be a list, tuple or ndarray")
-        if isinstance(receivers, np.ndarray) and receivers.ndim not in [ 1, 2 ]:
-            raise ValueError("receivers must be 1-D or 2-D ndarray")
-        if isinstance(receivers, (list, tuple)) and len(receivers) != self._n_dim:
-            raise ValueError("receivers should have %d coordinates, got %d" \
-                             % (self._n_dim, len(receivers)))
-        elif isinstance(receivers, np.ndarray) and receivers.ndim == 1 and len(receivers) != self._n_dim:
-            raise ValueError("receivers should have %d coordinates, got %d" \
-                             % (self._n_dim, len(receivers)))
-        elif isinstance(receivers, np.ndarray) and receivers.ndim == 2 and receivers.shape[1] != self._n_dim:
-            raise ValueError("receivers should have %d coordinates, got %d" \
-                             % (self._n_dim, receivers.shape[1]))
-        
-        # Call Eikonal solver
-        zsrc, xsrc = self._shift(source)
-        dz, dx = self._grid_size
-        ttgrad = fteik2d.solver2d(1./self._velocity_model, zsrc, xsrc, dz, dx, self._n_sweep)[1]
-        gz = RegularGridInterpolator((self._zaxis, self._xaxis), ttgrad[:,:,0])
-        gx = RegularGridInterpolator((self._zaxis, self._xaxis), ttgrad[:,:,1])
-        
-        # Call ray tracer
+    
+    def _shift(self, coord):
         if self._n_dim == 2:
-            if isinstance(receivers, (list, tuple)) or receivers.ndim == 1:
-                return self._trace_ray2d(source, receivers, gz, gx)
-            else:
-                return [ self._trace_ray2d(source, receiver, gz, gx) for receiver in receivers ]
-        
-    def _trace_ray2d(self, source, receiver, gz, gx):
-        dz, dx = self._grid_size
-        eps = np.linalg.norm(self._grid_size)
-        ray = [ tuple(receiver) ]
-        while np.linalg.norm(np.asarray(ray[-1]) - np.asarray(source)) > eps:
-            zcur, xcur = ray[-1]
-            z = np.floor(zcur/dz) * dz
-            x = np.floor(xcur/dx) * dx
-            pz = -gz(ray[-1])
-            px = -gx(ray[-1])
-            if px != 0:
-                a = pz / px
-                b = zcur - a * xcur
-                         
-            # Up
-            if pz < 0 and px == 0:
-                ray.append(( z-dz, xcur ))
-            # Left
-            elif pz == 0 and px < 0:
-                ray.append(( zcur, x-dx ))
-            # Down
-            elif pz > 0 and px == 0:
-                ray.append(( z+dz, xcur ))
-            # Right
-            elif pz == 0 and px > 0:
-                ray.append(( zcur, x+dx ))
-            # Up - Right
-            elif pz < 0 and px > 0:
-                zu = z - dz
-                xr = x + dx
-                pu = ( zu, (zu-b)/a )
-                pr = ( a*xr+b, xr )
-                du = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pu))
-                dr = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pr))
-                if dr <= du:
-                    ray.append(pr)
-                else:
-                    ray.append(pu)
-            # Up - Left
-            elif pz < 0 and px < 0:
-                zu = z - dz
-                xl = x - dx
-                pu = ( zu, (zu-b)/a )
-                pl = ( a*xl+b, xl )
-                du = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pu))
-                dl = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pl))
-                if dl <= du:
-                    ray.append(pl)
-                else:
-                    ray.append(pu)
-            # Down - Left
-            elif pz > 0 and px < 0:
-                zd = z + dz
-                xl = x - dx
-                pd = ( zd, (zd-b)/a )
-                pl = ( a*xl+b, xl )
-                dd = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pd))
-                dl = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pl))
-                if dl <= dd:
-                    ray.append(pl)
-                else:
-                    ray.append(pd)
-            # Down - Right
-            elif pz > 0 and px > 0:
-                zd = z + dz
-                xr = x + dx
-                pd = ( zd, (zd-b)/a )
-                pr = ( a*xr+b, xr )
-                dd = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pd))
-                dr = np.linalg.norm(np.asarray(ray[-1]) - np.asarray(pr))
-                if dr <= dd:
-                    ray.append(pr)
-                else:
-                    ray.append(pd)
-        ray.append(( source ))
-        return Ray(z = np.asarray(ray)[:,0], x = np.asarray(ray)[:,1])
+            return np.array(coord) - np.array([ self._zmin, self._xmin ])
+        elif self._n_dim == 3:
+            return np.array(coord) - np.array([ self._zmin, self._xmin, self._ymin ])
     
-    def _shift(self, sources):
-        if len(sources) == 2:
-            return np.array(sources) - np.array([ self._zmin, self._xmin ])
-        elif len(sources) == 3:
-            return np.array(sources) - np.array([ self._zmin, self._xmin, self._ymin ])
-    
-    def _check_2d(self, zsrc, xsrc, dz, dx, nz, nx):
+    def _check_2d(self, z, x, dz, dx, nz, nx):
         zmax, xmax = (nz-1)*dz, (nx-1)*dx
-        if np.logical_or(np.any(zsrc < 0.), np.any(zsrc > zmax)):
-            raise ValueError("zsrc out of bounds")
-        if np.logical_or(np.any(xsrc < 0.), np.any(xsrc > xmax)):
-            raise ValueError("xsrc out of bounds")
+        if np.logical_or(np.any(z < 0.), np.any(z > zmax)):
+            raise ValueError("z out of bounds")
+        if np.logical_or(np.any(x < 0.), np.any(x > xmax)):
+            raise ValueError("x out of bounds")
             
-    def _check_3d(self, zsrc, xsrc, ysrc, dz, dx, dy, nz, nx, ny):
-        self._check_2d(zsrc, xsrc, dz, dx, nz, nx)
+    def _check_3d(self, z, x, y, dz, dx, dy, nz, nx, ny):
+        self._check_2d(z, x, dz, dx, nz, nx)
         ymax = (ny-1)*dy
-        if np.logical_or(np.any(ysrc < 0.), np.any(ysrc > ymax)):
-            raise ValueError("ysrc out of bounds")
+        if np.logical_or(np.any(y < 0.), np.any(y > ymax)):
+            raise ValueError("y out of bounds")
             
     @property
     def velocity_model(self):

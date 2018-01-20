@@ -66,6 +66,10 @@ contains
 
     ! Allocate work array for traveltimes
     tt = Big
+    if ( present(ttgrad) ) then
+      ttz = 0.d0
+      ttx = 0.d0
+    end if
 
     ! Do our best to initialize source
     dzu = dabs( zsa - dfloat(zsi) )
@@ -75,14 +79,14 @@ contains
     iflag = 0
 
     ! Source seems close enough to a grid point in X and Y direction
-    if ( min(dzu, dzd) .lt. zerr .and. min(dxw, dxe) .lt. zerr) then
+    if ( min(dzu, dzd) .lt. zerr .and. min(dxw, dxe) .lt. zerr ) then
       zsa = dnint(zsa)
       xsa = dnint(xsa)
       iflag = 1
     end if
 
     ! At least one of coordinates not close to any grid point in X and Y direction
-    if ( min(dzu, dzd) .gt. zerr .or. min(dxw, dxe) .gt. zerr) then
+    if ( min(dzu, dzd) .gt. zerr .or. min(dxw, dxe) .gt. zerr ) then
       if ( min(dzu, dzd) .lt. zerr) zsa = dnint(zsa)
       if ( min(dxw, dxe) .lt. zerr) xsa = dnint(xsa)
       iflag = 2
@@ -111,7 +115,7 @@ contains
       tt(zsi,xsi) = t_ana(zsi, xsi, dz, dx, zsa, xsa, vzero)
       tt(zsi+1,xsi) = t_ana(zsi+1, xsi, dz, dx, zsa, xsa, vzero)
       tt(zsi,xsi+1) = t_ana(zsi, xsi+1, dz, dx, zsa, xsa, vzero)
-      tt(zsi+1,xsi+1) = t_ana(zsi+1 ,xsi+1, dz, dx, zsa, xsa, vzero)
+      tt(zsi+1,xsi+1) = t_ana(zsi+1, xsi+1, dz, dx, zsa, xsa, vzero)
 
       td = Big
       td(xsi+1) = vzero * dxe * dx
@@ -304,7 +308,6 @@ contains
       sgnvx = 1
       sgnrz = dfloat(sgntz)
       sgnrx = dfloat(sgntx)
-
       do j = 2, nx
         do i = 2, nz
           include "Include_FTeik2d_grad.f"

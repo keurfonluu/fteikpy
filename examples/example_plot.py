@@ -36,8 +36,8 @@ if __name__ == "__main__":
     # Trace ray from receivers to source
     nrcv = 200
     receivers = np.zeros((nrcv, 2))
-    receivers[:,1] = np.linspace(3000., eik.xaxis[-1], nrcv)
-    rays = eik.raytracer(source, receivers)
+    receivers[:,1] = np.linspace(4400., eik.xaxis[-1], nrcv)
+    rays = tt.raytracer(receivers, ray_step = 1., max_ray = 1000)
     
     # Plot velocity model and isochrones
     fig = plt.figure(figsize = (10, 3.5), facecolor = "white")
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     ax = eik.xaxis
     az = eik.zaxis
     cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100, cmap = "jet")
-    tt.plot(n_levels = 30, axes = ax1, cont_kws = dict(colors = "black", linewidths = 0.5))
+    tt.plot(n_levels = 100, axes = ax1, cont_kws = dict(colors = "black", linewidths = 0.5))
     for ray in rays:
         ray.plot(axes = ax1, plt_kws = dict(color = "black", linewidth = 0.5))
     

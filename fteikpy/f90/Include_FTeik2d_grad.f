@@ -31,14 +31,14 @@
 
   ! Compute gradient according to minimum time direction
   if ( present(ttgrad) ) then
-    select case (imin)
-    case (2)
+    select case(imin)
+    case(2)
       ttx(i,j) = 0.d0
       ttz(i,j) = sgntz * (tt(i,j)-tv) / dz
-    case (3)
+    case(3)
       ttx(i,j) = sgntx * (tt(i,j)-te) / dx
       ttz(i,j) = 0.d0
-    case (4)
+    case(4)
       ttx(i,j) = sgntx * (tt(i,j)-te) / dx
       ttz(i,j) = sgntz * (tt(i,j)-tv) / dz
     end select
