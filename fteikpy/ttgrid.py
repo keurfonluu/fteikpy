@@ -22,7 +22,7 @@ __all__ = [ "TTGrid" ]
 class TTGrid:
     """
     Traveltime grid.
-    
+
     Parameters
     ----------
     grid : ndarray of shape (nz, nx[, ny]) or None, default None
@@ -38,7 +38,7 @@ class TTGrid:
     ymin : int or float, default 0.
         Y axis first coordinate. Only used if grid's shape is 3.
     """
-    
+
     def __init__(self, grid = None, grid_size = None, source = None,
                  zmin = 0., xmin = 0., ymin = 0.):
         if grid is not None and not isinstance(grid, np.ndarray) \
@@ -87,11 +87,11 @@ class TTGrid:
             self._xaxis = None
             self._yaxis = None
         return
-    
+
     def get(self, zq, xq, yq = None, check = True):
         """
         Get the traveltime value given grid point coordinate.
-        
+
         Parameters
         ----------
         zq : scalar
@@ -106,12 +106,12 @@ class TTGrid:
             outside the grid (as Fortran interpolation code will try to access
             inexistent values). Disable checking if you need to call 'get'
             method a lot of times for better performance.
-            
+
         Returns
         -------
         tq : scalar or ndarray
             Traveltime value(s).
-            
+
         Notes
         -----
         The method uses velocity interpolation to estimate more accurate
@@ -131,18 +131,18 @@ class TTGrid:
                     raise ValueError("yq must be a scalar")
                 if not self._yaxis[0] <= yq <= self._yaxis[-1]:
                     raise ValueError("yq out of bounds")
-            
+
         if self._n_dim == 2:
             tq = fteik2d.interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
         elif self._n_dim == 3:
             tq = fteik3d.interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
                                  zq, xq, yq)
         return tq
-    
+
     def raytracer(self, receivers, ray_step = 1., max_ray = 10000):
         """
         A posteriori ray tracer.
-        
+
         Parameters
         ----------
         receivers : list or ndarray
@@ -151,12 +151,12 @@ class TTGrid:
             Ray stepsize (normalized).
         max_ray : int, default 1e4
             Maximum number of points to trace the ray.
-            
+
         Returns
         -------
         rays : list of Ray
             Rays from receivers to source.
-        
+
         Note
         ----
         Currently only available in 2-D.
@@ -181,20 +181,20 @@ class TTGrid:
             raise ValueError("ray_step must be positive, got %f" % ray_step)
         if not isinstance(max_ray, int) or max_ray < 3:
             raise ValueError("max_ray must be an integer greater than 2, got %d" % max_ray)
-        
+
         # Call ray tracer
         if self._n_dim == 2:
             if isinstance(receivers, (list, tuple)) or receivers.ndim == 1:
                 return self._trace_ray2d(receivers, ray_step, max_ray)
             else:
                 return [ self._trace_ray2d(receiver, ray_step, max_ray) for receiver in receivers ]
-    
+
     def _trace_ray2d(self, receiver, ray_step = 1., max_ray = 10000):
         zsrc, xsrc = self._shift(self._source) / self._grid_size
         zcur, xcur = self._shift(receiver) / self._grid_size
         nz, nx = self._grid_shape
         tt = self._grid
-        
+
         ray = [ (zcur, xcur) ]
         count = 0
         while np.sqrt((zsrc - zcur)**2+(xsrc-xcur)**2) > ray_step \
@@ -209,9 +209,9 @@ class TTGrid:
             if j == nx-1:
                 j -= 1
                 J -= 1
-            if i < 0 or I >= nz-1 or J < 0 or J >= nx-1:
+            if I < 0 or I >= nz-1 or J < 0 or J >= nx-1:
                 raise ValueError("ray out of bounds")
-            
+
             dz = zcur - I
             dx = xcur - J
             if dz > 0.5:
@@ -220,7 +220,7 @@ class TTGrid:
             if dx > 0.5:
                 j += 1
                 dx = 1. - dx
-            
+
             if (zcur-i)**2+(xcur-j)**2 < (zcur-I-0.5)**2+(xcur-J-0.5)**2:
                 if i and i < nz-1:
                     grad[0] = tt[i+1,j] - tt[i-1,j]
@@ -242,26 +242,26 @@ class TTGrid:
             grad /= np.linalg.norm(grad)
             if np.isnan(grad[0]):
                 break
-            
+
             # Compute next point
             zcur -= grad[0] * ray_step
             xcur -= grad[1] * ray_step
             zcur = np.clip(zcur, 0, nz-1)
             xcur = np.clip(xcur, 0, nx-1)
-            
+
             # Append current point and go to next
             ray.append((zcur, xcur))
             count += 1
-        
+
         if zcur != zsrc or xcur != xsrc:
             ray.append((zsrc, xsrc))
         ray_z, ray_x = (np.array(ray)*self._grid_size).transpose()
         return Ray(z = ray_z + self._zmin, x = ray_x + self._xmin)
-    
+
     def plot(self, n_levels = 20, axes = None, figsize = (10, 8), cont_kws = {}):
         """
         Plot the traveltime grid.
-        
+
         Parameters
         ----------
         n_levels : int, default 20
@@ -272,7 +272,7 @@ class TTGrid:
             Figure width and height if axes is None.
         cont_kws : dict
             Keyworded arguments passed to contour plot.
-        
+
         Returns
         -------
         ax1 : matplotlib axes
@@ -286,7 +286,7 @@ class TTGrid:
             raise ValueError("figsize must be a tuple with 2 elements")
         if not isinstance(cont_kws, dict):
             raise ValueError("cont_kws must be a dictionary")
-        
+
         if self._n_dim == 2:
             if axes is None:
                 fig = plt.figure(figsize = figsize, facecolor = "white")
@@ -297,11 +297,11 @@ class TTGrid:
             return ax1
         else:
             raise ValueError("plot unavailable for 3-D grid")
-            
+
     def save(self, filename):
         """
         Pickle the traveltime grid to a file.
-        
+
         Parameters
         ----------
         filename : str
@@ -309,11 +309,11 @@ class TTGrid:
         """
         with open(filename, "wb") as f:
             pickle.dump(self, f, protocol = pickle.HIGHEST_PROTOCOL)
-            
+
     def load(self, filename):
         """
         Unpickle a traveltime grid from a file.
-        
+
         Parameters
         ----------
         filename : str
@@ -334,20 +334,20 @@ class TTGrid:
                           zmin = tmp.zmin,
                           xmin = tmp.xmin,
                           ymin = tmp.ymin)
-            
+
     def _shift(self, coord):
         if self._n_dim == 2:
             return np.array(coord) - np.array([ self._zmin, self._xmin ])
         elif self._n_dim == 3:
             return np.array(coord) - np.array([ self._zmin, self._xmin, self._ymin ])
-    
+
     def _check_2d(self, z, x, dz, dx, nz, nx):
         zmax, xmax = (nz-1)*dz, (nx-1)*dx
         if np.logical_or(np.any(z < 0.), np.any(z > zmax)):
             raise ValueError("z out of bounds")
         if np.logical_or(np.any(x < 0.), np.any(x > xmax)):
             raise ValueError("x out of bounds")
-            
+
     def _check_3d(self, z, x, y, dz, dx, dy, nz, nx, ny):
         self._check_2d(z, x, dz, dx, nz, nx)
         ymax = (ny-1)*dy
@@ -361,11 +361,11 @@ class TTGrid:
         Traveltime grid.
         """
         return self._grid
-    
+
     @grid.setter
     def grid(self, value):
         self._grid = value
-        
+
     @property
     def grid_shape(self):
         """
@@ -373,11 +373,11 @@ class TTGrid:
         Traveltime grid's shape.
         """
         return self._grid_shape
-    
+
     @grid_shape.setter
     def grid_shape(self, value):
         self._grid_shape = value
-        
+
     @property
     def grid_size(self):
         """
@@ -385,11 +385,11 @@ class TTGrid:
         Grid size in meters.
         """
         return self._grid_size
-    
+
     @grid_size.setter
     def grid_size(self, value):
         self._grid_size = value
-        
+
     @property
     def n_dim(self):
         """
@@ -397,11 +397,11 @@ class TTGrid:
         Traveltime grid's dimension.
         """
         return self._n_dim
-    
+
     @n_dim.setter
     def n_dim(self, value):
         self._n_dim = value
-        
+
     @property
     def source(self):
         """
@@ -409,11 +409,11 @@ class TTGrid:
         Source coordinates (Z, X[, Y]).
         """
         return self._source
-    
+
     @source.setter
     def source(self, value):
         self._source = value
-        
+
     @property
     def zmin(self):
         """
@@ -421,11 +421,11 @@ class TTGrid:
         Z axis first coordinate.
         """
         return self._zmin
-    
+
     @zmin.setter
     def zmin(self, value):
         self._zmin = value
-        
+
     @property
     def xmin(self):
         """
@@ -433,11 +433,11 @@ class TTGrid:
         X axis first coordinate.
         """
         return self._xmin
-    
+
     @xmin.setter
     def xmin(self, value):
         self._xmin = value
-        
+
     @property
     def ymin(self):
         """
@@ -445,11 +445,11 @@ class TTGrid:
         Y axis first coordinate.
         """
         return self._ymin
-    
+
     @ymin.setter
     def ymin(self, value):
         self._ymin = value
-    
+
     @property
     def zaxis(self):
         """
@@ -457,11 +457,11 @@ class TTGrid:
         Z coordinates of the grid.
         """
         return self._zaxis
-    
+
     @zaxis.setter
     def zaxis(self, value):
         self._zaxis = value
-    
+
     @property
     def xaxis(self):
         """
@@ -469,11 +469,11 @@ class TTGrid:
         X coordinates of the grid.
         """
         return self._xaxis
-    
+
     @xaxis.setter
     def xaxis(self, value):
         self._xaxis = value
-    
+
     @property
     def yaxis(self):
         """
@@ -481,7 +481,7 @@ class TTGrid:
         Y coordinates of the grid.
         """
         return self._yaxis
-    
+
     @yaxis.setter
     def yaxis(self, value):
         self._yaxis = value

@@ -394,6 +394,115 @@ contains
 
   end subroutine solver2d
 
+  subroutine ray2d(ray, tt, nz, nx, zs, xs, zr, xr, dz, dx, ray_step, max_ray)
+    integer(kind = 4), intent(in) :: nz, nx, max_ray
+    real(kind = 8), intent(in) :: tt(nz,nx), zs, xs, zr, xr, dz, dx, ray_step
+    real(kind = 8), intent(out) :: ray(max_ray,2)
+    integer(kind = 4) :: count, i, j, ii, jj
+    real(kind = 8) :: zsrc, xsrc, zcur, xcur, grad(2), dzin, dxin
+
+    zsrc = zs / dz
+    xsrc = xs / dx
+    zcur = zr / dz
+    xcur = xr / dx
+
+    ray(1,:) = [ zcur, xcur ]
+    count = 2
+    do while ( sqrt( (zsrc-zcur)*(zsrc-zcur) + (xsrc-xcur)*(xsrc-xcur) ) .gt. ray_step &
+      .and. count .lt. min(max_ray-2, 2*(nz+nx)/ray_step) )
+      ! Compute gradient
+      grad = 0.d0
+      i = int(zcur) + 1
+      j = int(xcur) + 1
+      ii = i
+      jj = j
+      if ( i .eq. nz ) then
+        i = i - 1
+        ii = ii - 1
+      end if
+      if ( j .eq. nx ) then
+        j = j - 1
+        jj = jj - 1
+      end if
+      if ( ii .lt. 1 .or. ii .ge. nz .or. jj .lt. 1 .or. jj .ge. nx ) then
+        print *, "Error: ray out of bounds"
+        stop
+      end if
+
+      dzin = zcur - ii
+      dxin = xcur - jj
+      if ( dz .gt. 0.5d0 ) then
+        i = i + 1
+        dz = 1.d0 - dz
+      end if
+      if ( dx .gt. 0.5d0 ) then
+        j = j + 1
+        dx = 1.d0 - dx
+      end if
+
+      if ( ( zcur - dfloat(i) ) * ( zcur - dfloat(i) ) + ( xcur - dfloat(j) ) * ( xcur - dfloat(j) ) &
+        .lt. ( zcur - dfloat(ii) - 0.5d0 ) * ( zcur - dfloat(ii) - 0.5d0 ) &
+           + ( xcur - dfloat(jj) - 0.5d0 ) * ( xcur - dfloat(jj) - 0.5d0 ) ) then
+        if ( i .gt. 1 .and. i .lt. nz ) then
+          grad(1) = tt(i+1,j) - tt(i-1,j)
+        else if ( i .gt. 1 ) then
+          grad(1) = 2.d0 * ( tt(i,j) - tt(i-1,j) )
+        else
+          grad(1) = 2.d0 * ( tt(i+1,j) - tt(i,j) )
+        end if
+
+        if ( j .gt. 1 .and. j .lt. nx ) then
+          grad(2) = tt(i,j+1) - tt(i,j-1)
+        else if ( j .gt. 1 ) then
+          grad(2) = 2.d0 * ( tt(i,j) - tt(i,j-1) )
+        else
+          grad(2) = 2.d0 * ( tt(i,j+1) - tt(i,j) )
+        end if
+      else
+        grad(1) = tt(ii+1,jj) - tt(ii,jj) + tt(ii+1,jj+1) - tt(ii,jj+1)
+        grad(0) = tt(ii,jj+1) - tt(ii,jj) + tt(ii+1,jj+1) - tt(ii+1,jj)
+        grad = 2.d0 * grad
+      end if
+      grad = grad / sqrt(sum(grad*grad))
+      if ( isnan(grad(1)) ) exit
+
+      ! Compute next point
+      zcur = zcur - grad(1) * ray_step
+      xcur = xcur - grad(2) * ray_step
+      if ( zcur .lt. 0.d0 ) zcur = 0.d0
+      if ( zcur .gt. nz-1 ) zcur = dfloat(nz-1)
+      if ( xcur .lt. 0.d0 ) xcur = 0.d0
+      if ( xcur .ge. nx-1 ) xcur = dfloat(nx-1)
+
+      ! Append current point and go to next
+      ray(count,:) = [ zcur, xcur ]
+      count = count + 1
+    end do
+
+    if ( zcur .ne. zsrc .or. xcur .ne. xsrc ) ray(count,:) = [ zsrc, xsrc ]
+    return
+  end subroutine ray2d
+
+  subroutine raytracer2d(ray, tt, nz, nx, zs, xs, zr, xr, dz, dx, &
+    ray_step, max_ray, nrcv, n_threads)
+    integer(kind = 4), intent(in) :: nz, nx, max_ray, nrcv
+    integer(kind = 4), intent(in), optional :: n_threads
+    real(kind = 8), intent(in) :: tt(nz,nx), zs, xs, zr(nrcv), xr(nrcv), &
+      ray_step, dz, dx
+    real(kind = 8), intent(out) :: ray(nrcv,max_ray,2)
+    integer(kind = 4) :: k
+
+    if ( present(n_threads) ) call omp_set_num_threads(n_threads)
+
+    !$omp parallel default(shared)
+    !$omp do schedule(runtime)
+    do k = 1, nrcv
+      call ray2d(ray(k,:,:), tt, nz, nx, zs, xs, zr(k), xr(k), dz, dx, ray_step, max_ray)
+    end do
+    !$omp end parallel
+    return
+  end subroutine raytracer2d
+
   subroutine solve(slow, tt, nz, nx, zs, xs, dz, dx, n_sweep, nsrc, n_threads)
     integer(kind = 4), intent(in) :: nz, nx, n_sweep, nsrc
     integer(kind = 4), intent(in), optional :: n_threads
