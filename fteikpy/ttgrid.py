@@ -139,7 +139,7 @@ class TTGrid:
                                  zq, xq, yq)
         return tq
 
-    def raytracer(self, receivers, ray_step = 1., max_ray = 10000):
+    def raytracer(self, receivers, ray_step = 1., max_ray = 10000, n_threads = 1):
         """
         A posteriori ray tracer.
 
@@ -151,6 +151,8 @@ class TTGrid:
             Ray stepsize (normalized).
         max_ray : int, default 1e4
             Maximum number of points to trace the ray.
+        n_threads : int, default 1
+            Number of threads to pass to OpenMP.
 
         Returns
         -------
@@ -184,79 +186,17 @@ class TTGrid:
 
         # Call ray tracer
         if self._n_dim == 2:
+            zsrc, xsrc = self._shift(self._source)
+            zrcv, xrcv = self._shift(receivers).transpose()
+            dz, dx = self._grid_size
             if isinstance(receivers, (list, tuple)) or receivers.ndim == 1:
-                return self._trace_ray2d(receivers, ray_step, max_ray)
+                ray, npts = fteik2d.ray2d(self._grid, zsrc, xsrc, zrcv, xrcv,
+                                          dz, dx, ray_step, max_ray)
+                return Ray(z = ray[:npts,0] + self._zmin, x = ray[:npts,1] + self._xmin)
             else:
-                return [ self._trace_ray2d(receiver, ray_step, max_ray) for receiver in receivers ]
-
-    def _trace_ray2d(self, receiver, ray_step = 1., max_ray = 10000):
-        zsrc, xsrc = self._shift(self._source) / self._grid_size
-        zcur, xcur = self._shift(receiver) / self._grid_size
-        nz, nx = self._grid_shape
-        tt = self._grid
-
-        ray = [ (zcur, xcur) ]
-        count = 0
-        while np.sqrt((zsrc - zcur)**2+(xsrc-xcur)**2) > ray_step \
-            and count < min(max_ray-2, 2*(nz+nx)/ray_step):
-            # Compute gradient
-            grad = np.zeros(2)
-            i = I = int(zcur)
-            j = J = int(xcur)
-            if i == nz-1:
-                i -= 1
-                I -= 1
-            if j == nx-1:
-                j -= 1
-                J -= 1
-            if I < 0 or I >= nz-1 or J < 0 or J >= nx-1:
-                raise ValueError("ray out of bounds")
-
-            dz = zcur - I
-            dx = xcur - J
-            if dz > 0.5:
-                i += 1
-                dz = 1. - dz
-            if dx > 0.5:
-                j += 1
-                dx = 1. - dx
-
-            if (zcur-i)**2+(xcur-j)**2 < (zcur-I-0.5)**2+(xcur-J-0.5)**2:
-                if i and i < nz-1:
-                    grad[0] = tt[i+1,j] - tt[i-1,j]
-                elif i:
-                    grad[0] = 2. * (tt[i,j] - tt[i-1,j])
-                else:
-                    grad[0] = 2. * (tt[i+1,j] - tt[i,j])
-                if j and j < nx-1:
-                    grad[1] = tt[i,j+1] -  tt[i,j-1]
-                elif j:
-                    grad[1] = 2. * (tt[i,j] - tt[i,j-1])
-                else:
-                    grad[1] = 2. * (tt[i,j+1] - tt[i,j])
-            else:
-                grad[0] = tt[I+1,J] - tt[I,J] + tt[I+1,J+1] - tt[I,J+1] \
-                        + tt[I+1,J] - tt[I,J] + tt[I+1,J+1] - tt[I,J+1]
-                grad[1] = tt[I,J+1] - tt[I,J] + tt[I+1,J+1] - tt[I+1,J] \
-                        + tt[I,J+1] - tt[I,J] + tt[I+1,J+1] - tt[I+1,J]
-            grad /= np.linalg.norm(grad)
-            if np.isnan(grad[0]):
-                break
-
-            # Compute next point
-            zcur -= grad[0] * ray_step
-            xcur -= grad[1] * ray_step
-            zcur = np.clip(zcur, 0, nz-1)
-            xcur = np.clip(xcur, 0, nx-1)
-
-            # Append current point and go to next
-            ray.append((zcur, xcur))
-            count += 1
-
-        if zcur != zsrc or xcur != xsrc:
-            ray.append((zsrc, xsrc))
-        ray_z, ray_x = (np.array(ray)*self._grid_size).transpose()
-        return Ray(z = ray_z + self._zmin, x = ray_x + self._xmin)
+                rays, npts = fteik2d.raytracer2d(self._grid, zsrc, xsrc, zrcv, xrcv,
+                                                 dz, dx, ray_step, max_ray, n_threads = n_threads)
+                return [ Ray(z = ray[:n,0] + self._zmin, x = ray[:n,1] + self._xmin) for ray, n in zip(rays, npts) ]
 
     def plot(self, n_levels = 20, axes = None, figsize = (10, 8), cont_kws = {}):
         """

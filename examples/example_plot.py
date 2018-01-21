@@ -29,7 +29,7 @@ if __name__ == "__main__":
     dz, dx = 10., 10.
     
     # Compute traveltimes using a 2D Eikonal solver
-    eik = Eikonal(marmousi, grid_size = (dz, dx), n_sweep = 2)
+    eik = Eikonal(marmousi, grid_size = (dz, dx), n_sweep = 3)
     eik.smooth(5)
     tt = eik.solve(source)
     
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     nrcv = 200
     receivers = np.zeros((nrcv, 2))
     receivers[:,1] = np.linspace(4400., eik.xaxis[-1], nrcv)
-    rays = tt.raytracer(receivers, ray_step = 1., max_ray = 1000)
+    rays = tt.raytracer(receivers, ray_step = 1., max_ray = 1000, n_threads = 8)
     
     # Plot velocity model and isochrones
     fig = plt.figure(figsize = (10, 3.5), facecolor = "white")
