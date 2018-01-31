@@ -49,6 +49,13 @@ ext3 = Extension(
     f2py_options = [],
     )
 
+ext4 = Extension(
+    name = "fteikpy._bspline",
+    sources = ["fteikpy/f90/bspline.f90"],
+    extra_f90_compile_args = FFLAGS.split(),
+    extra_link_args = [ "-lgomp" ],
+    )
+
 if __name__ == "__main__":
     setup(
         name = DISTNAME,
@@ -63,5 +70,5 @@ if __name__ == "__main__":
         version = VERSION,
         packages = find_packages(),
         include_package_data = True,
-        ext_modules = [ ext1, ext2, ext3 ],
+        ext_modules = [ ext1, ext2, ext3, ext4 ],
     )
