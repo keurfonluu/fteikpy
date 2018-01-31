@@ -46,7 +46,7 @@ if __name__ == "__main__":
     
     ax = eik.xaxis
     az = eik.zaxis
-    cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100, cmap = "jet")
+    cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100)
     tt.plot(n_levels = 100, axes = ax1, cont_kws = dict(colors = "black", linewidths = 0.5))
     for ray in rays:
         ray.plot(axes = ax1, plt_kws = dict(color = "black", linewidth = 0.5))

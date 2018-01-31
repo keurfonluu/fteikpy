@@ -102,7 +102,7 @@ class TTGrid:
             Y coordinate of the grid point. yq should be None if grid is
             a 2-D array.
         check : bool
-            Check input zq, xq and yq to avoid crashes when interpolating
+            Check inputs zq, xq and yq to avoid crashes when interpolating
             outside the grid (as Fortran interpolation code will try to access
             inexistent values). Disable checking if you need to call 'get'
             method a lot of times for better performance.
@@ -183,6 +183,8 @@ class TTGrid:
             raise ValueError("ray_step must be positive, got %f" % ray_step)
         if not isinstance(max_ray, int) or max_ray < 3:
             raise ValueError("max_ray must be an integer greater than 2, got %d" % max_ray)
+        if not isinstance(n_threads, int) or n_threads < 1:
+            raise ValueError("n_threads must be atleast 1, got %s" % n_threads)
 
         # Call ray tracer
         if self._n_dim == 2:

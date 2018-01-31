@@ -172,6 +172,8 @@ class Eikonal:
                              % (self._n_dim, sources.shape[1]))
         if dtype not in [ "float32", "float64" ]:
             raise ValueError("dtype must be 'float32' or 'float64'")
+        if not isinstance(n_threads, int) or n_threads < 1:
+            raise ValueError("n_threads must be atleast 1, got %s" % n_threads)
         
         # Define src array
         if isinstance(sources, (list, tuple)) or sources.ndim == 1:
@@ -211,6 +213,14 @@ class Eikonal:
             return tt[0]
         else:
             return tt
+        
+#    def vel2spl(self, spl_shape):
+#        nz_spl, nx_spl = spl_shape
+#        zaxis = np.linspace(self._zaxis[0], self._zaxis[-1], nz_spl)
+#        xaxis = np.linspace(self._xaxis[0], self._xaxis[-1], nx_spl)
+#        fn = RegularGridInterpolator((self._zaxis, self._xaxis), self._velocity_model)
+#        Z, X = np.meshgrid(zaxis, xaxis, indexing = "ij")
+#        return fn([ [ z, x ] for z, x in zip(Z.ravel(), X.ravel()) ]).reshape(spl_shape)
     
     def _shift(self, coord):
         if self._n_dim == 2:
