@@ -51,7 +51,7 @@ if __name__ == "__main__":
     
     ax1.set_title("Marmousi")
     cb = fig.colorbar(cax)
-    cb.set_label("P-wave velocity (km/s)")
+    cb.set_label("P-wave velocity (m/s)")
     
     fig.tight_layout()
     plt.show()
