@@ -44,18 +44,12 @@ if __name__ == "__main__":
     fig.patch.set_alpha(0.)
     ax1 = fig.add_subplot(1, 1, 1)
     
-    ax = eik.xaxis
-    az = eik.zaxis
-    cax = ax1.contourf(ax, az, eik.velocity_model/1e3, 100)
+    cax = eik.plot(axes = ax1)
     tt.plot(n_levels = 100, axes = ax1, cont_kws = dict(colors = "black", linewidths = 0.5))
     for ray in rays:
         ray.plot(axes = ax1, plt_kws = dict(color = "black", linewidth = 0.5))
     
     ax1.set_title("Marmousi")
-    ax1.set_xlabel("X (m)")
-    ax1.set_ylabel("Depth (m)")
-    ax1.invert_yaxis()
-    
     cb = fig.colorbar(cax)
     cb.set_label("P-wave velocity (km/s)")
     

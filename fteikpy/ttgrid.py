@@ -191,6 +191,9 @@ class TTGrid:
             zsrc, xsrc = self._shift(self._source)
             zrcv, xrcv = self._shift(receivers).transpose()
             dz, dx = self._grid_size
+            
+            for z, x in zip(zrcv, xrcv):
+                self._check_2d(z, x)
             if isinstance(receivers, (list, tuple)) or receivers.ndim == 1:
                 ray, npts = fteik2d.ray2d(self._grid, zsrc, xsrc, zrcv, xrcv,
                                           dz, dx, ray_step, max_ray)
@@ -200,13 +203,13 @@ class TTGrid:
                                                  dz, dx, ray_step, max_ray, n_threads = n_threads)
                 return [ Ray(z = ray[:n,0] + self._zmin, x = ray[:n,1] + self._xmin) for ray, n in zip(rays, npts) ]
 
-    def plot(self, n_levels = 20, axes = None, figsize = (10, 8), cont_kws = {}):
+    def plot(self, n_levels = 100, axes = None, figsize = (10, 8), cont_kws = {}):
         """
         Plot the traveltime grid.
 
         Parameters
         ----------
-        n_levels : int, default 20
+        n_levels : int, default 100
             Number of levels for contour.
         axes : matplotlib axes or None, default None
             Axes used for plot.
@@ -217,8 +220,8 @@ class TTGrid:
 
         Returns
         -------
-        ax1 : matplotlib axes
-            Axes used for plot.
+        cax : matplotlib contour
+            Contour plot.
         """
         if not isinstance(n_levels, int) or n_levels < 1:
             raise ValueError("n_levels must be a positive integer")
@@ -235,8 +238,8 @@ class TTGrid:
                 ax1 = fig.add_subplot(1, 1, 1)
             else:
                 ax1 = axes
-            ax1.contour(self._xaxis, self._zaxis, self._grid, n_levels, **cont_kws)
-            return ax1
+            cax = ax1.contour(self._xaxis, self._zaxis, self._grid, n_levels, **cont_kws)
+            return cax
         else:
             raise ValueError("plot unavailable for 3-D grid")
 
@@ -283,17 +286,15 @@ class TTGrid:
         elif self._n_dim == 3:
             return np.array(coord) - np.array([ self._zmin, self._xmin, self._ymin ])
 
-    def _check_2d(self, z, x, dz, dx, nz, nx):
-        zmax, xmax = (nz-1)*dz, (nx-1)*dx
-        if np.logical_or(np.any(z < 0.), np.any(z > zmax)):
+    def _check_2d(self, z, x):
+        if np.logical_or(np.any(z < self._zaxis[0]), np.any(z > self._zaxis[-1])):
             raise ValueError("z out of bounds")
-        if np.logical_or(np.any(x < 0.), np.any(x > xmax)):
+        if np.logical_or(np.any(x < self._xaxis[0]), np.any(x > self._xaxis[-1])):
             raise ValueError("x out of bounds")
-
-    def _check_3d(self, z, x, y, dz, dx, dy, nz, nx, ny):
-        self._check_2d(z, x, dz, dx, nz, nx)
-        ymax = (ny-1)*dy
-        if np.logical_or(np.any(y < 0.), np.any(y > ymax)):
+            
+    def _check_3d(self, z, x, y):
+        self._check_2d(z, x)
+        if np.logical_or(np.any(y < self._yaxis[0]), np.any(y > self._yaxis[-1])):
             raise ValueError("y out of bounds")
 
     @property

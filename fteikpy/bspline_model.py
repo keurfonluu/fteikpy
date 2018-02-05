@@ -6,9 +6,10 @@ License: MIT
 """
 
 import numpy as np
+from scipy.interpolate import RegularGridInterpolator
 from ._bspline import bspline as bspl
 
-__all__ = [ "bspline1", "bspline2" ]
+__all__ = [ "bspline1", "bspline2", "vel2spl", "spl2vel" ]
 
 
 def bspline1(x, y, xq, order = 4, check = True):
@@ -118,3 +119,112 @@ def bspline2(x, y, z, xq, yq, order = 4, n_threads = 1, check = True):
         return bspl.bspline2(x, y, z, XQ, YQ, order = order, n_threads = n_threads)
     elif np.asarray(xq).ndim == 2:
         return bspl.bspline2(x, y, z, xq, yq, order = order, n_threads = n_threads)
+
+
+def vel2spl(velocity_model, spl_shape, order = 4, n_threads = 1):
+    """
+    Smooth a velocity model by undersampling and interpolating using B-splines.
+    
+    Parameters
+    ----------
+    velocity_model : ndarray of shape (nz, nx)
+        Velocity model grid in m/s.
+    spl_shape : tuple (nz_spl, nx_spl)
+        B-splines grid shape.
+    order : int, default 4
+        Order of spline. Order should be less than the number of control points
+        in both dimensions.
+    n_threads : int, default 1
+        Number of threads to pass to OpenMP.
+        
+    Returns
+    -------
+    spl : ndarray of shape (nz, nx)
+        Smoothed velocity model grid in m/s.
+        
+    Note
+    ----
+    Currently only available in 2-D.
+    """
+    # Check inputs
+    if not isinstance(velocity_model, np.ndarray) and velocity_model.ndim != 2:
+        raise ValueError("velocity_model must be a 2-D ndarray")
+    if np.any(np.array(velocity_model.shape) < 4):
+        raise ValueError("velocity_model grid shape must be at least 4")
+    if not isinstance(spl_shape, (list, tuple, np.ndarray)):
+        raise ValueError("spl_shape must be a list, tuple or ndarray")
+    if len(spl_shape) != velocity_model.ndim:
+        raise ValueError("spl_shape should be of length %d, got %d" \
+                         % (velocity_model.ndim, len(spl_shape)))
+    if np.any(np.array(spl_shape) <= 3) or not np.all([ isinstance(i, int) for i in spl_shape ]):
+        raise ValueError("elements in spl_shape must be integers greater than 3")
+    if not 2 <= order <= np.min(spl_shape):
+        raise ValueError("order should be in [ %d, %d ], got %d" % (2, np.min(spl_shape), order))
+    if not isinstance(order, int) or not isinstance(n_threads, int) or n_threads < 1:
+        raise ValueError("n_threads must be atleast 1, got %s" % n_threads)
+    
+    # Extract control points
+    nz, nx = velocity_model.shape
+    nz_spl, nx_spl = spl_shape
+    zaxis = np.arange(nz)
+    xaxis = np.arange(nx)
+    zaxis_spl = np.linspace(0, nz-1, nz_spl)
+    xaxis_spl = np.linspace(0, nx-1, nx_spl)
+    fn = RegularGridInterpolator((zaxis, xaxis), velocity_model)
+    Z, X = np.meshgrid(zaxis_spl, xaxis_spl, indexing = "ij")
+    spl = fn([ [ z, x ] for z, x in zip(Z.ravel(), X.ravel()) ]).reshape(spl_shape)
+    
+    # B-spline interpolation
+    return bspline2(xaxis_spl, zaxis_spl, spl, xaxis, zaxis, order, n_threads)
+
+
+def spl2vel(spl, grid_shape, order = 4, n_threads = 1):
+    """
+    Interpolate a velocity model described by spline nodes using B-splines.
+    
+    Parameters
+    ----------
+    spl : ndarray of shape (nz_spl, nx_spl)
+        Velocity model spline nodes in m/s.
+    grid_shape : tuple (nz, nx)
+        Output velocity model grid shape.
+    order : int, default 4
+        Order of spline. Order should be less than the number of control points
+        in both dimensions.
+    n_threads : int, default 1
+        Number of threads to pass to OpenMP.
+        
+    Returns
+    -------
+    velocity_model : ndarray of shape (nz, nx)
+        Velocity model grid in m/s.
+        
+    Note
+    ----
+    Currently only available in 2-D.
+    """
+    # Check inputs
+    if not isinstance(spl, np.ndarray) and spl.ndim != 2:
+        raise ValueError("spl must be a 2-D ndarray")
+    if np.any(np.array(spl.shape) < 4):
+        raise ValueError("spl grid shape must be at least 4")
+    if not isinstance(grid_shape, (list, tuple, np.ndarray)):
+        raise ValueError("grid_shape must be a list, tuple or ndarray")
+    if len(grid_shape) != spl.ndim:
+        raise ValueError("grid_shape should be of length %d, got %d" \
+                         % (spl.ndim, len(grid_shape)))
+    if np.any(np.array(grid_shape) <= 3) or not np.all([ isinstance(i, int) for i in grid_shape ]):
+        raise ValueError("elements in grid_shape must be integers greater than 3")
+    if not 2 <= order <= np.min(spl.shape):
+        raise ValueError("order should be in [ %d, %d ], got %d" % (2, np.min(spl.shape), order))
+    if not isinstance(order, int) or not isinstance(n_threads, int) or n_threads < 1:
+        raise ValueError("n_threads must be atleast 1, got %s" % n_threads)
+    
+    # B-spline interpolation
+    nz_spl, nx_spl = spl.shape
+    nz, nx = grid_shape
+    zaxis = np.arange(nz)
+    xaxis = np.arange(nx)
+    zaxis_spl = np.linspace(0, nz-1, nz_spl)
+    xaxis_spl = np.linspace(0, nx-1, nx_spl)
+    return bspline2(xaxis_spl, zaxis_spl, spl, xaxis, zaxis, order, n_threads)

@@ -58,11 +58,6 @@ class Ray:
             Figure width and height if axes is None.
         plt_kws : dict
             Keyworded arguments passed to plot.
-        
-        Returns
-        -------
-        ax1 : matplotlib axes
-            Axes used for plot.
         """
         if axes is not None and not isinstance(axes, Axes):
             raise ValueError("axes must be Axes")
@@ -78,7 +73,6 @@ class Ray:
             else:
                 ax1 = axes
             ax1.plot(self._x, self._z, **plt_kws)
-            return ax1
         else:
             raise ValueError("plot unavailable in 3-D")
                 

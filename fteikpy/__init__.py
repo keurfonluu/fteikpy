@@ -12,7 +12,7 @@ from .ttgrid import TTGrid
 from .eikonal import Eikonal
 from .ray import Ray
 from .layered_model import lay2vel, lay2tt
-from .bspline_model import bspline1, bspline2
+from .bspline_model import bspline1, bspline2, vel2spl, spl2vel
 
 __version__ = "1.4.3"
 __all__ = [
@@ -23,4 +23,6 @@ __all__ = [
     "lay2tt",
     "bspline1",
     "bspline2",
+    "vel2spl",
+    "spl2vel",
     ]

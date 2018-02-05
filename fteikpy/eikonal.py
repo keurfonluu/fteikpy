@@ -8,6 +8,8 @@ License: MIT
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from ._fteik2d import fteik2d
 from ._fteik3d import fteik3d
 from scipy.interpolate import RegularGridInterpolator
@@ -49,7 +51,7 @@ class Eikonal:
             self._velocity_model = np.array(velocity_model)
             self._n_dim = velocity_model.ndim
         if np.any(np.array(velocity_model.shape) < 4):
-            raise ValueError("grid shape must be at least 4")
+            raise ValueError("velocity_model grid shape must be at least 4")
         else:
             self._grid_shape = velocity_model.shape
         if not isinstance(grid_size, (list, tuple, np.ndarray)):
@@ -188,7 +190,7 @@ class Eikonal:
             dz, dx = self._grid_size
             nz, nx = self._grid_shape
             for i in range(nsrc):
-                self._check_2d(src_shift[i,0], src_shift[i,1], dz, dx, nz, nx)
+                self._check_2d(src_shift[i,0], src_shift[i,1])
             grid = fteik2d.solve(1./self._velocity_model, src_shift[:,0], src_shift[:,1],
                                  dz, dx, self._n_sweep, n_threads = n_threads)
             tt = [ TTGrid(grid = np.array(grid[:,:,i], dtype = dtype),
@@ -200,7 +202,7 @@ class Eikonal:
             dz, dx, dy = self._grid_size
             nz, nx, ny = self._grid_shape
             for i in range(nsrc):
-                self._check_3d(src[i,0], src[i,1], src[i,2], dz, dx, dy, nz, nx, ny)
+                self._check_3d(src[i,0], src[i,1], src[i,2])
             grid = fteik3d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1], src_shift[:,2],
                                  dz, dx, dy, self._n_sweep, n_threads)
             tt = [ TTGrid(grid = np.array(grid[:,:,:,i], dtype = dtype),
@@ -214,13 +216,48 @@ class Eikonal:
         else:
             return tt
         
-#    def vel2spl(self, spl_shape):
-#        nz_spl, nx_spl = spl_shape
-#        zaxis = np.linspace(self._zaxis[0], self._zaxis[-1], nz_spl)
-#        xaxis = np.linspace(self._xaxis[0], self._xaxis[-1], nx_spl)
-#        fn = RegularGridInterpolator((self._zaxis, self._xaxis), self._velocity_model)
-#        Z, X = np.meshgrid(zaxis, xaxis, indexing = "ij")
-#        return fn([ [ z, x ] for z, x in zip(Z.ravel(), X.ravel()) ]).reshape(spl_shape)
+    def plot(self, n_levels = 200, axes = None, figsize = (10, 4), cont_kws = {}):
+        """
+        Plot the velocity model.
+
+        Parameters
+        ----------
+        n_levels : int, default 200
+            Number of levels for contour.
+        axes : matplotlib axes or None, default None
+            Axes used for plot.
+        figsize : tuple, default (8, 8)
+            Figure width and height if axes is None.
+        cont_kws : dict
+            Keyworded arguments passed to contour plot.
+
+        Returns
+        -------
+        cax : matplotlib contour
+            Contour plot.
+        """
+        if not isinstance(n_levels, int) or n_levels < 1:
+            raise ValueError("n_levels must be a positive integer")
+        if axes is not None and not isinstance(axes, Axes):
+            raise ValueError("axes must be Axes")
+        if not isinstance(figsize, (list, tuple)) or len(figsize) != 2:
+            raise ValueError("figsize must be a tuple with 2 elements")
+        if not isinstance(cont_kws, dict):
+            raise ValueError("cont_kws must be a dictionary")
+
+        if self._n_dim == 2:
+            if axes is None:
+                fig = plt.figure(figsize = figsize, facecolor = "white")
+                ax1 = fig.add_subplot(1, 1, 1)
+            else:
+                ax1 = axes
+            cax = ax1.contourf(self._xaxis, self._zaxis, self._velocity_model, n_levels, **cont_kws)
+            ax1.set_xlabel("X (m)")
+            ax1.set_ylabel("Depth (m)")
+            ax1.invert_yaxis()
+            return cax
+        else:
+            raise ValueError("plot unavailable for 3-D grid")
     
     def _shift(self, coord):
         if self._n_dim == 2:
@@ -228,17 +265,15 @@ class Eikonal:
         elif self._n_dim == 3:
             return np.array(coord) - np.array([ self._zmin, self._xmin, self._ymin ])
     
-    def _check_2d(self, z, x, dz, dx, nz, nx):
-        zmax, xmax = (nz-1)*dz, (nx-1)*dx
-        if np.logical_or(np.any(z < 0.), np.any(z > zmax)):
+    def _check_2d(self, z, x):
+        if np.logical_or(np.any(z < self._zaxis[0]), np.any(z > self._zaxis[-1])):
             raise ValueError("z out of bounds")
-        if np.logical_or(np.any(x < 0.), np.any(x > xmax)):
+        if np.logical_or(np.any(x < self._xaxis[0]), np.any(x > self._xaxis[-1])):
             raise ValueError("x out of bounds")
             
-    def _check_3d(self, z, x, y, dz, dx, dy, nz, nx, ny):
-        self._check_2d(z, x, dz, dx, nz, nx)
-        ymax = (ny-1)*dy
-        if np.logical_or(np.any(y < 0.), np.any(y > ymax)):
+    def _check_3d(self, z, x, y):
+        self._check_2d(z, x)
+        if np.logical_or(np.any(y < self._yaxis[0]), np.any(y > self._yaxis[-1])):
             raise ValueError("y out of bounds")
             
     @property
