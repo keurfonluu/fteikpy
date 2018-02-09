@@ -133,9 +133,9 @@ class TTGrid:
                     raise ValueError("yq out of bounds")
 
         if self._n_dim == 2:
-            tq = fteik2d.interp2(self._source, self._zaxis, self._xaxis, self._grid, zq, xq)
+            tq = fteik2d.interp2(self._zaxis, self._xaxis, self._grid, zq, xq)
         elif self._n_dim == 3:
-            tq = fteik3d.interp3(self._source, self._zaxis, self._xaxis, self._yaxis, self._grid,
+            tq = fteik3d.interp3(self._zaxis, self._xaxis, self._yaxis, self._grid,
                                  zq, xq, yq)
         return tq
 
@@ -192,13 +192,14 @@ class TTGrid:
             zrcv, xrcv = self._shift(receivers).transpose()
             dz, dx = self._grid_size
             
-            for z, x in zip(zrcv, xrcv):
-                self._check_2d(z, x)
             if isinstance(receivers, (list, tuple)) or receivers.ndim == 1:
+                self._check_2d(zsrc, xsrc)
                 ray, npts = fteik2d.ray2d(self._grid, zsrc, xsrc, zrcv, xrcv,
                                           dz, dx, ray_step, max_ray)
                 return Ray(z = ray[:npts,0] + self._zmin, x = ray[:npts,1] + self._xmin)
             else:
+                for z, x in zip(zrcv, xrcv):
+                    self._check_2d(z, x)
                 rays, npts = fteik2d.raytracer2d(self._grid, zsrc, xsrc, zrcv, xrcv,
                                                  dz, dx, ray_step, max_ray, n_threads = n_threads)
                 return [ Ray(z = ray[:n,0] + self._zmin, x = ray[:n,1] + self._xmin) for ray, n in zip(rays, npts) ]

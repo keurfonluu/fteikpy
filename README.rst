@@ -10,7 +10,7 @@ a different grid spacing in Z, X and Y directions. The algorithm handles
 properly the curvature of wavefronts close to the source. The source can be
 placed without any problem between grid points.
 
-:Version: 1.4.3
+:Version: 1.4.4
 :Author: Mark Noble
 :Maintainer: Keurfon Luu
 :Web site: https://github.com/keurfonluu/fteikpy

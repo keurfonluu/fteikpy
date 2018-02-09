@@ -530,88 +530,153 @@ contains
     return
   end subroutine solve
 
-  function interp2(source, x, y, v, xq, yq) result(vq)
+  function interp2(x, y, v, xq, yq) result(vq)
     real(kind = 8) :: vq
     real(kind = 8), intent(in) :: xq, yq
-    real(kind = 8), dimension(:), intent(in) :: source, x, y
+    real(kind = 8), dimension(:), intent(in) :: x, y
     real(kind = 8), dimension(:,:), intent(in) :: v
     integer(kind = 4) :: nx, ny, i1, i2, j1, j2
-    real(kind = 8) :: N(4), ax(4), ay(4), av(4), ad(4)
-    real(kind = 8) :: x1, x2, y1, y2, v11, v21, v12, v22, d11, d21, d12, d22
+    real(kind = 8) :: x1, x2, y1, y2, v11, v21, v12, v22
+    real(kind = 8) :: N(4), ax(4), ay(4), av(4)
 
-    if ( all(source .eq. [ xq, yq ])) then
-      vq = 0.
+    nx = size(v, 1)
+    ny = size(v, 2)
+    i1 = minloc(xq - x, dim = 1, mask = xq .ge. x)
+    j1 = minloc(yq - y, dim = 1, mask = yq .ge. y)
+    i2 = i1 + 1
+    j2 = j1 + 1
+
+    if ( i1 .eq. nx .and. j1 .ne. ny ) then
+      x1 = x(i1)
+      x2 = 2.d0 * x1 - x(nx-1)
+      y1 = y(j1)
+      y2 = y(j2)
+      v11 = v(i1,j1)
+      v21 = 0.d0
+      v12 = v(i1,j2)
+      v22 = 0.d0
+    else if ( i1 .ne. nx .and. j1 .eq. ny ) then
+      x1 = x(i1)
+      x2 = x(i2)
+      y1 = y(j1)
+      y2 = 2.d0 * y1 - y(ny-1)
+      v11 = v(i1,j1)
+      v21 = v(i2,j1)
+      v12 = 0.d0
+      v22 = 0.d0
+    else if ( i1 .eq. nx .and. j1 .eq. ny ) then
+      x1 = x(i1)
+      x2 = 2.d0 * x1 - x(nx-1)
+      y1 = y(j1)
+      y2 = 2.d0 * y1 - y(ny-1)
+      v11 = v(i1,j1)
+      v21 = 0.d0
+      v12 = 0.d0
+      v22 = 0.d0
     else
-      nx = size(v, 1)
-      ny = size(v, 2)
-      i1 = minloc(xq - x, dim = 1, mask = xq .ge. x)
-      j1 = minloc(yq - y, dim = 1, mask = yq .ge. y)
-      i2 = i1 + 1
-      j2 = j1 + 1
-
-      if ( i1 .eq. nx .and. j1 .ne. ny ) then
-        x1 = x(i1)
-        x2 = 2.d0 * x1 - x(nx-1)
-        y1 = y(j1)
-        y2 = y(j2)
-        d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
-        d21 = 0.d0
-        d12 = dsqrt( sum( ( source - [x1,y2] ) * ( source - [x1,y2] ) ) )
-        d22 = 0.d0
-        v11 = v(i1,j1)
-        v21 = 1.d0
-        v12 = v(i1,j2)
-        v22 = 1.d0
-      else if ( i1 .ne. nx .and. j1 .eq. ny ) then
-        x1 = x(i1)
-        x2 = x(i2)
-        y1 = y(j1)
-        y2 = 2.d0 * y1 - y(ny-1)
-        d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
-        d21 = dsqrt( sum( ( source - [x2,y1] ) * ( source - [x2,y1] ) ) )
-        d12 = 0.d0
-        d22 = 0.d0
-        v11 = v(i1,j1)
-        v21 = v(i2,j1)
-        v12 = 1.d0
-        v22 = 1.d0
-      else if ( i1 .eq. nx .and. j1 .eq. ny ) then
-        x1 = x(i1)
-        x2 = 2.d0 * x1 - x(nx-1)
-        y1 = y(j1)
-        y2 = 2.d0 * y1 - y(ny-1)
-        d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
-        d21 = 0.d0
-        d12 = 0.d0
-        d22 = 0.d0
-        v11 = v(i1,j1)
-        v21 = 1.d0
-        v12 = 1.d0
-        v22 = 1.d0
-      else
-        x1 = x(i1)
-        x2 = x(i2)
-        y1 = y(j1)
-        y2 = y(j2)
-        d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
-        d21 = dsqrt( sum( ( source - [x2,y1] ) * ( source - [x2,y1] ) ) )
-        d12 = dsqrt( sum( ( source - [x1,y2] ) * ( source - [x1,y2] ) ) )
-        d22 = dsqrt( sum( ( source - [x2,y2] ) * ( source - [x2,y2] ) ) )
-        v11 = v(i1,j1)
-        v21 = v(i2,j1)
-        v12 = v(i1,j2)
-        v22 = v(i2,j2)
-      end if
-
-      ax = [ x2, x1, x2, x1 ]
-      ay = [ y2, y2, y1, y1 ]
-      av = [ v11, v21, v12, v22 ]
-      ad = [ d11, d21, d12, d22 ]
-      N = dabs( (ax - xq) * (ay - yq) ) / dabs( (x2 - x1) * (y2 - y1) )
-      vq = dsqrt( sum( ( source - [xq,yq] ) * ( source - [xq,yq] ) ) ) / dot_product(ad / av, N)
+      x1 = x(i1)
+      x2 = x(i2)
+      y1 = y(j1)
+      y2 = y(j2)
+      v11 = v(i1,j1)
+      v21 = v(i2,j1)
+      v12 = v(i1,j2)
+      v22 = v(i2,j2)
     end if
+
+    ax = [ x2, x1, x2, x1 ]
+    ay = [ y2, y2, y1, y1 ]
+    av = [ v11, v21, v12, v22 ]
+    N = dabs( (ax - xq) * (ay - yq) ) / dabs( (x2 - x1) * (y2 - y1) )
+    vq = dot_product(av, N)
     return
   end function interp2
+
+  ! Apparent velocity interpolation: returns NaN when query point is
+  ! near source (within [zsrc-dz, zsrc], [xsrc-dx, xsrc]) as traveltime
+  ! at source is zero. Commented until fixed.
+  ! function interp2(source, x, y, v, xq, yq) result(vq)
+  !   real(kind = 8) :: vq
+  !   real(kind = 8), intent(in) :: xq, yq
+  !   real(kind = 8), dimension(:), intent(in) :: source, x, y
+  !   real(kind = 8), dimension(:,:), intent(in) :: v
+  !   integer(kind = 4) :: nx, ny, i1, i2, j1, j2
+  !   real(kind = 8) :: N(4), ax(4), ay(4), av(4), ad(4)
+  !   real(kind = 8) :: x1, x2, y1, y2, v11, v21, v12, v22, d11, d21, d12, d22
+  !
+  !   if ( all(source .eq. [ xq, yq ]) ) then
+  !     vq = 0.d0
+  !   else
+  !     nx = size(v, 1)
+  !     ny = size(v, 2)
+  !     i1 = minloc(xq - x, dim = 1, mask = xq .ge. x)
+  !     j1 = minloc(yq - y, dim = 1, mask = yq .ge. y)
+  !     i2 = i1 + 1
+  !     j2 = j1 + 1
+  !
+  !     if ( i1 .eq. nx .and. j1 .ne. ny ) then
+  !       x1 = x(i1)
+  !       x2 = 2.d0 * x1 - x(nx-1)
+  !       y1 = y(j1)
+  !       y2 = y(j2)
+  !       d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+  !       d21 = 0.d0
+  !       d12 = dsqrt( sum( ( source - [x1,y2] ) * ( source - [x1,y2] ) ) )
+  !       d22 = 0.d0
+  !       v11 = v(i1,j1)
+  !       v21 = 1.d0
+  !       v12 = v(i1,j2)
+  !       v22 = 1.d0
+  !     else if ( i1 .ne. nx .and. j1 .eq. ny ) then
+  !       x1 = x(i1)
+  !       x2 = x(i2)
+  !       y1 = y(j1)
+  !       y2 = 2.d0 * y1 - y(ny-1)
+  !       d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+  !       d21 = dsqrt( sum( ( source - [x2,y1] ) * ( source - [x2,y1] ) ) )
+  !       d12 = 0.d0
+  !       d22 = 0.d0
+  !       v11 = v(i1,j1)
+  !       v21 = v(i2,j1)
+  !       v12 = 1.d0
+  !       v22 = 1.d0
+  !     else if ( i1 .eq. nx .and. j1 .eq. ny ) then
+  !       x1 = x(i1)
+  !       x2 = 2.d0 * x1 - x(nx-1)
+  !       y1 = y(j1)
+  !       y2 = 2.d0 * y1 - y(ny-1)
+  !       d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+  !       d21 = 0.d0
+  !       d12 = 0.d0
+  !       d22 = 0.d0
+  !       v11 = v(i1,j1)
+  !       v21 = 1.d0
+  !       v12 = 1.d0
+  !       v22 = 1.d0
+  !     else
+  !       x1 = x(i1)
+  !       x2 = x(i2)
+  !       y1 = y(j1)
+  !       y2 = y(j2)
+  !       d11 = dsqrt( sum( ( source - [x1,y1] ) * ( source - [x1,y1] ) ) )
+  !       d21 = dsqrt( sum( ( source - [x2,y1] ) * ( source - [x2,y1] ) ) )
+  !       d12 = dsqrt( sum( ( source - [x1,y2] ) * ( source - [x1,y2] ) ) )
+  !       d22 = dsqrt( sum( ( source - [x2,y2] ) * ( source - [x2,y2] ) ) )
+  !       v11 = v(i1,j1)
+  !       v21 = v(i2,j1)
+  !       v12 = v(i1,j2)
+  !       v22 = v(i2,j2)
+  !     end if
+  !
+  !     ax = [ x2, x1, x2, x1 ]
+  !     ay = [ y2, y2, y1, y1 ]
+  !     av = [ v11, v21, v12, v22 ]
+  !     ad = [ d11, d21, d12, d22 ]
+  !     N = dabs( (ax - xq) * (ay - yq) ) / dabs( (x2 - x1) * (y2 - y1) )
+  !     vq = dsqrt( sum( ( source - [xq,yq] ) * ( source - [xq,yq] ) ) ) / dot_product(ad / av, N)
+  !   end if
+  !   return
+  ! end function interp2
 
   function lay2tt(slow, nz, nx, dz, dx, zs, xs, ys, zr, xr, yr, &
                     n_sweep, nsrc, nrcv, n_threads) result(tt)
@@ -654,7 +719,7 @@ contains
       call solver2d(slow(:,:nmax), tmp, nz, nmax, src(i,3), 0.d0, dz, dx, n_sweep)
       do j = 1, n2
         dhorz = dsqrt( sum( ( src(i,1:2) - rcv(j,1:2) ) * ( src(i,1:2) - rcv(j,1:2) ) ) )
-        tcalc(j,i) = interp2([ 0.d0, src(i,3) ], az, ax, tmp, rcv(j,3), dhorz)
+        tcalc(j,i) = interp2(az, ax, tmp, rcv(j,3), dhorz)
       end do
       deallocate(tmp)
     end do

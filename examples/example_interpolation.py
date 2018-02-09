@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Parameters
     nz, nx = 100, 100
     dz, dx = 1., 1.
-    source = ( 50., 50. )
+    source = ( 20., 20. )
     velocity = 1500.
     
     # Analytical solution
