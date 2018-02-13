@@ -24,12 +24,12 @@ except ImportError:
 if __name__ == "__main__":
     # Parameters
     source = ( 0., 0. )
-    marmousi = pickle.load(open("marmousi.pickle", "rb"))
+    marmousi = pickle.load(open("marmousi.pickle", "rb"))[51:,:]
     nz, nx = marmousi.shape
     dz, dx = 10., 10.
     
     # Compute traveltimes using a 2D Eikonal solver
-    eik = Eikonal(marmousi[50:,:], grid_size = (dz, dx), n_sweep = 3)
+    eik = Eikonal(marmousi, grid_size = (dz, dx), n_sweep = 3)
     eik.smooth(50)
     tt = eik.solve(source)
     
