@@ -126,7 +126,7 @@ class Eikonal:
             self._xaxis = self._xmin + self._grid_size[1] * np.arange(self._grid_shape[1])
             self._yaxis = self._ymin + self._grid_size[2] * np.arange(self._grid_shape[2])
     
-    def smooth(self, sigma, mode = "reflect", cval = 0., truncate = 4.):
+    def smooth(self, sigma):
         """
         Smooth velocity model. This method uses SciPy's gaussian_filter
         function.
@@ -134,12 +134,29 @@ class Eikonal:
         Parameters
         ----------
         sigma : int, float or tuple
-            Standard deviation for Gaussian kernel. The standard deviations of
-            the Gaussian filter are given for each axis as a sequence, or as a
-            single number, in which case it is equal for all axes.
+            Standard deviation in meters for Gaussian kernel. The standard
+            deviations of the Gaussian filter are given for each axis as a
+            sequence, or as a single number, in which case it is equal for all
+            axes.
         """
-        self._velocity_model = gaussian_filter(self._velocity_model, sigma)
+        # Check inputs
+        if not isinstance(sigma, (int, float, list, tuple)):
+            raise ValueError("sigma must be a scalar or a tuple")
+        if isinstance(sigma, (int, float)) and sigma < 0.:
+            raise ValueError("sigma must be positive")
+        elif isinstance(sigma, (list, tuple)):
+            if len(sigma) != self._n_dim:
+                raise ValueError("sigma must be a scalar or a tuple of length %d" % self._n_dim)
+            if np.any(np.array(sigma) < 0.):
+                raise ValueError("elements in sigma must be positive")
             
+        # Gaussian filtering
+        if isinstance(sigma, (int, float)):
+            npts = np.full(self._n_dim, sigma) / self._grid_size
+        else:
+            npts = np.array(sigma) / self._grid_size
+        self._velocity_model = gaussian_filter(self._velocity_model, npts)
+        
     def solve(self, sources, dtype = "float32", n_threads = 1):
         """
         Compute the traveltime grid associated to a source point.

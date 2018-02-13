@@ -29,8 +29,8 @@ if __name__ == "__main__":
     dz, dx = 10., 10.
     
     # Compute traveltimes using a 2D Eikonal solver
-    eik = Eikonal(marmousi, grid_size = (dz, dx), n_sweep = 3)
-    eik.smooth(5)
+    eik = Eikonal(marmousi[50:,:], grid_size = (dz, dx), n_sweep = 3)
+    eik.smooth(50)
     tt = eik.solve(source)
     
     # Trace ray from receivers to source
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     fig.patch.set_alpha(0.)
     ax1 = fig.add_subplot(1, 1, 1)
     
-    cax = eik.plot(axes = ax1)
+    cax = eik.plot(axes = ax1, cont_kws = dict(cmap = "viridis"))
     tt.plot(n_levels = 100, axes = ax1, cont_kws = dict(colors = "black", linewidths = 0.5))
     for ray in rays:
         ray.plot(axes = ax1, plt_kws = dict(color = "black", linewidth = 0.5))
