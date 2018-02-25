@@ -118,7 +118,7 @@ class Eikonal:
             xaxis = np.linspace(self._xmin, self._xaxis[-1], new_shape[1])
             yaxis = np.linspace(self._ymin, self._yaxis[-1], new_shape[2])
             Z, X, Y = np.meshgrid(zaxis, xaxis, yaxis, indexing = "ij")
-            cz, cx, cy = [ new / (old+1) for new, old in zip(new_shape, self._grid_shape) ]
+            cz, cx, cy = [ new / old for new, old in zip(new_shape, self._grid_shape) ]
             self._velocity_model = fn([ [ z, x, y ] for z, x, y in zip(Z.ravel(), X.ravel(), Y.ravel()) ]).reshape(new_shape)
             self._grid_shape = new_shape
             self._grid_size = (self._grid_size[0] / cz, self._grid_size[1] / cx, self._grid_size[2] / cy)
@@ -210,24 +210,24 @@ class Eikonal:
                 self._check_2d(src_shift[i,0], src_shift[i,1])
             grid = fteik2d.solve(1./self._velocity_model, src_shift[:,0], src_shift[:,1],
                                  dz, dx, self._n_sweep, n_threads = n_threads)
-            tt = [ TTGrid(grid = np.array(grid[:,:,i], dtype = dtype),
-                          source = src[i,:],
+            tt = [ TTGrid(grid = np.array(g, dtype = dtype),
+                          source = s,
                           grid_size = self._grid_size,
                           zmin = self._zmin,
-                          xmin = self._xmin) for i in range(nsrc) ]
-        elif len(self._grid_shape) == 3:
+                          xmin = self._xmin) for g, s in zip(grid, src) ]
+        elif self._n_dim == 3:
             dz, dx, dy = self._grid_size
             nz, nx, ny = self._grid_shape
             for i in range(nsrc):
                 self._check_3d(src[i,0], src[i,1], src[i,2])
-            grid = fteik3d.solve(self._velocity_model, src_shift[:,0], src_shift[:,1], src_shift[:,2],
-                                 dz, dx, dy, self._n_sweep, n_threads)
-            tt = [ TTGrid(grid = np.array(grid[:,:,:,i], dtype = dtype),
-                          source = src[i,:],
+            grid = fteik3d.solve(1./self._velocity_model, src_shift[:,0], src_shift[:,1], src_shift[:,2],
+                                 dz, dx, dy, self._n_sweep, n_threads = n_threads)
+            tt = [ TTGrid(grid = np.array(g, dtype = dtype),
+                          source = s,
                           grid_size = self._grid_size,
                           zmin = self._zmin,
                           xmin = self._xmin,
-                          ymin = self._ymin) for i in range(nsrc) ]
+                          ymin = self._ymin) for g, s in zip(grid, src) ]
         if isinstance(sources, (list, tuple)) or sources.ndim == 1:
             return tt[0]
         else:

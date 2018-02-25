@@ -47,7 +47,7 @@ if __name__ == "__main__":
     
     # Eikonal 3D
     start_time = time.time()
-    eik3d = Eikonal(vel3d, (dz, dx, dy), n_sweep = 1)
+    eik3d = Eikonal(vel3d, (dz, dx, dy), n_sweep = 2)
     tt = eik3d.solve(sources, n_threads = n_threads)
     tcalc_eik3d = np.array([ [ grid.get(z, x, y, check = False) for z, x, y in receivers ]
                                 for grid in tt ]).transpose()

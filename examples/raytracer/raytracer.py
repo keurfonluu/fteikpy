@@ -86,7 +86,7 @@ class Ray3D:
         self._rotate()
             
         # Invert for the take-off angle
-        iopt, gfit = fminbnd(self._costfunc, 0., 180., eps = 1e-6, args = (V, H))
+        iopt, gfit = fminbnd(self._costfunc, 0., 180., eps = 1e-16, args = (V, H))
         
         # Shoot with optimal take-off angle...
         self.positions[:,0] = self._shoot(iopt, V, H)

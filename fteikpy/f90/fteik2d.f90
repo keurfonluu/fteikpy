@@ -12,7 +12,11 @@ module fteik2d
   implicit none
 
   integer(kind = 4), parameter :: nmax = 15000
-  real(kind = 8), parameter :: Big = 99999.d0, zerr = 1.d-4
+  integer(kind = 4), parameter :: scheme = 2
+  integer(kind = 4), parameter :: epsin = 5
+  real(kind = 8), parameter :: zerr = 1.d-4
+  real(kind = 8), parameter :: Big = 99999.d0
+  logical, parameter :: perturbation = .true.
 
 contains
 
@@ -23,23 +27,20 @@ contains
     integer(kind = 4), intent(in) :: nz, nx, n_sweep
     real(kind = 8), intent(in) :: zsrc, xsrc, dz, dx
 
-    integer(kind = 4) :: imin, i, j, kk, i1, j1, ierr, iflag
+    integer(kind = 4) :: imin, i, j, kk, i1, j1, iflag
     integer(kind = 4) :: zsi, xsi
     integer(kind = 4) :: sgntz, sgntx, sgnvz, sgnvx
 
     real(kind = 8) :: ttz(nz,nx), ttx(nz,nx)
-    real(kind = 8) :: t1d1, t1d2, time_sol(4), td(nmax)
-    real(kind = 8) :: dzu, dzd, dxw, dxe
     real(kind = 8) :: zsa, xsa
+    real(kind = 8) :: tzc, txc
     real(kind = 8) :: vzero, vref
-    real(kind = 8) :: t1d, t2d, t1, t2, t3, tdiag, ta, tb
+    real(kind = 8) :: dzu, dzd, dxw, dxe
     real(kind = 8) :: tv, te, tev
-    real(kind = 8) :: tauv, taue, tauev
-    real(kind = 8) :: dzi, dxi, dz2i, dx2i, dsum, dz2dx2
+    real(kind = 8) :: t0c, td(nmax), ta, tb, tauv, taue, tauev
+    real(kind = 8) :: dzi, dxi, dz2i, dx2i
     real(kind = 8) :: sgnrz, sgnrx
-    real(kind = 8) :: t0c, tzc, txc
     real(kind = 8) :: apoly, bpoly, cpoly, dpoly
-    integer(kind = 4) :: epsin = 5
 
     ! Check inputs
     if ( nz .lt. 3 .or. nx .lt. 3 ) stop "Error: grid size nz, nx too small"
@@ -120,7 +121,6 @@ contains
       td = Big
       td(xsi+1) = vzero * dxe * dx
       dx2i = 1.d0 / (dx*dx)
-
       do j = xsi+2, nx
         vref = slow(zsi,j-1)
         td(j) = td(j-1) + dx * vref
@@ -291,68 +291,10 @@ contains
       end do
     end select
 
-    ! Precalculate constants
-    dzi = 1.d0 / dz
-    dxi = 1.d0 / dx
-    dz2i = 1.d0 / (dz*dz)
-    dx2i = 1.d0 / (dx*dx)
-    dsum = dz2i + dx2i
-    dz2dx2 = dz2i * dx2i
-
-    ! Ready to do at least one global sweep
+    ! Full sweeps
     do kk = 1, n_sweep
-      ! First sweeping: Top->Bottom ; West->East
-      sgntz = 1
-      sgntx = 1
-      sgnvz = 1
-      sgnvx = 1
-      sgnrz = dfloat(sgntz)
-      sgnrx = dfloat(sgntx)
-      do j = 2, nx
-        do i = 2, nz
-          include "Include_FTeik2d_grad.f"
-        end do
-      end do
-
-      ! Second sweeping: Top->Bottom ; East->West
-      sgntz = 1
-      sgntx = -1
-      sgnvz = 1
-      sgnvx = 0
-      sgnrz = dfloat(sgntz)
-      sgnrx = dfloat(sgntx)
-      do j = nx-1, 1, -1
-        do i = 2, nz
-          include "Include_FTeik2d_grad.f"
-        end do
-      end do
-
-      ! Third sweep: Bottom->Top ; West->East
-      sgntz = -1
-      sgntx = 1
-      sgnvz = 0
-      sgnvx = 1
-      sgnrz = dfloat(sgntz)
-      sgnrx = dfloat(sgntx)
-      do j = 2, nx
-        do i = nz-1, 1, -1
-          include "Include_FTeik2d_grad.f"
-        end do
-      end do
-
-      ! Fourth sweeping: Bottom->Top ; East->West
-      sgntz = -1
-      sgntx = -1
-      sgnvz = 0
-      sgnvx = 0
-      sgnrz = dfloat(sgntz)
-      sgnrx = dfloat(sgntx)
-      do j = nx-1, 1, -1
-        do i = nz-1, 1, -1
-          include "Include_FTeik2d_grad.f"
-        end do
-      end do
-
+      call sweep2d(scheme, slow, tt, ttz, ttx, nz, nx, dz, dx, &
+                   zsi, xsi, tzc, txc, zsa, xsa, vzero)
     end do
 
     if ( present(ttgrad) ) then
@@ -362,7 +304,7 @@ contains
     return
   contains
 
-    ! Functions to calculate analytical times in homgenous model
+    ! Function to calculate analytical times in homogeneous model
     real(kind = 8) function t_ana(i, j, dz, dx, zsa, xsa, vzero)
       integer(kind = 4), intent(in) :: i, j
       real(kind = 8), intent(in) :: dz, dx, zsa, xsa, vzero
@@ -372,15 +314,15 @@ contains
       return
     end function t_ana
 
-    ! Functions to calculate analytical times in homgenous model + derivatives of times
+    ! Function to calculate analytical times in homogeneous model + derivatives of times
     real(kind = 8) function t_anad(tzc, txc, i, j, dz, dx, zsa, xsa, vzero)
       integer(kind = 4), intent(in) :: i, j
       real(kind = 8), intent(in) :: dz, dx, zsa, xsa, vzero
       real(kind = 8) :: d0
       real(kind = 8), intent(out) :: tzc, txc
 
-      d0 = ( ( dfloat(i) - zsa ) *dz )**2.d0 &
-           + ( ( dfloat(j) - xsa ) *dx )**2.d0
+      d0 = ( ( dfloat(i) - zsa ) * dz )**2.d0 &
+           + ( ( dfloat(j) - xsa ) * dx )**2.d0
       t_anad = vzero * (d0**0.5d0)
       if ( d0 .gt. 0.d0 ) then
         tzc = ( d0**(-0.5d0) ) * ( dfloat(i) - zsa ) * dz * vzero
@@ -391,6 +333,100 @@ contains
       end if
       return
     end function t_anad
+
+    ! Function to perform sweep
+    subroutine sweep2d(scheme, slow, tt, ttz, ttx, nz, nx, dz, dx, &
+                       zsi, xsi, tzc, txc, zsa, xsa, vzero)
+      real(kind = 8), intent(in) :: slow(nz,nx)
+      real(kind = 8), intent(inout) :: tt(nz,nx), ttz(nz,nx), ttx(nz,nx)
+      integer(kind = 4), intent(in) :: scheme, nz, nx, zsi, xsi
+      real(kind = 8), intent(in) :: dz, dx, zsa, xsa, vzero
+      real(kind = 8), intent(inout) :: tzc, txc
+      integer(kind = 4) :: i, j, sgntz, sgntx, sgnvz, sgnvx
+      integer(kind = 4) :: i1, j1, imin
+      real(kind = 8) :: dzi, dxi, dz2i, dx2i
+      real(kind = 8) :: vref, time_sol(4)
+      real(kind = 8) :: tv, te, tev
+      real(kind = 8) :: t2d, t1, t2, t3
+      real(kind = 8) :: t1d1, t1d2
+      real(kind = 8) :: apoly, bpoly, cpoly, dpoly
+      real(kind = 8) :: t0c, ta, tb, tauv, taue, tauev
+
+      ! Precalculate constants
+      dzi = 1.d0 / dz
+      dxi = 1.d0 / dx
+      dz2i = 1.d0 / (dz*dz)
+      dx2i = 1.d0 / (dx*dx)
+
+      select case(scheme)
+      ! Standard sweeping scheme
+      case(1)
+        ! First sweeping: Top->Bottom ; West->East
+        sgntz = 1 ; sgntx = 1
+        sgnvz = 1 ; sgnvx = 1
+        do j = 2, nx
+          do i = 2, nz
+            include "Include_FTeik2d.f"
+          end do
+        end do
+
+        ! Second sweeping: Top->Bottom ; East->West
+        sgntz = 1 ; sgntx = -1
+        sgnvz = 1 ; sgnvx = 0
+        do j = nx-1, 1, -1
+          do i = 2, nz
+            include "Include_FTeik2d.f"
+          end do
+        end do
+
+        ! Third sweep: Bottom->Top ; West->East
+        sgntz = -1 ; sgntx = 1
+        sgnvz = 0 ; sgnvx = 1
+        do j = 2, nx
+          do i = nz-1, 1, -1
+            include "Include_FTeik2d.f"
+          end do
+        end do
+
+        ! Fourth sweeping: Bottom->Top ; East->West
+        sgntz = -1 ; sgntx = -1
+        sgnvz = 0 ; sgnvx = 0
+        do j = nx-1, 1, -1
+          do i = nz-1, 1, -1
+            include "Include_FTeik2d.f"
+          end do
+        end do
+
+      ! New sweeping scheme
+      case(2)
+        sgntx = 1 ; sgnvx = 1
+        do j = 2, nx
+          sgntz = 1 ; sgnvz = 1
+          do i = 2, nz
+            include "Include_FTeik2d.f"
+          end do
+
+          sgntz= -1 ; sgnvz = 0
+          do i = nz-1, 1, -1
+            include "Include_FTeik2d.f"
+          end do
+        end do
+
+        sgntx = -1 ; sgnvx = 0
+        do j = nx-1, 1, -1
+          sgntz = 1 ; sgnvz = 1
+          do i = 2, nz
+            include "Include_FTeik2d.f"
+          end do
+
+          sgntz = -1 ; sgnvz = 0
+          do i = nz-1, 1, -1
+            include "Include_FTeik2d.f"
+          end do
+        end do
+      end select
+      return
+    end subroutine sweep2d
 
   end subroutine solver2d
 
@@ -516,7 +552,7 @@ contains
     integer(kind = 4), intent(in) :: nz, nx, n_sweep, nsrc
     integer(kind = 4), intent(in), optional :: n_threads
     real(kind = 8), intent(in) :: slow(nz,nx), zs(nsrc), xs(nsrc), dz, dx
-    real(kind = 8), intent(out) :: tt(nz, nx, nsrc)
+    real(kind = 8), intent(out) :: tt(nsrc,nz,nx)
     integer(kind = 4) :: k
 
     if ( present(n_threads) ) call omp_set_num_threads(n_threads)
@@ -524,7 +560,7 @@ contains
     !$omp parallel default(shared)
     !$omp do schedule(runtime)
     do k = 1, nsrc
-      call solver2d(slow, tt(:,:,k), nz, nx, zs(k), xs(k), dz, dx, n_sweep)
+      call solver2d(slow, tt(k,:,:), nz, nx, zs(k), xs(k), dz, dx, n_sweep)
     end do
     !$omp end parallel
     return
@@ -678,8 +714,59 @@ contains
   !   return
   ! end function interp2
 
-  function lay2tt(slow, nz, nx, dz, dx, zs, xs, ys, zr, xr, yr, &
+  function slow2tt2(slow, nz, nx, dz, dx, zs, xs, zr, xr, &
                     n_sweep, nsrc, nrcv, n_threads) result(tt)
+    real(kind = 8) :: tt(nrcv,nsrc)
+    integer(kind = 4), intent(in) :: nz, nx, n_sweep, nsrc, nrcv
+    integer(kind = 4), intent(in), optional :: n_threads
+    real(kind = 8), intent(in) :: slow(nz,nx), dz, dx, zs(nsrc), xs(nsrc), &
+      zr(nrcv), xr(nrcv)
+    integer(kind = 4) :: i, j, k, n1, n2
+    real(kind = 8), dimension(:), allocatable :: ax, az
+    real(kind = 8), dimension(:,:), allocatable :: tmp, tcalc, rcv, src
+
+    if ( present(n_threads) ) call omp_set_num_threads(n_threads)
+
+    ! Switch sources and stations to minimize calls to eikonals
+    n1 = min(nrcv, nsrc)
+    n2 = max(nrcv, nsrc)
+    if ( n1 .eq. nsrc ) then
+      rcv = reshape([ zr, xr ], shape = [ n2, 2 ], order = [ 1, 2 ])
+      src = reshape([ zs, xs ], shape = [ n1, 2 ], order = [ 1, 2 ])
+    else
+      rcv = reshape([ zs, xs ], shape = [ n2, 2 ], order = [ 1, 2 ])
+      src = reshape([ zr, xr ], shape = [ n1, 2 ], order = [ 1, 2 ])
+    end if
+
+    ! Initialize tcalc
+    allocate(tcalc(n2,n1))
+
+    ! Compute traveltimes using an eikonal solver
+    az = dz * [ ( dfloat(k-1), k = 1, nz ) ]
+    ax = dx * [ ( dfloat(k-1), k = 1, nx ) ]
+    !$omp parallel default(shared) private(tmp, j)
+    !$omp do schedule(runtime)
+    do i = 1, n1
+      allocate(tmp(nz,nx))
+      call solver2d(slow, tmp, nz, nx, src(i,1), src(i,2), dz, dx, n_sweep)
+      do j = 1, n2
+        tcalc(j,i) = interp2(az, ax, tmp, rcv(j,1), rcv(j,2))
+      end do
+      deallocate(tmp)
+    end do
+    !$omp end parallel
+
+    ! Transpose to reshape to [ nrcv, nsrc ]
+    if ( n1 .eq. nrcv ) then
+      tt = transpose(tcalc)
+    else
+      tt = tcalc
+    end if
+    return
+  end function slow2tt2
+
+  function lay2tt(slow, nz, nx, dz, dx, zs, xs, ys, zr, xr, yr, &
+                  n_sweep, nsrc, nrcv, n_threads) result(tt)
     real(kind = 8) :: tt(nrcv,nsrc)
     integer(kind = 4), intent(in) :: nz, nx, n_sweep, nsrc, nrcv
     integer(kind = 4), intent(in), optional :: n_threads
@@ -726,7 +813,7 @@ contains
     !$omp end parallel
 
     ! Transpose to reshape to [ nrcv, nsrc ]
-    if (n1 .eq. nrcv) then
+    if ( n1 .eq. nrcv ) then
       tt = transpose(tcalc)
     else
       tt = tcalc

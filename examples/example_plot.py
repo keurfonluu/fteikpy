@@ -54,4 +54,4 @@ if __name__ == "__main__":
     cb.set_label("P-wave velocity (m/s)")
     
     fig.tight_layout()
-    plt.show()
+    fig.show()

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Parameters
     nz, nx = 100, 100
     dz, dx = 1., 1.
-    source = ( 20., 20. )
+    source = ( 50., 50. )
     velocity = 1500.
     
     # Analytical solution
@@ -64,3 +64,6 @@ if __name__ == "__main__":
     ax1.grid(True, linestyle = ":")
     ax2.grid(True, linestyle = ":")
     ax3.grid(True, linestyle = ":")
+    
+    fig.tight_layout()
+    fig.show()
