@@ -19,10 +19,13 @@ def interp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
         vq = vzero * dist2d(xsrc, ysrc, xq, yq)
     else:
         nx, ny = numpy.shape(v)
+        nx -= 1
+        ny -= 1
+
         i2 = i1 + 1
         j2 = j1 + 1
 
-        if i1 == nx - 1 and j1 != ny - 1:
+        if i1 == nx and j1 != ny:
             x1 = x[i1]
             x2 = 2.0 * x1 - x[-2]
             y1 = y[j1]
@@ -38,7 +41,7 @@ def interp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
             v12 = v[i1, j2]
             v22 = 1.0
 
-        elif i1 != nx - 1 and j1 == ny - 1:
+        elif i1 != nx and j1 == ny:
             x1 = x[i1]
             x2 = x[i1]
             y1 = y[j1]
@@ -54,7 +57,7 @@ def interp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
             v12 = 1.0
             v22 = 1.0
 
-        elif i1 == nx - 1 and j1 == ny - 1:
+        elif i1 == nx and j1 == ny:
             x1 = x[i1]
             x2 = 2.0 * x1 - x[-2]
             y1 = y[j1]
