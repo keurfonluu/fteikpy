@@ -6,7 +6,7 @@ import numpy
 class BaseEikonalSolver(ABC):
     def __init__(self, velocity_model, gridsize, origin):
         self._velocity_model = numpy.array(velocity_model, dtype=numpy.float64)
-        self._gridsize = (float(x) for x in gridsize)
+        self._gridsize = tuple(float(x) for x in gridsize)
         self._origin = numpy.array(origin, dtype=numpy.float64)
 
     @abstractmethod
