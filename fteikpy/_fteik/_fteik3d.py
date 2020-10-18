@@ -168,7 +168,7 @@ def sweep3d(tt, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, n
                 sweep(tt, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 0, 0, 0, -1, -1, -1, nz, nx, ny)
 
 
-@jitted("f8[:, :, :](f8[:, :, :], f8, f8, f8, f8, f8, f8, i4)")
+@jitted("Tuple((f8[:, :, :], f8))(f8[:, :, :], f8, f8, f8, f8, f8, f8, i4)")
 def eikonal3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2):
     """Calculate traveltimes given a 3D velocity model."""
     # Parameters
@@ -206,4 +206,4 @@ def eikonal3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2):
     for _ in range(max_sweep):
         sweep3d(tt, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, ny)
 
-    return tt
+    return tt, vzero

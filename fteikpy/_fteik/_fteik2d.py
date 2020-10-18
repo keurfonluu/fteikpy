@@ -128,7 +128,7 @@ def sweep2d(tt, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx):
             sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 0, 0, -1, -1, nz, nx)
 
 
-@jitted("f8[:, :](f8[:, :], f8, f8, f8, f8, i4)")
+@jitted("Tuple((f8[:, :], f8))(f8[:, :], f8, f8, f8, f8, i4)")
 def eikonal2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
     """Calculate traveltimes given a 2D velocity model."""
     # Parameters
@@ -278,4 +278,4 @@ def eikonal2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
     for _ in range(max_sweep):
         sweep2d(tt, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx)
 
-    return tt
+    return tt, vzero
