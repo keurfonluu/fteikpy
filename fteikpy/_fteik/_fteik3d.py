@@ -169,7 +169,7 @@ def sweep3d(tt, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, n
 
 
 @jitted("Tuple((f8[:, :, :], f8))(f8[:, :, :], f8, f8, f8, f8, f8, f8, i4)")
-def eikonal3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2):
+def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2):
     """Calculate traveltimes given a 3D velocity model."""
     # Parameters
     nz, nx, ny = numpy.shape(slow)
