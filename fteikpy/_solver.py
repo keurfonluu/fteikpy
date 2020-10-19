@@ -1,7 +1,7 @@
 import numpy
 
 from ._base import BaseEikonalSolver
-from ._fteik import fteik2d, fteik3d
+from ._fteik import solve2d, solve3d
 from ._grid import TraveltimeGrid2D, TraveltimeGrid3D
 
 
@@ -10,21 +10,34 @@ class EikonalSolver2D(BaseEikonalSolver):
         origin = origin if origin else numpy.zeros(2)
         super().__init__(velocity_model, gridsize, origin)
 
-    def solve(self, source, max_sweep=2):
-        tt, vzero = fteik2d(
+    def solve(self, sources, max_sweep=2):
+        tt, vzero = solve2d(
             1.0 / self._velocity_model,
             *self._gridsize,
-            *(source - self._origin),
+            (sources - self._origin),
             max_sweep=max_sweep,
         )
 
-        return TraveltimeGrid2D(
-            grid=tt,
-            gridsize=self._gridsize,
-            origin=self._origin,
-            source=source,
-            vzero=vzero,
-        )
+        if isinstance(tt, numpy.ndarray):
+            return [
+                TraveltimeGrid2D(
+                    grid=t,
+                    gridsize=self._gridsize,
+                    origin=self._origin,
+                    source=source,
+                    vzero=v,
+                )
+                for source, t, v in zip(sources, tt, vzero)
+            ]
+
+        else:
+            return TraveltimeGrid2D(
+                grid=tt,
+                gridsize=self._gridsize,
+                origin=self._origin,
+                source=sources,
+                vzero=vzero,
+            )
 
 
 class EikonalSolver3D(BaseEikonalSolver):
@@ -32,18 +45,31 @@ class EikonalSolver3D(BaseEikonalSolver):
         origin = origin if origin else numpy.zeros(3)
         super().__init__(velocity_model, gridsize, origin)
 
-    def solve(self, source, max_sweep=2):
-        tt, vzero = fteik3d(
+    def solve(self, sources, max_sweep=2):
+        tt, vzero = solve3d(
             1.0 / self._velocity_model,
             *self._gridsize,
-            *(source - self._origin),
+            (sources - self._origin),
             max_sweep=max_sweep,
         )
 
-        return TraveltimeGrid3D(
-            grid=tt,
-            gridsize=self._gridsize,
-            origin=self._origin,
-            source=source,
-            vzero=vzero,
-        )
+        if isinstance(tt, numpy.ndarray):
+            return [
+                TraveltimeGrid3D(
+                    grid=t,
+                    gridsize=self._gridsize,
+                    origin=self._origin,
+                    source=source,
+                    vzero=v,
+                )
+                for source, t, v in zip(sources, tt, vzero)
+            ]
+
+        else:
+            return TraveltimeGrid3D(
+                grid=tt,
+                gridsize=self._gridsize,
+                origin=self._origin,
+                source=sources,
+                vzero=vzero,
+            )

@@ -1,5 +1,7 @@
 import numpy
 
+from numba import prange
+
 from .._common import jitted
 
 
@@ -279,3 +281,22 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
         sweep2d(tt, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx)
 
     return tt, vzero
+
+
+@jitted(parallel=True)
+def solve2d(slow, dz, dx, src, max_sweep=2):
+    if src.ndim == 1:
+        return fteik2d(slow, dz, dx, src[0], src[1], max_sweep)
+
+    elif src.ndim == 2:
+        nsrc = len(src)
+        nz, nx = slow.shape
+        tt = numpy.empty((nsrc, nz, nx), dtype=numpy.float64)
+        vzero = numpy.empty(nsrc, dtype=numpy.float64)
+        for i in prange(nsrc):
+            tt[i], vzero[i] = fteik2d(slow, dz, dx, src[i, 0], src[i, 1], max_sweep)
+
+        return tt, vzero
+
+    else:
+        raise ValueError()
