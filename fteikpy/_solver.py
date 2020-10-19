@@ -10,12 +10,13 @@ class EikonalSolver2D(BaseEikonalSolver):
         origin = origin if origin else numpy.zeros(2)
         super().__init__(velocity_model, gridsize, origin)
 
-    def solve(self, sources, max_sweep=2):
-        tt, vzero = solve2d(
+    def solve(self, sources, max_sweep=2, return_grad=False):
+        tt, ttgrad, vzero = solve2d(
             1.0 / self._velocity_model,
             *self._gridsize,
             (sources - self._origin),
             max_sweep=max_sweep,
+            grad=return_grad,
         )
 
         if isinstance(vzero, numpy.ndarray):
@@ -25,9 +26,10 @@ class EikonalSolver2D(BaseEikonalSolver):
                     gridsize=self._gridsize,
                     origin=self._origin,
                     source=source,
+                    grad=tg if return_grad else None,
                     vzero=v,
                 )
-                for source, t, v in zip(sources, tt, vzero)
+                for source, t, tg, v in zip(sources, tt, ttgrad, vzero)
             ]
 
         else:
@@ -36,6 +38,7 @@ class EikonalSolver2D(BaseEikonalSolver):
                 gridsize=self._gridsize,
                 origin=self._origin,
                 source=sources,
+                grad=ttgrad if return_grad else None,
                 vzero=vzero,
             )
 
@@ -45,12 +48,13 @@ class EikonalSolver3D(BaseEikonalSolver):
         origin = origin if origin else numpy.zeros(3)
         super().__init__(velocity_model, gridsize, origin)
 
-    def solve(self, sources, max_sweep=2):
-        tt, vzero = solve3d(
+    def solve(self, sources, max_sweep=2, return_grad=False):
+        tt, ttgrad, vzero = solve3d(
             1.0 / self._velocity_model,
             *self._gridsize,
             (sources - self._origin),
             max_sweep=max_sweep,
+            grad=return_grad,
         )
 
         if isinstance(vzero, numpy.ndarray):
@@ -60,9 +64,10 @@ class EikonalSolver3D(BaseEikonalSolver):
                     gridsize=self._gridsize,
                     origin=self._origin,
                     source=source,
+                    grad=tg if return_grad else None,
                     vzero=v,
                 )
-                for source, t, v in zip(sources, tt, vzero)
+                for source, t, tg, v in zip(sources, tt, ttgrad, vzero)
             ]
 
         else:
@@ -71,5 +76,6 @@ class EikonalSolver3D(BaseEikonalSolver):
                 gridsize=self._gridsize,
                 origin=self._origin,
                 source=sources,
+                grad=ttgrad if return_grad else None,
                 vzero=vzero,
             )

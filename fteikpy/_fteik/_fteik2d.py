@@ -46,8 +46,8 @@ def delta(t1, tauv, taue, tauev, t0c, tzc, txc, dzi, dxi, dz2i, dx2i, vzero, vre
     return 0.5 * (dpoly ** 0.5 - bpoly) / apoly + t0c if dpoly >= 0.0 else t1
 
 
-@jitted("void(f8[:, :], f8[:, :], UniTuple(f8, 6), f8, f8, f8, f8, f8, i4, i4, i4, i4, i4, i4, i4, i4)")
-def sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, sgnvz, sgnvx, sgntz, sgntx, nz, nx):
+@jitted("void(f8[:, :], f8[:, :, :], f8[:, :], UniTuple(f8, 6), f8, f8, f8, f8, f8, i4, i4, i4, i4, i4, i4, i4, i4, b1)")
+def sweep(tt, ttgrad, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, sgnvz, sgnvx, sgntz, sgntx, nz, nx, grad):
     """Sweep in given direction."""
     dz, dx, dzi, dxi, dz2i, dx2i = dargs
     i1 = i - sgnvz
@@ -103,11 +103,24 @@ def sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, sgnvz, sgnvx, sgntz,
                 t2d = Big
 
     # Select minimum time
-    tt[i, j] = min(tt[i, j], t1d, t2d)
+    t0 = tt[i, j]
+    tt[i, j] = min(t0, t1d, t2d)
+
+    # Compute gradient according to minimum time direction
+    if grad and tt[i, j] != t0:
+        if tt[i, j] == t1d1:
+            ttgrad[i, j, 0] = sgntz * (tt[i, j] - tv) / dz
+            ttgrad[i, j, 1] = 0.0
+        elif tt[i, j] == t1d2:
+            ttgrad[i, j, 0] = 0.0
+            ttgrad[i, j, 1] = sgntx * (tt[i, j] - te) / dx
+        else:
+            ttgrad[i, j, 0] = sgntz * (tt[i, j] - tv) / dz
+            ttgrad[i, j, 1] = sgntx * (tt[i, j] - te) / dx
 
 
-@jitted("void(f8[:, :], f8[:, :], f8, f8, f8, f8, f8, f8, f8, i4, i4)")
-def sweep2d(tt, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx):
+@jitted("void(f8[:, :], f8[:, :, :], f8[:, :], f8, f8, f8, f8, f8, f8, f8, i4, i4, b1)")
+def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
     """Perform one sweeping."""
     dzi = 1.0 / dz
     dxi = 1.0 / dx
@@ -117,21 +130,21 @@ def sweep2d(tt, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx):
     
     for j in range(1, nx):
         for i in range(1, nz):
-            sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 1, 1, 1, 1, nz, nx)
+            sweep(tt, ttgrad, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 1, 1, 1, 1, nz, nx, grad)
 
         for i in range(nz - 2, -1, -1):
-            sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 0, 1, -1, 1, nz, nx)
+            sweep(tt, ttgrad, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 0, 1, -1, 1, nz, nx, grad)
 
     for j in range(nx - 2, -1, -1):
         for i in range(1, nz):
-            sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 1, 0, 1, -1, nz, nx)
+            sweep(tt, ttgrad, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 1, 0, 1, -1, nz, nx, grad)
 
         for i in range(nz - 2, -1, -1):
-            sweep(tt, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 0, 0, -1, -1, nz, nx)
+            sweep(tt, ttgrad, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, 0, 0, -1, -1, nz, nx, grad)
 
 
-@jitted("Tuple((f8[:, :], f8))(f8[:, :], f8, f8, f8, f8, i4)")
-def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
+@jitted("Tuple((f8[:, :], f8[:, :, :], f8))(f8[:, :], f8, f8, f8, f8, i4, b1)")
+def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2, grad=False):
     """Calculate traveltimes given a 2D velocity model."""
     # Parameters
     nz, nx = numpy.shape(slow)
@@ -151,6 +164,11 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
 
     # Allocate work array
     tt = numpy.full((nz, nx), Big, dtype=numpy.float64)
+    ttgrad = (
+        numpy.zeros((nz, nx, 2), dtype=numpy.float64)
+        if grad
+        else numpy.empty((0, 0, 0), dtype=numpy.float64)
+    )
 
     # Do our best to initialize source
     dzu = numpy.abs(zsa - float(zsi))
@@ -278,25 +296,30 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
         tt[int(zsa), int(xsa)] = 0.0
 
     for _ in range(max_sweep):
-        sweep2d(tt, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx)
+        sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad)
 
-    return tt, vzero
+    return tt, ttgrad, vzero
 
 
 @jitted(parallel=True)
-def solve2d(slow, dz, dx, src, max_sweep=2):
+def solve2d(slow, dz, dx, src, max_sweep=2, grad=False):
     if src.ndim == 1:
-        return fteik2d(slow, dz, dx, src[0], src[1], max_sweep)
+        return fteik2d(slow, dz, dx, src[0], src[1], max_sweep, grad)
 
     elif src.ndim == 2:
         nsrc = len(src)
         nz, nx = slow.shape
         tt = numpy.empty((nsrc, nz, nx), dtype=numpy.float64)
+        ttgrad = (
+            numpy.empty((nsrc, nz, nx, 2), dtype=numpy.float64)
+            if grad
+            else numpy.empty((nsrc, 0, 0, 0), dtype=numpy.float64)
+        )
         vzero = numpy.empty(nsrc, dtype=numpy.float64)
         for i in prange(nsrc):
-            tt[i], vzero[i] = fteik2d(slow, dz, dx, src[i, 0], src[i, 1], max_sweep)
+            tt[i], ttgrad[i], vzero[i] = fteik2d(slow, dz, dx, src[i, 0], src[i, 1], max_sweep, grad)
 
-        return tt, vzero
+        return tt, ttgrad, vzero
 
     else:
         raise ValueError()

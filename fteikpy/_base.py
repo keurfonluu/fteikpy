@@ -27,11 +27,12 @@ class BaseEikonalSolver(ABC):
 
 
 class BaseTraveltimeGrid(ABC):
-    def __init__(self, grid, gridsize, origin, source, vzero):
+    def __init__(self, grid, gridsize, origin, source, grad, vzero):
         self._grid = grid
         self._gridsize = gridsize
         self._origin = origin
         self._source = source
+        self._grad = grad
         self._vzero = vzero
 
     @abstractmethod
@@ -56,6 +57,18 @@ class BaseTraveltimeGrid(ABC):
     @property
     def source(self):
         return self._source
+
+    @property
+    def grad(self):
+        return self._grad
+
+    @property
+    def gradz(self):
+        return self._grad[:, :, 0] if self._grad is not None else None
+
+    @property
+    def gradx(self):
+        return self._grad[:, :, 1] if self._grad is not None else None
 
     @property
     def shape(self):
