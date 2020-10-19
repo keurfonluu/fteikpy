@@ -13,8 +13,8 @@ class TraveltimeGrid2D(BaseTraveltimeGrid):
             self.zaxis,
             self.xaxis,
             self._grid,
-            *points,
-            *self._source,
+            numpy.asarray(points),
+            self._source,
             self._vzero,
         )
         
@@ -31,8 +31,8 @@ class TraveltimeGrid3D(BaseTraveltimeGrid):
             self.xaxis,
             self.yaxis,
             self._grid,
-            *points,
-            *self._source,
+            numpy.asarray(points),
+            self._source,
             self._vzero,
         )
         
