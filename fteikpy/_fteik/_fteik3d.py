@@ -6,7 +6,7 @@ from .._common import jitted
 
 
 Big = 1.0e5
-eps = 1.0e-4
+eps = 1.0e-15
 
 
 @jitted("f8(i4, i4, i4, f8, f8, f8, f8, f8, f8, f8)")

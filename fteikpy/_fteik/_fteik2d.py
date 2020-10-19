@@ -6,7 +6,7 @@ from .._common import jitted
 
 
 Big = 1.0e5
-eps = 1.0e-4
+eps = 1.0e-15
 epsin = 5
 
 
@@ -155,27 +155,27 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
     # Do our best to initialize source
     dzu = numpy.abs(zsa - float(zsi))
     dzd = numpy.abs(float(zsi) - zsa + 1.0)
-    dxw = numpy.abs(xsa - float(zsi))
+    dxw = numpy.abs(xsa - float(xsi))
     dxe = numpy.abs(float(xsi) - xsa + 1.0)
 
     # Source seems close enough to a grid point in X and Y direction
     dzv_min = min(dzu, dzd)
     dzh_min = min(dxw, dxe)
     if dzv_min < eps and dzh_min < eps:
-        zsa = numpy.floor(zsa)
-        xsa = numpy.floor(xsa)
+        zsa = numpy.round(zsa)
+        xsa = numpy.round(xsa)
         iflag = 1
 
     # At least one of coordinates not close to any grid point in X and Y direction
     elif dzv_min > eps or dzh_min > eps:
-        zsa = numpy.floor(zsa) if dzv_min < eps else zsa
-        xsa = numpy.floor(xsa) if dzh_min < eps else xsa
+        zsa = numpy.round(zsa) if dzv_min < eps else zsa
+        xsa = numpy.round(xsa) if dzh_min < eps else xsa
         iflag = 2
 
     # Oops we are lost, not sure this happens - fix src to nearest grid point
     else:
-        zsa = numpy.floor(zsa)
-        xsa = numpy.floor(xsa)
+        zsa = numpy.round(zsa)
+        xsa = numpy.round(xsa)
         iflag = 3
 
     # We know where src is - start first propagation
@@ -184,7 +184,7 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2):
 
         dzu = numpy.abs(zsa - float(zsi))
         dzd = numpy.abs(float(zsi) - zsa + 1.0)
-        dxw = numpy.abs(xsa - float(zsi))
+        dxw = numpy.abs(xsa - float(xsi))
         dxe = numpy.abs(float(xsi) - xsa + 1.0)
 
         # First initialize 4 points around source

@@ -18,7 +18,7 @@ class EikonalSolver2D(BaseEikonalSolver):
             max_sweep=max_sweep,
         )
 
-        if isinstance(tt, numpy.ndarray):
+        if isinstance(vzero, numpy.ndarray):
             return [
                 TraveltimeGrid2D(
                     grid=t,
@@ -53,7 +53,7 @@ class EikonalSolver3D(BaseEikonalSolver):
             max_sweep=max_sweep,
         )
 
-        if isinstance(tt, numpy.ndarray):
+        if isinstance(vzero, numpy.ndarray):
             return [
                 TraveltimeGrid3D(
                     grid=t,
