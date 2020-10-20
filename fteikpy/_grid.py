@@ -1,12 +1,19 @@
 import numpy
 
-from ._base import BaseTraveltimeGrid
+from ._base import BaseGrid2D, BaseGrid3D, BaseTraveltime
 from ._fteik import interp2d, interp3d
 
 
-class TraveltimeGrid2D(BaseTraveltimeGrid):
+class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
     def __init__(self, grid, gridsize, origin, source, grad, vzero):
-        super().__init__(grid, gridsize, origin, source, grad, vzero)
+        super().__init__(
+            grid=grid,
+            gridsize=gridsize,
+            origin=origin,
+            source=source,
+            grad=grad,
+            vzero=vzero,
+        )
 
     def __call__(self, points):
         t = interp2d(
@@ -21,9 +28,16 @@ class TraveltimeGrid2D(BaseTraveltimeGrid):
         return t
 
 
-class TraveltimeGrid3D(BaseTraveltimeGrid):
+class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
     def __init__(self, grid, gridsize, origin, source, grad, vzero):
-        super().__init__(grid, gridsize, origin, source, grad, vzero)
+        super().__init__(
+            grid=grid,
+            gridsize=gridsize,
+            origin=origin,
+            source=source,
+            grad=grad,
+            vzero=vzero,
+        )
 
     def __call__(self, points):
         t = interp3d(
@@ -37,11 +51,3 @@ class TraveltimeGrid3D(BaseTraveltimeGrid):
         )
         
         return t
-
-    @property
-    def yaxis(self):
-        return self._origin[2] + self._gridsize[2] * numpy.arange(self.shape[2])
-
-    @property
-    def grady(self):
-        return self._grad[:, :, 2] if self._grad is not None else None

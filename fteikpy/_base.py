@@ -1,43 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import numpy
 
 
-class BaseEikonalSolver(ABC):
-    def __init__(self, velocity_model, gridsize, origin):
-        self._velocity_model = numpy.array(velocity_model, dtype=numpy.float64)
+class BaseGrid(ABC):
+    def __init__(self, grid, gridsize, origin, **kwargs):
+        super().__init__(**kwargs)
+        self._grid = numpy.asarray(grid, dtype=numpy.float64)
         self._gridsize = tuple(float(x) for x in gridsize)
-        self._origin = numpy.array(origin, dtype=numpy.float64)
-
-    @abstractmethod
-    def solve(self, source, max_sweep=2):
-        pass
-
-    @property
-    def velocity_model(self):
-        return self._velocity_model
-
-    @property
-    def gridsize(self):
-        return self._gridsize
-
-    @property
-    def origin(self):
-        return self._origin
-
-
-class BaseTraveltimeGrid(ABC):
-    def __init__(self, grid, gridsize, origin, source, grad, vzero):
-        self._grid = grid
-        self._gridsize = gridsize
-        self._origin = origin
-        self._source = source
-        self._grad = grad
-        self._vzero = vzero
-
-    @abstractmethod
-    def __call__(self, points):
-        pass
+        self._origin = numpy.asarray(origin, dtype=numpy.float64)
 
     def __getitem__(self, islice):
         return self._grid[islice]
@@ -55,22 +26,6 @@ class BaseTraveltimeGrid(ABC):
         return self._origin
 
     @property
-    def source(self):
-        return self._source
-
-    @property
-    def grad(self):
-        return self._grad
-
-    @property
-    def gradz(self):
-        return self._grad[:, :, 0] if self._grad is not None else None
-
-    @property
-    def gradx(self):
-        return self._grad[:, :, 1] if self._grad is not None else None
-
-    @property
     def shape(self):
         return self._grid.shape
 
@@ -82,6 +37,8 @@ class BaseTraveltimeGrid(ABC):
     def ndim(self):
         return self._grid.ndim
 
+
+class BaseGrid2D(BaseGrid):
     @property
     def zaxis(self):
         return self._origin[0] + self._gridsize[0] * numpy.arange(self.shape[0])
@@ -89,3 +46,25 @@ class BaseTraveltimeGrid(ABC):
     @property
     def xaxis(self):
         return self._origin[1] + self._gridsize[1] * numpy.arange(self.shape[1])
+
+
+class BaseGrid3D(BaseGrid2D):
+    @property
+    def yaxis(self):
+        return self._origin[2] + self._gridsize[2] * numpy.arange(self.shape[2])
+
+
+class BaseTraveltime(ABC):
+    def __init__(self, source, grad, vzero, **kwargs):
+        super().__init__(**kwargs)
+        self._source = source
+        self._grad = grad
+        self._vzero = vzero
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def grad(self):
+        return self._grad

@@ -1,18 +1,21 @@
 import numpy
 
-from ._base import BaseEikonalSolver
+from ._base import BaseGrid2D, BaseGrid3D
 from ._fteik import solve2d, solve3d
 from ._grid import TraveltimeGrid2D, TraveltimeGrid3D
 
 
-class EikonalSolver2D(BaseEikonalSolver):
-    def __init__(self, velocity_model, gridsize, origin=None):
-        origin = origin if origin else numpy.zeros(2)
-        super().__init__(velocity_model, gridsize, origin)
+class EikonalSolver2D(BaseGrid2D):
+    def __init__(self, grid, gridsize, origin=None):
+        super().__init__(
+            grid=grid,
+            gridsize=gridsize,
+            origin=origin if origin else numpy.zeros(2),
+        )
 
     def solve(self, sources, max_sweep=2, return_grad=False):
         tt, ttgrad, vzero = solve2d(
-            1.0 / self._velocity_model,
+            1.0 / self._grid,
             *self._gridsize,
             (sources - self._origin),
             max_sweep=max_sweep,
@@ -43,14 +46,17 @@ class EikonalSolver2D(BaseEikonalSolver):
             )
 
 
-class EikonalSolver3D(BaseEikonalSolver):
-    def __init__(self, velocity_model, gridsize, origin=None):
-        origin = origin if origin else numpy.zeros(3)
-        super().__init__(velocity_model, gridsize, origin)
+class EikonalSolver3D(BaseGrid3D):
+    def __init__(self, grid, gridsize, origin=None):
+        super().__init__(
+            grid=grid,
+            gridsize=gridsize,
+            origin=origin if origin else numpy.zeros(3),
+        )
 
     def solve(self, sources, max_sweep=2, return_grad=False):
         tt, ttgrad, vzero = solve3d(
-            1.0 / self._velocity_model,
+            1.0 / self._grid,
             *self._gridsize,
             (sources - self._origin),
             max_sweep=max_sweep,
