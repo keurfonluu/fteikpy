@@ -2,6 +2,8 @@ from abc import ABC
 
 import numpy
 
+from ._interp import interp2d, interp3d
+
 
 class BaseGrid(ABC):
     def __init__(self, grid, gridsize, origin, **kwargs):
@@ -39,6 +41,14 @@ class BaseGrid(ABC):
 
 
 class BaseGrid2D(BaseGrid):
+    def __call__(self, points):
+        return interp2d(
+            self.zaxis,
+            self.xaxis,
+            self._grid,
+            numpy.asarray(points, dtype=numpy.float64),
+        )
+
     @property
     def zaxis(self):
         return self._origin[0] + self._gridsize[0] * numpy.arange(self.shape[0])
@@ -49,6 +59,15 @@ class BaseGrid2D(BaseGrid):
 
 
 class BaseGrid3D(BaseGrid2D):
+    def __call__(self, points):
+        return interp3d(
+            self.zaxis,
+            self.xaxis,
+            self.yaxis,
+            self._grid,
+            numpy.asarray(points, dtype=numpy.float64),
+        )
+
     @property
     def yaxis(self):
         return self._origin[2] + self._gridsize[2] * numpy.arange(self.shape[2])

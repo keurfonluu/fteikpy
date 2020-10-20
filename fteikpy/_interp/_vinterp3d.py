@@ -11,7 +11,7 @@ def dist3d(x1, y1, z1, x2, y2, z2):
 
 
 @jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8)")
-def vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero):
+def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero):
     xsi = numpy.nonzero(x <= xsrc)[0][-1]
     ysi = numpy.nonzero(y <= ysrc)[0][-1]
     zsi = numpy.nonzero(z <= zsrc)[0][-1]
@@ -251,15 +251,15 @@ def vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero):
 
 
 @jitted(parallel=True)
-def interp3d(x, y, z, v, q, src, vzero):
+def vinterp3d(x, y, z, v, q, src, vzero):
     if q.ndim == 1:
-        return vinterp3d(x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero)
+        return _vinterp3d(x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero)
 
     elif q.ndim == 2:
         nq = len(q)
         out = numpy.empty(nq, dtype=numpy.float64)
         for i in prange(nq):
-            out[i] = vinterp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], src[0], src[1], src[2], vzero)
+            out[i] = _vinterp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], src[0], src[1], src[2], vzero)
 
         return out
 

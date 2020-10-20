@@ -11,7 +11,7 @@ def dist2d(x1, y1, x2, y2):
 
 
 @jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8)")
-def vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
+def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
     xsi = numpy.nonzero(x <= xsrc)[0][-1]
     ysi = numpy.nonzero(y <= ysrc)[0][-1]
     i1 = numpy.nonzero(x <= xq)[0][-1]
@@ -102,15 +102,15 @@ def vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
 
 
 @jitted(parallel=True)
-def interp2d(x, y, v, q, src, vzero):
+def vinterp2d(x, y, v, q, src, vzero):
     if q.ndim == 1:
-        return vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero)
+        return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero)
 
     elif q.ndim == 2:
         nq = len(q)
         out = numpy.empty(nq, dtype=numpy.float64)
         for i in prange(nq):
-            out[i] = vinterp2d(x, y, v, q[i, 0], q[i, 1], src[0], src[1], vzero)
+            out[i] = _vinterp2d(x, y, v, q[i, 0], q[i, 1], src[0], src[1], vzero)
 
         return out
 

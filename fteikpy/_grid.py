@@ -1,7 +1,7 @@
 import numpy
 
 from ._base import BaseGrid2D, BaseGrid3D, BaseTraveltime
-from ._fteik import interp2d, interp3d
+from ._interp import vinterp2d, vinterp3d
 
 
 class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
@@ -16,16 +16,14 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         )
 
     def __call__(self, points):
-        t = interp2d(
+        return vinterp2d(
             self.zaxis,
             self.xaxis,
             self._grid,
-            numpy.asarray(points),
+            numpy.asarray(points, dtype=numpy.float64),
             self._source,
             self._vzero,
         )
-        
-        return t
 
 
 class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
@@ -40,12 +38,12 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         )
 
     def __call__(self, points):
-        t = interp3d(
+        return vinterp3d(
             self.zaxis,
             self.xaxis,
             self.yaxis,
             self._grid,
-            numpy.asarray(points),
+            numpy.asarray(points, dtype=numpy.float64),
             self._source,
             self._vzero,
         )
