@@ -47,5 +47,3 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             self._source,
             self._vzero,
         )
-        
-        return t

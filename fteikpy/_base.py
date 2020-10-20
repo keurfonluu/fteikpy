@@ -58,7 +58,7 @@ class BaseGrid2D(BaseGrid):
         return self._origin[1] + self._gridsize[1] * numpy.arange(self.shape[1])
 
 
-class BaseGrid3D(BaseGrid2D):
+class BaseGrid3D(BaseGrid):
     def __call__(self, points):
         return interp3d(
             self.zaxis,
@@ -67,6 +67,14 @@ class BaseGrid3D(BaseGrid2D):
             self._grid,
             numpy.asarray(points, dtype=numpy.float64),
         )
+
+    @property
+    def zaxis(self):
+        return self._origin[0] + self._gridsize[0] * numpy.arange(self.shape[0])
+
+    @property
+    def xaxis(self):
+        return self._origin[1] + self._gridsize[1] * numpy.arange(self.shape[1])
 
     @property
     def yaxis(self):
