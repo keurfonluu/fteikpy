@@ -10,8 +10,13 @@ def dist2d(x1, y1, x2, y2):
     return ((x1 - x2) ** 2.0 + (y1 - y2) ** 2.0) ** 0.5
 
 
-@jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8)")
-def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
+@jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8, f8)")
+def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
+    condx = x[0] <= xq <= x[-1]
+    condy = y[0] <= yq <= y[-1]
+    if not (condx and condy):
+        return fval
+
     xsi = numpy.nonzero(x <= xsrc)[0][-1]
     ysi = numpy.nonzero(y <= ysrc)[0][-1]
     i1 = numpy.nonzero(x <= xq)[0][-1]
@@ -102,15 +107,15 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero):
 
 
 @jitted(parallel=True)
-def vinterp2d(x, y, v, q, src, vzero):
+def vinterp2d(x, y, v, q, src, vzero, fval=numpy.nan):
     if q.ndim == 1:
-        return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero)
+        return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero, fval)
 
     elif q.ndim == 2:
         nq = len(q)
         out = numpy.empty(nq, dtype=numpy.float64)
         for i in prange(nq):
-            out[i] = _vinterp2d(x, y, v, q[i, 0], q[i, 1], src[0], src[1], vzero)
+            out[i] = _vinterp2d(x, y, v, q[i, 0], q[i, 1], src[0], src[1], vzero, fval)
 
         return out
 

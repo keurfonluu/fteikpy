@@ -41,12 +41,13 @@ class BaseGrid(ABC):
 
 
 class BaseGrid2D(BaseGrid):
-    def __call__(self, points):
+    def __call__(self, points, fill_value=numpy.nan):
         return interp2d(
             self.zaxis,
             self.xaxis,
             self._grid,
             numpy.asarray(points, dtype=numpy.float64),
+            fill_value,
         )
 
     @property
@@ -59,13 +60,14 @@ class BaseGrid2D(BaseGrid):
 
 
 class BaseGrid3D(BaseGrid):
-    def __call__(self, points):
+    def __call__(self, points, fill_value=numpy.nan):
         return interp3d(
             self.zaxis,
             self.xaxis,
             self.yaxis,
             self._grid,
             numpy.asarray(points, dtype=numpy.float64),
+            fill_value,
         )
 
     @property

@@ -5,8 +5,14 @@ from numba import prange
 from .._common import jitted
 
 
-@jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8)")
-def _interp3d(x, y, z, v, xq, yq, zq):
+@jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8)")
+def _interp3d(x, y, z, v, xq, yq, zq, fval):
+    condx = x[0] <= xq <= x[-1]
+    condy = y[0] <= yq <= y[-1]
+    condz = z[0] <= zq <= z[-1]
+    if not (condx and condy and condz):
+        return fval
+
     nx, ny, nz = numpy.shape(v)
     nx -= 1
     ny -= 1
@@ -166,15 +172,15 @@ def _interp3d(x, y, z, v, xq, yq, zq):
 
 
 @jitted(parallel=True)
-def interp3d(x, y, z, v, q):
+def interp3d(x, y, z, v, q, fval=numpy.nan):
     if q.ndim == 1:
-        return _interp3d(x, y, z, v, q[0], q[1], q[2])
+        return _interp3d(x, y, z, v, q[0], q[1], q[2], fval)
 
     elif q.ndim == 2:
         nq = len(q)
         out = numpy.empty(nq, dtype=numpy.float64)
         for i in prange(nq):
-            out[i] = _interp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2])
+            out[i] = _interp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], fval)
 
         return out
 

@@ -5,8 +5,13 @@ from numba import prange
 from .._common import jitted
 
 
-@jitted("f8(f8[:], f8[:], f8[:, :], f8, f8)")
-def _interp2d(x, y, v, xq, yq):
+@jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8)")
+def _interp2d(x, y, v, xq, yq, fval):
+    condx = x[0] <= xq <= x[-1]
+    condy = y[0] <= yq <= y[-1]
+    if not (condx and condy):
+        return fval
+
     nx, ny = numpy.shape(v)
     nx -= 1
     ny -= 1
@@ -70,15 +75,15 @@ def _interp2d(x, y, v, xq, yq):
 
 
 @jitted(parallel=True)
-def interp2d(x, y, v, q):
+def interp2d(x, y, v, q, fval=numpy.nan):
     if q.ndim == 1:
-        return _interp2d(x, y, v, q[0], q[1])
+        return _interp2d(x, y, v, q[0], q[1], fval)
 
     elif q.ndim == 2:
         nq = len(q)
         out = numpy.empty(nq, dtype=numpy.float64)
         for i in prange(nq):
-            out[i] = _interp2d(x, y, v, q[i, 0], q[i, 1])
+            out[i] = _interp2d(x, y, v, q[i, 0], q[i, 1], fval)
 
         return out
 

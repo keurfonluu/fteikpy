@@ -214,6 +214,13 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2, grad=False):
     # Parameters
     nz, nx, ny = numpy.shape(slow)
 
+    # Check inputs
+    condz = 0.0 <= zsrc <= dz * (nz - 1)
+    condx = 0.0 <= xsrc <= dx * (nx - 1)
+    condy = 0.0 <= ysrc <= dy * (ny - 1)
+    if not (condz and condx and condy):
+        raise ValueError("source out of bound")
+
     # Convert src to grid position and try and take into account machine precision
     zsa = zsrc / dz
     xsa = xsrc / dx

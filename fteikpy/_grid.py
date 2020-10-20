@@ -15,7 +15,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             vzero=vzero,
         )
 
-    def __call__(self, points):
+    def __call__(self, points, fill_value=numpy.nan):
         return vinterp2d(
             self.zaxis,
             self.xaxis,
@@ -23,6 +23,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             self._vzero,
+            fill_value,
         )
 
     @property
@@ -45,7 +46,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             vzero=vzero,
         )
 
-    def __call__(self, points):
+    def __call__(self, points, fill_value=numpy.nan):
         return vinterp3d(
             self.zaxis,
             self.xaxis,
@@ -54,6 +55,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             self._vzero,
+            fill_value,
         )
 
     @property

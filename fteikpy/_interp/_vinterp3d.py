@@ -10,8 +10,14 @@ def dist3d(x1, y1, z1, x2, y2, z2):
     return ((x1 - x2) ** 2.0 + (y1 - y2) ** 2.0 + (z1 - z2) ** 2.0) ** 0.5
 
 
-@jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8)")
-def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero):
+@jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8)")
+def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
+    condx = x[0] <= xq <= x[-1]
+    condy = y[0] <= yq <= y[-1]
+    condz = z[0] <= zq <= z[-1]
+    if not (condx and condy and condz):
+        return fval
+
     xsi = numpy.nonzero(x <= xsrc)[0][-1]
     ysi = numpy.nonzero(y <= ysrc)[0][-1]
     zsi = numpy.nonzero(z <= zsrc)[0][-1]
@@ -251,15 +257,15 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero):
 
 
 @jitted(parallel=True)
-def vinterp3d(x, y, z, v, q, src, vzero):
+def vinterp3d(x, y, z, v, q, src, vzero, fval=numpy.nan):
     if q.ndim == 1:
-        return _vinterp3d(x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero)
+        return _vinterp3d(x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero, fval)
 
     elif q.ndim == 2:
         nq = len(q)
         out = numpy.empty(nq, dtype=numpy.float64)
         for i in prange(nq):
-            out[i] = _vinterp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], src[0], src[1], src[2], vzero)
+            out[i] = _vinterp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], src[0], src[1], src[2], vzero, fval)
 
         return out
 
