@@ -25,6 +25,14 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             self._vzero,
         )
 
+    @property
+    def grad(self):
+        return (
+            BaseGrid2D(self._grad, self._gridsize, self._origin)
+            if self._grad is not None
+            else None
+        )
+
 
 class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
     def __init__(self, grid, gridsize, origin, source, grad, vzero):
@@ -46,4 +54,12 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             self._vzero,
+        )
+
+    @property
+    def grad(self):
+        return (
+            BaseGrid3D(self._grad, self._gridsize, self._origin)
+            if self._grad is not None
+            else None
         )

@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractproperty
 
 import numpy
 
@@ -92,6 +92,6 @@ class BaseTraveltime(ABC):
     def source(self):
         return self._source
 
-    @property
+    @abstractproperty
     def grad(self):
-        return self._grad
+        pass
