@@ -13,3 +13,23 @@ def jitted(*args, **kwargs):
         }
     )
     return jit(*args, **kwargs)
+
+
+@jitted
+def norm2d(x, y):
+    return (x * x + y * y) ** 0.5
+
+
+@jitted
+def norm3d(x, y, z):
+    return (x * x + y * y + z * z) ** 0.5
+
+
+@jitted
+def dist2d(x1, y1, x2, y2):
+    return norm2d(x1 - x2, y1 - y2)
+
+
+@jitted
+def dist3d(x1, y1, z1, x2, y2, z2):
+    return norm3d(x1 - x2, y1 - y2, z1 - z2)
