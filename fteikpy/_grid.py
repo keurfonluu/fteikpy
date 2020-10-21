@@ -1,6 +1,7 @@
 import numpy
 
 from ._base import BaseGrid2D, BaseGrid3D, BaseTraveltime
+from ._fteik import ray2d, ray3d
 from ._interp import vinterp2d, vinterp3d
 
 
@@ -24,6 +25,23 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             self._source,
             self._vzero,
             fill_value,
+        )
+
+    def raytrace(self, points, stepsize=None):
+        if self._grad is None:
+            raise ValueError(
+                "no gradient array to perform ray tracing, use option 'return_grad' to return gradient array"
+            )
+
+        stepsize = stepsize if stepsize else numpy.min(self._gridsize)
+
+        return ray2d(
+            self.zaxis,
+            self.xaxis,
+            self._grad,
+            numpy.asarray(points, dtype=numpy.float64),
+            self._source,
+            stepsize,
         )
 
     @property
@@ -56,6 +74,24 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             self._source,
             self._vzero,
             fill_value,
+        )
+
+    def raytrace(self, points, stepsize=None):
+        if self._grad is None:
+            raise ValueError(
+                "no gradient array to perform ray tracing, use option 'return_grad' to return gradient array"
+            )
+
+        stepsize = stepsize if stepsize else numpy.min(self._gridsize)
+
+        return ray3d(
+            self.zaxis,
+            self.xaxis,
+            self.yaxis,
+            self._grad,
+            numpy.asarray(points, dtype=numpy.float64),
+            self._source,
+            stepsize,
         )
 
     @property
