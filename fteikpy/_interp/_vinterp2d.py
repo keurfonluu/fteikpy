@@ -2,12 +2,7 @@ import numpy
 
 from numba import prange
 
-from .._common import jitted
-
-
-@jitted("f8(f8, f8, f8, f8)")
-def dist2d(x1, y1, x2, y2):
-    return ((x1 - x2) ** 2.0 + (y1 - y2) ** 2.0) ** 0.5
+from .._common import dist2d, jitted
 
 
 @jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8, f8)")
@@ -50,7 +45,7 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 
         elif i1 != nx and j1 == ny:
             x1 = x[i1]
-            x2 = x[i1]
+            x2 = x[i2]
             y1 = y[j1]
             y2 = 2.0 * y1 - y[-2]
 

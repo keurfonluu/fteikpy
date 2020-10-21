@@ -34,7 +34,7 @@ def _interp2d(x, y, v, xq, yq, fval):
 
     elif i1 != nx and j1 == ny:
         x1 = x[i1]
-        x2 = x[i1]
+        x2 = x[i2]
         y1 = y[j1]
         y2 = 2.0 * y1 - y[-2]
 
