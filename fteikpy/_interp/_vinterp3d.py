@@ -2,12 +2,7 @@ import numpy
 
 from numba import prange
 
-from .._common import jitted
-
-
-@jitted("f8(f8, f8, f8, f8, f8, f8)")
-def dist3d(x1, y1, z1, x2, y2, z2):
-    return ((x1 - x2) ** 2.0 + (y1 - y2) ** 2.0 + (z1 - z2) ** 2.0) ** 0.5
+from .._common import dist3d, jitted
 
 
 @jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8)")
