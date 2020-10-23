@@ -5,14 +5,24 @@ from ._fteik import ray2d, ray3d
 from ._interp import vinterp2d, vinterp3d
 
 
+class Grid2D(BaseGrid2D):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class Grid3D(BaseGrid3D):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
-    def __init__(self, grid, gridsize, origin, source, grad, vzero):
+    def __init__(self, grid, gridsize, origin, source, gradient, vzero):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
             origin=origin,
             source=source,
-            grad=grad,
+            gradient=gradient,
             vzero=vzero,
         )
 
@@ -28,9 +38,9 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         )
 
     def raytrace(self, points, stepsize=None):
-        if self._grad is None:
+        if self._gradient is None:
             raise ValueError(
-                "no gradient array to perform ray tracing, use option 'return_grad' to return gradient array"
+                "no gradient array to perform ray tracing, use option 'return_gradient' to return gradient array"
             )
 
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
@@ -38,29 +48,37 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         return ray2d(
             self.zaxis,
             self.xaxis,
-            self._grad,
+            self._gradient,
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
         )
 
     @property
-    def grad(self):
+    def gradient_z(self):
         return (
-            BaseGrid2D(self._grad, self._gridsize, self._origin)
-            if self._grad is not None
+            Grid2D(self._gradient[:, :, 0], self._gridsize, self._origin)
+            if self._gradient is not None
+            else None
+        )
+
+    @property
+    def gradient_x(self):
+        return (
+            Grid2D(self._gradient[:, :, 1], self._gridsize, self._origin)
+            if self._gradient is not None
             else None
         )
 
 
 class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
-    def __init__(self, grid, gridsize, origin, source, grad, vzero):
+    def __init__(self, grid, gridsize, origin, source, gradient, vzero):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
             origin=origin,
             source=source,
-            grad=grad,
+            gradient=gradient,
             vzero=vzero,
         )
 
@@ -77,9 +95,9 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         )
 
     def raytrace(self, points, stepsize=None):
-        if self._grad is None:
+        if self._gradient is None:
             raise ValueError(
-                "no gradient array to perform ray tracing, use option 'return_grad' to return gradient array"
+                "no gradient array to perform ray tracing, use option 'return_gradient' to return gradient array"
             )
 
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
@@ -88,16 +106,32 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             self.zaxis,
             self.xaxis,
             self.yaxis,
-            self._grad,
+            self._gradient,
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
         )
 
     @property
-    def grad(self):
+    def gradient_z(self):
         return (
-            BaseGrid3D(self._grad, self._gridsize, self._origin)
-            if self._grad is not None
+            Grid3D(self._gradient[:, :, :, 0], self._gridsize, self._origin)
+            if self._gradient is not None
+            else None
+        )
+
+    @property
+    def gradient_x(self):
+        return (
+            Grid3D(self._gradient[:, :, :, 1], self._gridsize, self._origin)
+            if self._gradient is not None
+            else None
+        )
+
+    @property
+    def gradient_y(self):
+        return (
+            Grid3D(self._gradient[:, :, :, 2], self._gridsize, self._origin)
+            if self._gradient is not None
             else None
         )

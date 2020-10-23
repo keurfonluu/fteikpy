@@ -1,4 +1,4 @@
-from abc import ABC, abstractproperty
+from abc import ABC
 
 import numpy
 
@@ -84,16 +84,12 @@ class BaseGrid3D(BaseGrid):
 
 
 class BaseTraveltime(ABC):
-    def __init__(self, source, grad, vzero, **kwargs):
+    def __init__(self, source, gradient, vzero, **kwargs):
         super().__init__(**kwargs)
         self._source = source
-        self._grad = grad
+        self._gradient = gradient
         self._vzero = vzero
 
     @property
     def source(self):
         return self._source
-
-    @abstractproperty
-    def grad(self):
-        pass
