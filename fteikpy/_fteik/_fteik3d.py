@@ -209,7 +209,7 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
 
 
 @jitted("Tuple((f8[:, :, :], f8[:, :, :, :], f8))(f8[:, :, :], f8, f8, f8, f8, f8, f8, i4, b1)")
-def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2, grad=False):
+def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     """Calculate traveltimes given a 3D velocity model."""
     # Parameters
     nz, nx, ny = numpy.shape(slow)
@@ -255,16 +255,16 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, max_sweep=2, grad=False):
     tt[zsi, xsi + 1, ysi + 1] = t_ana(zsi, xsi + 1, ysi + 1, dz, dx, dy, zsa, xsa, ysa, vzero)
     tt[zsi + 1, xsi + 1, ysi + 1] = t_ana(zsi + 1, xsi + 1, ysi + 1, dz, dx, dy, zsa, xsa, ysa, vzero)
 
-    for _ in range(max_sweep):
+    for _ in range(nsweep):
         sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, ny, grad)
 
     return tt, ttgrad, vzero
 
 
 @jitted(parallel=True)
-def solve3d(slow, dz, dx, dy, src, max_sweep=2, grad=False):
+def solve3d(slow, dz, dx, dy, src, nsweep=2, grad=False):
     if src.ndim == 1:
-        return fteik3d(slow, dz, dx, dy, src[0], src[1], src[2], max_sweep, grad)
+        return fteik3d(slow, dz, dx, dy, src[0], src[1], src[2], nsweep, grad)
 
     elif src.ndim == 2:
         nsrc = len(src)
@@ -277,7 +277,7 @@ def solve3d(slow, dz, dx, dy, src, max_sweep=2, grad=False):
         )
         vzero = numpy.empty(nsrc, dtype=numpy.float64)
         for i in prange(nsrc):
-            tt[i], ttgrad[i], vzero[i] = fteik3d(slow, dz, dx, dy, src[i, 0], src[i, 1], src[i, 2], max_sweep, grad)
+            tt[i], ttgrad[i], vzero[i] = fteik3d(slow, dz, dx, dy, src[i, 0], src[i, 1], src[i, 2], nsweep, grad)
 
         return tt, ttgrad, vzero
 

@@ -144,7 +144,7 @@ def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
 
 
 @jitted("Tuple((f8[:, :], f8[:, :, :], f8))(f8[:, :], f8, f8, f8, f8, i4, b1)")
-def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2, grad=False):
+def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     """Calculate traveltimes given a 2D velocity model."""
     # Parameters
     nz, nx = numpy.shape(slow)
@@ -298,19 +298,21 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, max_sweep=2, grad=False):
             t0c, tzc, txc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
             tt[i, xsi] = delta(tt[i, xsi], tauv, taue, tauev, t0c, tzc, txc, dzi, dxi, dz2i, dx2i, vzero, vref, -1, -1)
 
+        nsweep -= 1
+
     else:
         tt[int(zsa), int(xsa)] = 0.0
 
-    for _ in range(max_sweep):
+    for _ in range(nsweep):
         sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad)
 
     return tt, ttgrad, vzero
 
 
 @jitted(parallel=True)
-def solve2d(slow, dz, dx, src, max_sweep=2, grad=False):
+def solve2d(slow, dz, dx, src, nsweep=2, grad=False):
     if src.ndim == 1:
-        return fteik2d(slow, dz, dx, src[0], src[1], max_sweep, grad)
+        return fteik2d(slow, dz, dx, src[0], src[1], nsweep, grad)
 
     elif src.ndim == 2:
         nsrc = len(src)
@@ -323,7 +325,7 @@ def solve2d(slow, dz, dx, src, max_sweep=2, grad=False):
         )
         vzero = numpy.empty(nsrc, dtype=numpy.float64)
         for i in prange(nsrc):
-            tt[i], ttgrad[i], vzero[i] = fteik2d(slow, dz, dx, src[i, 0], src[i, 1], max_sweep, grad)
+            tt[i], ttgrad[i], vzero[i] = fteik2d(slow, dz, dx, src[i, 0], src[i, 1], nsweep, grad)
 
         return tt, ttgrad, vzero
 

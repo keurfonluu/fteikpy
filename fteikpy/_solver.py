@@ -13,12 +13,12 @@ class EikonalSolver2D(BaseGrid2D):
             origin=origin if origin else numpy.zeros(2),
         )
 
-    def solve(self, sources, max_sweep=2, return_gradient=False):
+    def solve(self, sources, nsweep=2, return_gradient=False):
         tt, ttgrad, vzero = solve2d(
             1.0 / self._grid,
             *self._gridsize,
             (sources - self._origin),
-            max_sweep,
+            nsweep,
             return_gradient,
         )
 
@@ -54,12 +54,12 @@ class EikonalSolver3D(BaseGrid3D):
             origin=origin if origin else numpy.zeros(3),
         )
 
-    def solve(self, sources, max_sweep=2, return_gradient=False):
+    def solve(self, sources, nsweep=2, return_gradient=False):
         tt, ttgrad, vzero = solve3d(
             1.0 / self._grid,
             *self._gridsize,
             (sources - self._origin),
-            max_sweep,
+            nsweep,
             return_gradient,
         )
 
