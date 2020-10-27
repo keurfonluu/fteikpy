@@ -10,7 +10,7 @@ class EikonalSolver2D(BaseGrid2D):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin if origin else numpy.zeros(2),
+            origin=origin if origin is not None else numpy.zeros(2),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
@@ -51,7 +51,7 @@ class EikonalSolver3D(BaseGrid3D):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin if origin else numpy.zeros(3),
+            origin=origin if origin is not None else numpy.zeros(3),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
