@@ -230,7 +230,7 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
             dz2i = dz / dzd / dzd
             taue = tt[zsi + 1, j - 1] - t_ana(zsi + 1, j - 1, dz, dx, zsa, xsa, vzero)
             t0c, tzc, txc = t_anad(zsi + 1, j, dz, dx, zsa, xsa, vzero)
-            tt[zsi + 1, j] = delta(tt[zsi + 1, j], tauv, taue, tauev, t0c, tzc, txc, 1.0 / dzd, dxi, dz / dzd / dzd, dx2i, vzero, vref, 1, 1)
+            tt[zsi + 1, j] = delta(tt[zsi + 1, j], tauv, taue, tauev, t0c, tzc, txc, dzi, dxi, dz2i, dx2i, vzero, vref, 1, 1)
 
             dzi = 1.0 / dzu
             dz2i = dz / dzu / dzu
@@ -239,7 +239,7 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
             tt[zsi, j] = delta(tt[zsi, j], tauv, taue, tauev, t0c, tzc, txc, dzi, dxi, dz2i, dx2i, vzero, vref, -1, 1)
 
         td[xsi] = vzero * dxw * dx
-        for j in range(xsi - 2, -1, -1):
+        for j in range(xsi - 1, -1, -1):
             vref = slow[zsi, j]
             td[j] = td[j + 1] + dx * vref
             tauv = td[j] - vzero * numpy.abs(j - xsa) * dx
@@ -276,11 +276,11 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
             dxi = 1.0 / dxw
             dx2i = dx / dxw / dxw
             tauv = tt[i - 1, xsi] - t_ana(i - 1, xsi, dz, dx, zsa, xsa, vzero)
-            t0c, txc, tzc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
+            t0c, tzc, txc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
             tt[i, xsi] = delta(tt[i, xsi], tauv, taue, tauev, t0c, tzc, txc, dzi, dxi, dz2i, dx2i, vzero, vref, 1, -1)
 
         td[zsi] = vzero * dzu * dz
-        for i in range(zsi - 2, -1, -1):
+        for i in range(zsi - 1, -1, -1):
             vref = slow[i, xsi]
             td[i] = td[i + 1] + dz * vref
             taue = td[i] - vzero * numpy.abs(i - zsa) * dz
