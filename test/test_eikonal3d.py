@@ -12,3 +12,27 @@ def test_solve(sources):
     tref = [tana(sources, point) for point in points]
 
     assert numpy.allclose(tt(points), tref, atol=1.0e-2)
+
+
+@pytest.mark.parametrize(
+    "i, j, k",
+    [
+        (0, 0, 0),
+        (0, -1, 0),
+        (-1, 0, 0),
+        (-1, -1, 0),
+        (0, 0, -1),
+        (0, -1, -1),
+        (-1, 0, -1),
+        (-1, -1, -1),
+        (1, 2, 3),
+    ],
+)
+def test_interp(i, j, k):
+    sources = numpy.random.uniform(
+        [eik3d.zaxis[0], eik3d.xaxis[0], eik3d.yaxis[0]],
+        [eik3d.zaxis[-1], eik3d.xaxis[-1], eik3d.yaxis[-1]],
+    )
+    tt = eik3d.solve(sources, nsweep=2)
+
+    assert numpy.allclose(tt((eik3d.zaxis[i], eik3d.xaxis[j], eik3d.yaxis[k])), tt[i, j, k]) 
