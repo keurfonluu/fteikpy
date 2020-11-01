@@ -2,6 +2,8 @@ import numpy
 
 from fteikpy import EikonalSolver2D, EikonalSolver3D
 
+numpy.random.seed(42)
+
 
 eik2d = EikonalSolver2D(
     grid=numpy.ones((16, 16), dtype=numpy.float64),
