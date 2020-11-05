@@ -1,34 +1,38 @@
 import numpy
 import pytest
 
-from helpers import eik2d, tana
-
-
-@pytest.mark.parametrize("sources", ([0.0, 0.0], [0.005, 0.005]))
-def test_solve(sources):
-    tt = eik2d.solve(sources, nsweep=2)
-    z, x = numpy.meshgrid(eik2d.zaxis, eik2d.xaxis)
-    points = numpy.column_stack((z.ravel(), x.ravel()))
-    tref = [tana(sources, point) for point in points]
-
-    assert numpy.allclose(tt(points), tref, atol=1.0e-3)
+from helpers import eik2d, allclose
 
 
 @pytest.mark.parametrize(
-    "i, j",
-    [
-        (0, 0),
-        (0, -1),
-        (-1, 0),
-        (-1, -1),
-        (1, 2),
-    ],
+    "sources, tref",
+    (
+        ([0.0, 0.0], 2969.40942920),
+        ([0.5, 0.5], 2809.23711951),
+        ([[0.0, 0.0], [0.5, 0.5]], [2969.40942920, 2809.23711951]),
+    ),
 )
-def test_interp(i, j):
-    sources = numpy.random.uniform(
-        [eik2d.zaxis[0], eik2d.xaxis[0]],
-        [eik2d.zaxis[-1], eik2d.xaxis[-1]],
-    )
+def test_solve(sources, tref):
     tt = eik2d.solve(sources, nsweep=2)
 
-    assert numpy.allclose(tt((eik2d.zaxis[i], eik2d.xaxis[j])), tt[i, j]) 
+    allclose(tref, tt, lambda tt: tt.grid.sum())
+
+
+@pytest.mark.parametrize(
+    "points, vref",
+    (
+        ([0.0, 0.0], 1.0),
+        ([-1.0, -1.0], numpy.nan),
+        (
+            [
+                [0.0, 0.0],
+                [15.0, 0.0],
+                [15.0, 15.0],
+                [0.0, 15.0],
+            ],
+            numpy.ones(4),
+        ),
+    ),
+)
+def test_call(points, vref):
+    allclose(vref, points, lambda points: eik2d(points))
