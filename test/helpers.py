@@ -41,7 +41,3 @@ def allclose(a, b, bfun, atol=1.0e-8):
 
     else:
         raise ValueError()
-
-
-def tana(x, y, v=1.0):
-    return numpy.linalg.norm(x - y) / v
