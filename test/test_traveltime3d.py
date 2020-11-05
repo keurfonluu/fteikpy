@@ -31,3 +31,19 @@ def test_call(points, tref):
     tt = eik3d.solve(sources, nsweep=2)
 
     allclose(tref, points, lambda points: tt(points))
+
+
+@pytest.mark.parametrize(
+    "points, pref",
+    (
+        ([0.5, 0.5, 0.5], 1.5),
+        ([1.5, 1.5, 1.5], 7.26794919),
+        ([[0.5, 0.5, 0.5], [1.5, 1.5, 1.5]], [1.5, 7.26794919]),
+    ),
+)
+def test_raytrace(points, pref):
+    sources = 0.0, 0.0, 0.0
+    tt = eik3d.solve(sources, nsweep=2, return_gradient=True)
+    rays = tt.raytrace(points, stepsize=1.0)
+
+    allclose(pref, rays, lambda rays: rays.sum())
