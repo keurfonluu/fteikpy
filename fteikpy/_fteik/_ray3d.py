@@ -20,7 +20,12 @@ def _ray3d(z, x, y, ttgrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize):
         gz = interp3d(z, x, y, ttgrad[:, :, :, 0], pcur)
         gx = interp3d(z, x, y, ttgrad[:, :, :, 1], pcur)
         gy = interp3d(z, x, y, ttgrad[:, :, :, 2], pcur)
-        gni = 1.0 / norm3d(gz, gx, gy)
+        gn = norm3d(gz, gx, gy)
+
+        if gn > 0.0:
+            gni = 1.0 / gn
+        else:
+            break
 
         pcur[0] -= stepsize * gz * gni
         pcur[1] -= stepsize * gx * gni
@@ -43,7 +48,7 @@ def ray3d(z, x, y, ttgrad, p, src, stepsize):
     elif p.ndim == 2:
         out = []
         for i in prange(len(p)):
-            out.append(_ray3d(z, x, y, ttgrad, p[i, 0], p[i, 1], p[0, 2], src[0], src[1], src[2], stepsize))
+            out.append(_ray3d(z, x, y, ttgrad, p[i, 0], p[i, 1], p[i, 2], src[0], src[1], src[2], stepsize))
 
         return out
 

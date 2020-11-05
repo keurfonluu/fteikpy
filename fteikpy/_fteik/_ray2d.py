@@ -18,7 +18,12 @@ def _ray2d(z, x, ttgrad, zend, xend, zsrc, xsrc, stepsize):
     while dist2d(zsrc, xsrc, pcur[0], pcur[1]) > stepsize:
         gz = interp2d(z, x, ttgrad[:, :, 0], pcur)
         gx = interp2d(z, x, ttgrad[:, :, 1], pcur)
-        gni = 1.0 / norm2d(gz, gx)
+        gn = norm2d(gz, gx)
+
+        if gn > 0.0:
+            gni = 1.0 / gn
+        else:
+            break
 
         pcur[0] -= stepsize * gz * gni
         pcur[1] -= stepsize * gx * gni
