@@ -21,8 +21,8 @@ def test_solve(sources, tref):
 @pytest.mark.parametrize(
     "points, vref",
     (
-        ([0.0, 0.0], 1.0),
-        ([-1.0, -1.0], numpy.nan),
+        ([0.0, 0.0, 0.0], 1.0),
+        ([-1.0, -1.0, -1.0], numpy.nan),
         (
             [
                 [0.0, 0.0, 0.0],
