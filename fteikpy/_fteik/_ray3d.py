@@ -41,16 +41,18 @@ def _ray3d(z, x, y, ttgrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize):
 
 
 @jitted(parallel=True)
+def _ray3d_vectorized(z, x, y, ttgrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize):
+    out = []
+    for i in prange(len(zend)):
+        out.append(_ray3d(z, x, y, ttgrad, zend[i], xend[i], yend[i], zsrc, xsrc, ysrc, stepsize))
+
+    return out
+
+
+@jitted
 def ray3d(z, x, y, ttgrad, p, src, stepsize):
     if p.ndim == 1:
         return _ray3d(z, x, y, ttgrad, p[0], p[1], p[2], src[0], src[1], src[2], stepsize)
 
-    elif p.ndim == 2:
-        out = []
-        for i in prange(len(p)):
-            out.append(_ray3d(z, x, y, ttgrad, p[i, 0], p[i, 1], p[i, 2], src[0], src[1], src[2], stepsize))
-
-        return out
-
     else:
-        raise ValueError()
+        return _ray3d_vectorized(z, x, y, ttgrad, p[:, 0], p[:, 1], p[:, 2], src[0], src[1], src[2], stepsize)

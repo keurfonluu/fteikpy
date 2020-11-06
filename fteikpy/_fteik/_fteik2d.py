@@ -310,24 +310,26 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
 
 
 @jitted(parallel=True)
+def fteik2d_vectorized(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
+    nsrc = len(zsrc)
+    nz, nx = slow.shape
+    tt = numpy.empty((nsrc, nz, nx), dtype=numpy.float64)
+    ttgrad = (
+        numpy.empty((nsrc, nz, nx, 2), dtype=numpy.float64)
+        if grad
+        else numpy.empty((nsrc, 0, 0, 0), dtype=numpy.float64)
+    )
+    vzero = numpy.empty(nsrc, dtype=numpy.float64)
+    for i in prange(nsrc):
+        tt[i], ttgrad[i], vzero[i] = fteik2d(slow, dz, dx, zsrc[i], xsrc[i], nsweep, grad)
+
+    return tt, ttgrad, vzero
+
+
+@jitted
 def solve2d(slow, dz, dx, src, nsweep=2, grad=False):
     if src.ndim == 1:
         return fteik2d(slow, dz, dx, src[0], src[1], nsweep, grad)
 
-    elif src.ndim == 2:
-        nsrc = len(src)
-        nz, nx = slow.shape
-        tt = numpy.empty((nsrc, nz, nx), dtype=numpy.float64)
-        ttgrad = (
-            numpy.empty((nsrc, nz, nx, 2), dtype=numpy.float64)
-            if grad
-            else numpy.empty((nsrc, 0, 0, 0), dtype=numpy.float64)
-        )
-        vzero = numpy.empty(nsrc, dtype=numpy.float64)
-        for i in prange(nsrc):
-            tt[i], ttgrad[i], vzero[i] = fteik2d(slow, dz, dx, src[i, 0], src[i, 1], nsweep, grad)
-
-        return tt, ttgrad, vzero
-
     else:
-        raise ValueError()
+        return fteik2d_vectorized(slow, dz, dx, src[:, 0], src[:, 1], nsweep, grad)

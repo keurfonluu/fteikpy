@@ -302,24 +302,26 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
 
 
 @jitted(parallel=True)
+def fteik3d_vectorized(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
+    nsrc = len(zsrc)
+    nz, nx, ny = slow.shape
+    tt = numpy.empty((nsrc, nz, nx, ny), dtype=numpy.float64)
+    ttgrad = (
+        numpy.empty((nsrc, nz, nx, ny, 3), dtype=numpy.float64)
+        if grad
+        else numpy.empty((nsrc, 0, 0, 0, 0), dtype=numpy.float64)
+    )
+    vzero = numpy.empty(nsrc, dtype=numpy.float64)
+    for i in prange(nsrc):
+        tt[i], ttgrad[i], vzero[i] = fteik3d(slow, dz, dx, dy, zsrc[i], xsrc[i], ysrc[i], nsweep, grad)
+
+    return tt, ttgrad, vzero
+
+
+@jitted
 def solve3d(slow, dz, dx, dy, src, nsweep=2, grad=False):
     if src.ndim == 1:
         return fteik3d(slow, dz, dx, dy, src[0], src[1], src[2], nsweep, grad)
 
-    elif src.ndim == 2:
-        nsrc = len(src)
-        nz, nx, ny = slow.shape
-        tt = numpy.empty((nsrc, nz, nx, ny), dtype=numpy.float64)
-        ttgrad = (
-            numpy.empty((nsrc, nz, nx, ny, 3), dtype=numpy.float64)
-            if grad
-            else numpy.empty((nsrc, 0, 0, 0, 0), dtype=numpy.float64)
-        )
-        vzero = numpy.empty(nsrc, dtype=numpy.float64)
-        for i in prange(nsrc):
-            tt[i], ttgrad[i], vzero[i] = fteik3d(slow, dz, dx, dy, src[i, 0], src[i, 1], src[i, 2], nsweep, grad)
-
-        return tt, ttgrad, vzero
-
     else:
-        raise ValueError()
+        return fteik3d_vectorized(slow, dz, dx, dy, src[:, 0], src[:, 1], src[:, 2], nsweep, grad)

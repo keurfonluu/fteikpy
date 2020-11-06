@@ -172,17 +172,19 @@ def _interp3d(x, y, z, v, xq, yq, zq, fval):
 
 
 @jitted(parallel=True)
+def _interp3d_vectorized(x, y, z, v, xq, yq, zq, fval):
+    nq = len(xq)
+    out = numpy.empty(nq, dtype=numpy.float64)
+    for i in prange(nq):
+        out[i] = _interp3d(x, y, z, v, xq[i], yq[i], zq[i], fval)
+
+    return out
+
+
+@jitted
 def interp3d(x, y, z, v, q, fval=numpy.nan):
     if q.ndim == 1:
         return _interp3d(x, y, z, v, q[0], q[1], q[2], fval)
 
-    elif q.ndim == 2:
-        nq = len(q)
-        out = numpy.empty(nq, dtype=numpy.float64)
-        for i in prange(nq):
-            out[i] = _interp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], fval)
-
-        return out
-
     else:
-        raise ValueError()
+        return _interp3d_vectorized(x, y, z, v, q[:, 0], q[:, 1], q[:, 2], fval)

@@ -38,16 +38,18 @@ def _ray2d(z, x, ttgrad, zend, xend, zsrc, xsrc, stepsize):
 
 
 @jitted(parallel=True)
+def _ray2d_vectorized(z, x, ttgrad, zend, xend, zsrc, xsrc, stepsize):
+    out = []
+    for i in prange(len(zend)):
+        out.append(_ray2d(z, x, ttgrad, zend[i], xend[i], zsrc, xsrc, stepsize))
+
+    return out
+
+
+@jitted
 def ray2d(z, x, ttgrad, p, src, stepsize):
     if p.ndim == 1:
         return _ray2d(z, x, ttgrad, p[0], p[1], src[0], src[1], stepsize)
 
-    elif p.ndim == 2:
-        out = []
-        for i in prange(len(p)):
-            out.append(_ray2d(z, x, ttgrad, p[i, 0], p[i, 1], src[0], src[1], stepsize))
-
-        return out
-
     else:
-        raise ValueError()
+        return _ray2d_vectorized(z, x, ttgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize)

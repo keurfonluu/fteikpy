@@ -75,17 +75,19 @@ def _interp2d(x, y, v, xq, yq, fval):
 
 
 @jitted(parallel=True)
+def _interp2d_vectorized(x, y, v, xq, yq, fval):
+    nq = len(xq)
+    out = numpy.empty(nq, dtype=numpy.float64)
+    for i in prange(nq):
+        out[i] = _interp2d(x, y, v, xq[i], yq[i], fval)
+
+    return out
+
+
+@jitted
 def interp2d(x, y, v, q, fval=numpy.nan):
     if q.ndim == 1:
         return _interp2d(x, y, v, q[0], q[1], fval)
 
-    elif q.ndim == 2:
-        nq = len(q)
-        out = numpy.empty(nq, dtype=numpy.float64)
-        for i in prange(nq):
-            out[i] = _interp2d(x, y, v, q[i, 0], q[i, 1], fval)
-
-        return out
-
     else:
-        raise ValueError()
+        return _interp2d_vectorized(x, y, v, q[:, 0], q[:, 1], fval)

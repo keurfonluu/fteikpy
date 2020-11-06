@@ -102,17 +102,19 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 
 
 @jitted(parallel=True)
+def _vinterp2d_vectorized(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
+    nq = len(xq)
+    out = numpy.empty(nq, dtype=numpy.float64)
+    for i in prange(nq):
+        out[i] = _vinterp2d(x, y, v, xq[i], yq[i], xsrc, ysrc, vzero, fval)
+
+    return out
+
+
+@jitted
 def vinterp2d(x, y, v, q, src, vzero, fval=numpy.nan):
     if q.ndim == 1:
         return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero, fval)
 
-    elif q.ndim == 2:
-        nq = len(q)
-        out = numpy.empty(nq, dtype=numpy.float64)
-        for i in prange(nq):
-            out[i] = _vinterp2d(x, y, v, q[i, 0], q[i, 1], src[0], src[1], vzero, fval)
-
-        return out
-
     else:
-        raise ValueError()
+        return _vinterp2d_vectorized(x, y, v, q[:, 0], q[:, 1], src[0], src[1], vzero, fval)

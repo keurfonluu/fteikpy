@@ -252,17 +252,19 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
 
 
 @jitted(parallel=True)
+def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
+    nq = len(xq)
+    out = numpy.empty(nq, dtype=numpy.float64)
+    for i in prange(nq):
+        out[i] = _vinterp3d(x, y, z, v, xq[i], yq[i], zq[i], xsrc, ysrc, zsrc, vzero, fval)
+
+    return out
+
+
+@jitted
 def vinterp3d(x, y, z, v, q, src, vzero, fval=numpy.nan):
     if q.ndim == 1:
         return _vinterp3d(x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero, fval)
 
-    elif q.ndim == 2:
-        nq = len(q)
-        out = numpy.empty(nq, dtype=numpy.float64)
-        for i in prange(nq):
-            out[i] = _vinterp3d(x, y, z, v, q[i, 0], q[i, 1], q[i, 2], src[0], src[1], src[2], vzero, fval)
-
-        return out
-
     else:
-        raise ValueError()
+        return _vinterp3d_vectorized(x, y, z, v, q[:, 0], q[:, 1], q[:, 2], src[0], src[1], src[2], vzero, fval)
