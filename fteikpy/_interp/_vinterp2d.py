@@ -35,7 +35,7 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 
             d11 = dist2d(xsrc, ysrc, x1, y1)
             d21 = 0.0
-            d22 = dist2d(xsrc, ysrc, x1, y2)
+            d12 = dist2d(xsrc, ysrc, x1, y2)
             d22 = 0.0
 
             v11 = v[i1, j1]
