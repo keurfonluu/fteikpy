@@ -25,5 +25,5 @@ def test_call(points, gzref, gxref):
     sources = 0.0, 0.0
     tt = eik2d.solve(sources, nsweep=2, return_gradient=True)
 
-    allclose(gzref, points, lambda points: tt.gradient_z(points))
-    allclose(gxref, points, lambda points: tt.gradient_x(points))
+    allclose(gzref, points, lambda points: tt.gradient[0](points))
+    allclose(gxref, points, lambda points: tt.gradient[1](points))
