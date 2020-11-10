@@ -40,8 +40,8 @@ def delta(t1, tauv, taue, tauev, t0c, tzc, txc, dzi, dxi, dz2i, dx2i, vzero, vre
 
     apoly = dz2i + dx2i
     bpoly = 4.0 * (sgntx * txc * dxi + sgntz * tzc * dzi) - 2.0 * (ta * dx2i + tb * dz2i)
-    cpoly = (ta * ta * dx2i) + (tb * tb * dz2i) - 4.0 * (sgntx * txc * dxi * ta + sgntz * tzc * dzi * tb) + 4.0 * (vzero * vzero - vref * vref)
-    dpoly = bpoly * bpoly - 4.0 * apoly * cpoly
+    cpoly = (ta ** 2.0 * dx2i) + (tb ** 2.0 * dz2i) - 4.0 * (sgntx * txc * dxi * ta + sgntz * tzc * dzi * tb) + 4.0 * (vzero ** 2.0 - vref ** 2.0)
+    dpoly = bpoly ** 2.0 - 4.0 * apoly * cpoly
 
     return 0.5 * (dpoly ** 0.5 - bpoly) / apoly + t0c if dpoly >= 0.0 else t1
 
@@ -80,14 +80,14 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, zsa, xsa, vzero, i, j, sgnvz, sgnvx
         if tv <= te + dx * vref and te <= tv + dz * vref and te >= tev and tv >= tev:
             ta = tev + te - tv
             tb = tev - te + tv
-            t2d = ((tb * dz2i + ta * dx2i) + (4.0 * vref * vref * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) * (ta - tb)) ** 0.5) / (dz2i + dx2i)
+            t2d = ((tb * dz2i + ta * dx2i) + (4.0 * vref ** 2.0 * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) ** 2.0) ** 0.5) / (dz2i + dx2i)
 
         # Two 3 points operators
-        elif te - tev <= dz * dz * vref / (dx * dx + dz * dz) ** 0.5 and te - tev > 0.0:
-            t2d = te + dx * (vref * vref - ((te - tev) / dz) ** 2.0) ** 0.5
+        elif te - tev <= dz ** 2.0 * vref / (dx ** 2.0 + dz ** 2.0) ** 0.5 and te - tev > 0.0:
+            t2d = te + dx * (vref ** 2.0 - ((te - tev) / dz) ** 2.0) ** 0.5
 
-        elif tv - tev <= dx * dx * vref / (dx * dx + dz * dz) ** 0.5 and tv - tev > 0.0:
-            t2d = tv + dz * (vref * vref - ((tv - tev) / dx) ** 2.0) ** 0.5 
+        elif tv - tev <= dx ** 2.0 * vref / (dx ** 2.0 + dz ** 2.0) ** 0.5 and tv - tev > 0.0:
+            t2d = tv + dz * (vref ** 2.0 - ((tv - tev) / dx) ** 2.0) ** 0.5 
 
     # Test for spherical
     else:

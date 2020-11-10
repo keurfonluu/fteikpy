@@ -88,7 +88,7 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     if tv < te + dx * vref and te < tv + dz * vref:
         ta = tev + te - tv
         tb = tev - te + tv
-        t2d1 = ((tb * dz2i + ta * dx2i) + (4.0 * vref * vref * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) * (ta - tb)) ** 0.5) / (dz2i + dx2i)
+        t2d1 = ((tb * dz2i + ta * dx2i) + (4.0 * vref ** 2.0 * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) ** 2.0) ** 0.5) / (dz2i + dx2i)
 
     # ZY plane
     t2d2 = Big
@@ -96,7 +96,7 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     if tv < tn + dy * vref and tn < tv + dz * vref:
         ta = tv - tn + tnv
         tb = tn - tv + tnv
-        t2d2 = ((ta * dz2i + tb * dy2i) + (4.0 * vref * vref * (dz2i + dy2i) - dz2i * dy2i * (ta - tb) * (ta - tb)) ** 0.5) / (dz2i + dy2i)
+        t2d2 = ((ta * dz2i + tb * dy2i) + (4.0 * vref ** 2.0 * (dz2i + dy2i) - dz2i * dy2i * (ta - tb) ** 2.0) ** 0.5) / (dz2i + dy2i)
 
     # XY plane
     t2d3 = Big
@@ -104,7 +104,7 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     if te < tn + dy * vref and tn < te + dx * vref:
         ta = te - tn + ten
         tb = tn - te + ten
-        t2d3 = ((ta * dx2i + tb * dy2i) + (4.0 * vref * vref * (dx2i + dy2i) - dx2i * dy2i * (ta - tb) * (ta - tb)) ** 0.5) / (dx2i + dy2i)
+        t2d3 = ((ta * dx2i + tb * dy2i) + (4.0 * vref ** 2.0 * (dx2i + dy2i) - dx2i * dy2i * (ta - tb) ** 2.0) ** 0.5) / (dx2i + dy2i)
 
     t2d = min(t2d1, t2d2, t2d3)
 
@@ -116,10 +116,10 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
         tb = tv - 0.5 * tn + 0.5 * tnv - 0.5 * te + 0.5 * tev - ten + tnve
         tc = tn - 0.5 * te + 0.5 * ten - 0.5 * tv + 0.5 * tnv - tev + tnve
         
-        t2 = vref * vref * dsum * 9.0
-        t3 = dz2dx2 * (ta - tb) * (ta - tb)
-        t3 += dz2dy2 * (tb - tc) * (tb - tc)
-        t3 += dx2dy2 * (ta - tc) * (ta - tc)
+        t2 = vref ** 2.0 * dsum * 9.0
+        t3 = dz2dx2 * (ta - tb) ** 2.0
+        t3 += dz2dy2 * (tb - tc) ** 2.0
+        t3 += dx2dy2 * (ta - tc) ** 2.0
         if t2 >= t3:
             t1 = tb * dz2i + ta * dx2i + tc * dy2i
             t3d = (t1 + (t2 - t3) ** 0.5) / dsum
