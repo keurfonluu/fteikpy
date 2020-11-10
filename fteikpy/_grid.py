@@ -38,36 +38,31 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         )
 
     def raytrace(self, points, stepsize=None):
-        if self._gradient is None:
-            raise ValueError(
-                "no gradient array to perform ray tracing, use option 'return_gradient' to return gradient array"
-            )
-
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
+        gradient = self.gradient
 
         return ray2d(
             self.zaxis,
             self.xaxis,
-            self._gradient,
+            gradient[0].grid,
+            gradient[1].grid,
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
         )
 
     @property
-    def gradient_z(self):
+    def gradient(self):
         return (
-            Grid2D(self._gradient[:, :, 0], self._gridsize, self._origin)
+            [
+                Grid2D(self._gradient[:, :, i], self._gridsize, self._origin)
+                for i in range(2)
+            ]
             if self._gradient is not None
-            else None
-        )
-
-    @property
-    def gradient_x(self):
-        return (
-            Grid2D(self._gradient[:, :, 1], self._gridsize, self._origin)
-            if self._gradient is not None
-            else None
+            else [
+                Grid2D(grad, self._gridsize, self._origin)
+                for grad in numpy.gradient(self._grid, *self._gridsize)
+            ]
         )
 
 
@@ -95,43 +90,31 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         )
 
     def raytrace(self, points, stepsize=None):
-        if self._gradient is None:
-            raise ValueError(
-                "no gradient array to perform ray tracing, use option 'return_gradient' to return gradient array"
-            )
-
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
+        gradient = self.gradient
 
         return ray3d(
             self.zaxis,
             self.xaxis,
             self.yaxis,
-            self._gradient,
+            gradient[0].grid,
+            gradient[1].grid,
+            gradient[2].grid,
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
         )
 
     @property
-    def gradient_z(self):
+    def gradient(self):
         return (
-            Grid3D(self._gradient[:, :, :, 0], self._gridsize, self._origin)
+            [
+                Grid3D(self._gradient[:, :, :, i], self._gridsize, self._origin)
+                for i in range(3)
+            ]
             if self._gradient is not None
-            else None
-        )
-
-    @property
-    def gradient_x(self):
-        return (
-            Grid3D(self._gradient[:, :, :, 1], self._gridsize, self._origin)
-            if self._gradient is not None
-            else None
-        )
-
-    @property
-    def gradient_y(self):
-        return (
-            Grid3D(self._gradient[:, :, :, 2], self._gridsize, self._origin)
-            if self._gradient is not None
-            else None
+            else [
+                Grid3D(grad, self._gridsize, self._origin)
+                for grad in numpy.gradient(self._grid, *self._gridsize)
+            ]
         )
