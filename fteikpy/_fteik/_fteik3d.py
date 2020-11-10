@@ -131,39 +131,39 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     # Compute gradient according to minimum time direction
     if grad and tt[i, j, k] != t0:
         if tt[i, j, k] == t1d1:
-            ttgrad[i, j, k, 0] = sgntz * (tt[i, j, k] - tv) / dz
+            ttgrad[i, j, k, 0] = sgntz
             ttgrad[i, j, k, 1] = 0.0
             ttgrad[i, j, k, 2] = 0.0
 
         elif tt[i, j, k] == t1d2:
             ttgrad[i, j, k, 0] = 0.0
-            ttgrad[i, j, k, 1] = sgntx * (tt[i, j, k] - te) / dx
+            ttgrad[i, j, k, 1] = sgntx
             ttgrad[i, j, k, 2] = 0.0
 
         elif tt[i, j, k] == t1d3:
             ttgrad[i, j, k, 0] = 0.0
             ttgrad[i, j, k, 1] = 0.0
-            ttgrad[i, j, k, 2] = sgnty * (tt[i, j, k] - tn) / dy
+            ttgrad[i, j, k, 2] = sgnty
 
         elif tt[i, j, k] == t2d1:
-            ttgrad[i, j, k, 0] = sgntz * (tt[i, j, k] - tv) / dz
-            ttgrad[i, j, k, 1] = sgntx * (tt[i, j, k] - te) / dx
+            ttgrad[i, j, k, 0] = sgntz
+            ttgrad[i, j, k, 1] = sgntx
             ttgrad[i, j, k, 2] = 0.0
 
         elif tt[i, j, k] == t2d2:
-            ttgrad[i, j, k, 0] = sgntz * (tt[i, j, k] - tv) / dz
+            ttgrad[i, j, k, 0] = sgntz
             ttgrad[i, j, k, 1] = 0.0
-            ttgrad[i, j, k, 2] = sgnty * (tt[i, j, k] - tn) / dy
+            ttgrad[i, j, k, 2] = sgnty
 
         elif tt[i, j, k] == t2d3:
             ttgrad[i, j, k, 0] = 0.0
-            ttgrad[i, j, k, 1] = sgntx * (tt[i, j, k] - te) / dx
-            ttgrad[i, j, k, 2] = sgnty * (tt[i, j, k] - tn) / dy
+            ttgrad[i, j, k, 1] = sgntx
+            ttgrad[i, j, k, 2] = sgnty
 
         else:
-            ttgrad[i, j, k, 0] = sgntz * (tt[i, j, k] - tv) / dz
-            ttgrad[i, j, k, 1] = sgntx * (tt[i, j, k] - te) / dx
-            ttgrad[i, j, k, 2] = sgnty * (tt[i, j, k] - tn) / dy
+            ttgrad[i, j, k, 0] = sgntz
+            ttgrad[i, j, k, 1] = sgntx
+            ttgrad[i, j, k, 2] = sgnty
 
 
 @jitted("void(f8[:, :, :], f8[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8, f8, f8, i4, i4, i4, b1, b1)")
@@ -324,6 +324,25 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
 
     for i in range(nsweep):
         sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, ny, grad, i == 0)
+
+    if grad:
+        for i in range(nz):
+            for j in range(nx):
+                for k in range(ny):
+                    sgntz = int(ttgrad[i, j, k, 0])
+                    if sgntz != 0:
+                        t1 = tt[i - sgntz, j, k]
+                        ttgrad[i, j, k, 0] = sgntz * (tt[i, j, k] - t1) / dz
+
+                    sgntx = int(ttgrad[i, j, k, 1])
+                    if sgntx != 0:
+                        t1 = tt[i, j - sgntx, k]
+                        ttgrad[i, j, k, 1] = sgntx * (tt[i, j, k] - t1) / dx
+
+                    sgnty = int(ttgrad[i, j, k, 2])
+                    if sgnty != 0:
+                        t1 = tt[i, j, k - sgnty]
+                        ttgrad[i, j, k, 2] = sgnty * (tt[i, j, k] - t1) / dy
 
     return tt, ttgrad, vzero
 
