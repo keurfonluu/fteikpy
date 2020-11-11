@@ -1,29 +1,16 @@
-# -*- coding: utf-8 -*-
+from .__about__ import __version__
+from ._grid import Grid2D, Grid3D, TraveltimeGrid2D, TraveltimeGrid3D
+from ._helpers import get_num_threads, set_num_threads
+from ._solver import Eikonal2D, Eikonal3D
 
-"""
-FTeikPy is a Python module that computes accurate first arrival traveltimes in
-2-D and 3-D heterogeneous isotropic velocity model.
-
-Author: Keurfon Luu <keurfon.luu@mines-paristech.fr>
-License: MIT
-"""
-
-from .ttgrid import TTGrid
-from .eikonal import Eikonal
-from .ray import Ray, ray_coverage
-from .layered_model import lay2vel, lay2tt
-from .bspline_model import bspline1, bspline2, vel2spl, spl2vel
-
-__version__ = "1.5.0"
 __all__ = [
-    "TTGrid",
-    "Eikonal",
-    "Ray",
-    "ray_coverage",
-    "lay2vel",
-    "lay2tt",
-    "bspline1",
-    "bspline2",
-    "vel2spl",
-    "spl2vel",
-    ]
+    "Eikonal2D",
+    "Eikonal3D",
+    "Grid2D",
+    "Grid3D",
+    "TraveltimeGrid2D",
+    "TraveltimeGrid3D",
+    "get_num_threads",
+    "set_num_threads",
+    "__version__",
+]
