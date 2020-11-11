@@ -83,7 +83,7 @@ If you are using **fteikpy** in your scientific research, please consider mentio
 
 ..
 
-   M. Noble, A. Gesret and N. Belayouni, (2014). Accurate 3-D finite difference computation of traveltimes in strongly heterogeneous media. Geophysical Journal International, 199(3): 1572-1585, https://doi.org/10.1093/gji/ggu358
+   Noble, M., Gesret, A., and Belayouni, N., (2014). Accurate 3-D finite difference computation of traveltimes in strongly heterogeneous media. Geophysical Journal International, 199(3): 1572-1585, https://doi.org/10.1093/gji/ggu358
 
 BibTex:
 
@@ -121,7 +121,7 @@ BibTex:
    :target: https://github.com/psf/black
 
 .. |Codacy Badge| image:: https://img.shields.io/codacy/grade/29b21d65d07e40219dcc9ad1c978cbeb.svg?style=flat
-   :target: https://www.codacy.com/manual/keurfonluu/fteikpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=keurfonluu/fteikpy&amp;utm_campaign=Badge_Grade
+   :target: https://www.codacy.com/gh/keurfonluu/fteikpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=keurfonluu/fteikpy&amp;utm_campaign=Badge_Grade
 
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/keurfonluu/fteikpy.svg?style=flat
    :target: https://codecov.io/gh/keurfonluu/fteikpy
