@@ -67,8 +67,11 @@ The following example computes the traveltime grid in a 3D homogenous velocity m
    eik = Eikonal3D(velocity_model, gridsize=(dz, dx, dy))
    tt = eik.solve((0.0, 0.0, 0.0))
 
-   # Get traveltime at any point in the grid
-   t = tt(numpy.random.rand(3) * 7.0)
+   # Get traveltime at specific grid point
+   t1 = tt[0, 1, 2]
+
+   # Or get traveltime at any point in the grid
+   t2 = tt(numpy.random.rand(3) * 7.0)
 
 Contributing
 ------------
@@ -79,7 +82,7 @@ Guidelines <https://github.com/keurfonluu/fteikpy/blob/master/CONTRIBUTING.rst>`
 Citing fteikpy
 --------------
 
-If you are using **fteikpy** in your scientific research, please consider mentioning it (e.g., in Acknowledgements) and citing the following paper:
+If you are using **fteikpy** in your scientific research, please consider mentioning it (e.g. in Acknowledgements) and citing the following paper:
 
 ..
 
