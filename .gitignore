@@ -106,3 +106,6 @@ PKG-INFO
 requires.txt
 SOURCES.txt
 top_level.txt
+
+# VSCode
+.vscode
