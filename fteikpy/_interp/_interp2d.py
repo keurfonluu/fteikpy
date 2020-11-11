@@ -1,5 +1,4 @@
 import numpy
-
 from numba import prange
 
 from .._common import jitted

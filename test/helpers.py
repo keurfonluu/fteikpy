@@ -18,7 +18,6 @@ eik3d = Eikonal3D(
 
 
 def allclose(a, b, bfun, atol=1.0e-8):
-
     def allclose_nan(a, b):
         try:
             if numpy.isnan(a):

@@ -1,5 +1,4 @@
 import numpy
-
 from numba import prange
 
 from .._common import dist2d, jitted
@@ -117,4 +116,6 @@ def vinterp2d(x, y, v, q, src, vzero, fval=numpy.nan):
         return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero, fval)
 
     else:
-        return _vinterp2d_vectorized(x, y, v, q[:, 0], q[:, 1], src[0], src[1], vzero, fval)
+        return _vinterp2d_vectorized(
+            x, y, v, q[:, 0], q[:, 1], src[0], src[1], vzero, fval
+        )

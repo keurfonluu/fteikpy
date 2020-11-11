@@ -1,5 +1,4 @@
 import numpy
-
 from numba import prange
 
 from .._common import dist3d, jitted
@@ -245,7 +244,9 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
         az = numpy.array([z2, z2, z2, z2, z1, z1, z1, z1])
         av = numpy.array([v111, v211, v121, v221, v112, v212, v122, v222])
         ad = numpy.array([d111, d211, d121, d221, d112, d212, d122, d222])
-        N = numpy.abs((ax - xq) * (ay - yq) * (az - zq)) / numpy.abs((x2 - x1) * (y2 - y1) * (z2 -z1))
+        N = numpy.abs((ax - xq) * (ay - yq) * (az - zq)) / numpy.abs(
+            (x2 - x1) * (y2 - y1) * (z2 - z1)
+        )
         vq = dist3d(xsrc, ysrc, zsrc, xq, yq, zq) / numpy.dot(ad / av, N)
 
     return vq
@@ -256,7 +257,9 @@ def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval)
     nq = len(xq)
     out = numpy.empty(nq, dtype=numpy.float64)
     for i in prange(nq):
-        out[i] = _vinterp3d(x, y, z, v, xq[i], yq[i], zq[i], xsrc, ysrc, zsrc, vzero, fval)
+        out[i] = _vinterp3d(
+            x, y, z, v, xq[i], yq[i], zq[i], xsrc, ysrc, zsrc, vzero, fval
+        )
 
     return out
 
@@ -264,7 +267,11 @@ def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval)
 @jitted
 def vinterp3d(x, y, z, v, q, src, vzero, fval=numpy.nan):
     if q.ndim == 1:
-        return _vinterp3d(x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero, fval)
+        return _vinterp3d(
+            x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero, fval
+        )
 
     else:
-        return _vinterp3d_vectorized(x, y, z, v, q[:, 0], q[:, 1], q[:, 2], src[0], src[1], src[2], vzero, fval)
+        return _vinterp3d_vectorized(
+            x, y, z, v, q[:, 0], q[:, 1], q[:, 2], src[0], src[1], src[2], vzero, fval
+        )

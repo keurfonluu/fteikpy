@@ -1,12 +1,13 @@
 import numpy
-
 from numba import prange
 
 from .._common import dist3d, jitted, norm3d
 from .._interp import interp3d
 
 
-@jitted("f8[:, :](f8[:], f8[:], f8[:], f8[:, :, :], f8[:, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8)")
+@jitted(
+    "f8[:, :](f8[:], f8[:], f8[:], f8[:, :, :], f8[:, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8)"
+)
 def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize):
     condz = z[0] <= zend <= z[-1]
     condx = x[0] <= xend <= x[-1]
@@ -41,10 +42,28 @@ def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, ste
 
 
 @jitted(parallel=True)
-def _ray3d_vectorized(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize):
+def _ray3d_vectorized(
+    z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize
+):
     out = []
     for i in prange(len(zend)):
-        out.append(_ray3d(z, x, y, zgrad, xgrad, ygrad, zend[i], xend[i], yend[i], zsrc, xsrc, ysrc, stepsize))
+        out.append(
+            _ray3d(
+                z,
+                x,
+                y,
+                zgrad,
+                xgrad,
+                ygrad,
+                zend[i],
+                xend[i],
+                yend[i],
+                zsrc,
+                xsrc,
+                ysrc,
+                stepsize,
+            )
+        )
 
     return out
 
@@ -52,7 +71,35 @@ def _ray3d_vectorized(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc
 @jitted
 def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize):
     if p.ndim == 1:
-        return _ray3d(z, x, y, zgrad, xgrad, ygrad, p[0], p[1], p[2], src[0], src[1], src[2], stepsize)
+        return _ray3d(
+            z,
+            x,
+            y,
+            zgrad,
+            xgrad,
+            ygrad,
+            p[0],
+            p[1],
+            p[2],
+            src[0],
+            src[1],
+            src[2],
+            stepsize,
+        )
 
     else:
-        return _ray3d_vectorized(z, x, y, zgrad, xgrad, ygrad, p[:, 0], p[:, 1], p[:, 2], src[0], src[1], src[2], stepsize)
+        return _ray3d_vectorized(
+            z,
+            x,
+            y,
+            zgrad,
+            xgrad,
+            ygrad,
+            p[:, 0],
+            p[:, 1],
+            p[:, 2],
+            src[0],
+            src[1],
+            src[2],
+            stepsize,
+        )

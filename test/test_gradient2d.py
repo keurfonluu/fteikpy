@@ -1,7 +1,6 @@
 import numpy
 import pytest
-
-from helpers import eik2d, allclose
+from helpers import allclose, eik2d
 
 
 @pytest.mark.parametrize(

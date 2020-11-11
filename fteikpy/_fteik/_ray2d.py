@@ -1,5 +1,4 @@
 import numpy
-
 from numba import prange
 
 from .._common import dist2d, jitted, norm2d
@@ -52,4 +51,6 @@ def ray2d(z, x, zgrad, xgrad, p, src, stepsize):
         return _ray2d(z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize)
 
     else:
-        return _ray2d_vectorized(z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize)
+        return _ray2d_vectorized(
+            z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize
+        )

@@ -1,7 +1,6 @@
 import numpy
 import pytest
-
-from helpers import eik2d, allclose
+from helpers import allclose, eik2d
 
 
 @pytest.mark.parametrize(
@@ -34,7 +33,7 @@ def test_call(points, tref):
     (
         ([0.5, 0.5], 1.0),
         ([1.5, 1.5], 4.75735931),
-        ([[0.5, 0.5], [1.5, 1.5]], [1.0, 4.75735931])
+        ([[0.5, 0.5], [1.5, 1.5]], [1.0, 4.75735931]),
     ),
 )
 def test_raytrace(points, pref):

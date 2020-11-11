@@ -1,5 +1,4 @@
 import numpy
-
 from numba import prange
 
 from .._common import jitted
@@ -165,7 +164,9 @@ def _interp3d(x, y, z, v, xq, yq, zq, fval):
     ay = numpy.array([y2, y2, y1, y1, y2, y2, y1, y1])
     az = numpy.array([z2, z2, z2, z2, z1, z1, z1, z1])
     av = numpy.array([v111, v211, v121, v221, v112, v212, v122, v222])
-    N = numpy.abs((ax - xq) * (ay - yq) * (az - zq)) / numpy.abs((x2 - x1) * (y2 - y1) * (z2 -z1))
+    N = numpy.abs((ax - xq) * (ay - yq) * (az - zq)) / numpy.abs(
+        (x2 - x1) * (y2 - y1) * (z2 - z1)
+    )
     vq = numpy.dot(av, N)
 
     return vq

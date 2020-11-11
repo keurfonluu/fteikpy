@@ -1,9 +1,7 @@
 import numpy
-
 from numba import prange
 
 from .._common import jitted
-
 
 Big = 1.0e5
 eps = 1.0e-15
@@ -12,7 +10,11 @@ eps = 1.0e-15
 @jitted("f8(i4, i4, i4, f8, f8, f8, f8, f8, f8, f8)")
 def t_ana(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero):
     """Calculate analytical times in homogenous model."""
-    return vzero * ((dz * (i - zsa)) ** 2.0 + (dx * (j - xsa)) ** 2.0 + (dy * (k - ysa)) ** 2.0) ** 0.5
+    return (
+        vzero
+        * ((dz * (i - zsa)) ** 2.0 + (dx * (j - xsa)) ** 2.0 + (dy * (k - ysa)) ** 2.0)
+        ** 0.5
+    )
 
 
 @jitted("UniTuple(f8, 4)(i4, i4, i4, f8, f8, f8, f8, f8, f8, f8)")
@@ -33,8 +35,35 @@ def t_anad(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero):
     return t, tzc, txc, tyc
 
 
-@jitted("void(f8[:, :, :], f8[:, :, :, :], f8[:, :, :], UniTuple(f8, 10), f8, f8, f8, f8, f8, f8, f8, i4, i4, i4, i4, i4, i4, i4, i4, i4, i4, i4, i4, b1)")
-def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, sgnvz, sgnvx, sgnvy, sgntz, sgntx, sgnty, nz, nx, ny, grad):
+@jitted(
+    "void(f8[:, :, :], f8[:, :, :, :], f8[:, :, :], UniTuple(f8, 10), f8, f8, f8, f8, f8, f8, f8, i4, i4, i4, i4, i4, i4, i4, i4, i4, i4, i4, i4, b1)"
+)
+def sweep(
+    tt,
+    ttgrad,
+    slow,
+    dargs,
+    zsi,
+    xsi,
+    ysi,
+    zsa,
+    xsa,
+    ysa,
+    vzero,
+    i,
+    j,
+    k,
+    sgnvz,
+    sgnvx,
+    sgnvy,
+    sgntz,
+    sgntx,
+    sgnty,
+    nz,
+    nx,
+    ny,
+    grad,
+):
     """Sweep in given direction."""
     dz, dx, dy, dz2i, dx2i, dy2i, dz2dx2, dz2dy2, dx2dy2, dsum = dargs
 
@@ -57,7 +86,7 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
         slow[i1, max(j - 1, 0), max(k - 1, 0)],
         slow[i1, max(j - 1, 0), min(k, ny - 2)],
         slow[i1, min(j, nx - 2), max(k - 1, 0)],
-        slow[i1, min(j, nx - 2), min(k, ny - 2)],    
+        slow[i1, min(j, nx - 2), min(k, ny - 2)],
     )
     t1d1 = tv + dz * vref
 
@@ -88,7 +117,11 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     if tv < te + dx * vref and te < tv + dz * vref:
         ta = tev + te - tv
         tb = tev - te + tv
-        t2d1 = ((tb * dz2i + ta * dx2i) + (4.0 * vref ** 2.0 * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) ** 2.0) ** 0.5) / (dz2i + dx2i)
+        t2d1 = (
+            (tb * dz2i + ta * dx2i)
+            + (4.0 * vref ** 2.0 * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) ** 2.0)
+            ** 0.5
+        ) / (dz2i + dx2i)
 
     # ZY plane
     t2d2 = Big
@@ -96,7 +129,11 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     if tv < tn + dy * vref and tn < tv + dz * vref:
         ta = tv - tn + tnv
         tb = tn - tv + tnv
-        t2d2 = ((ta * dz2i + tb * dy2i) + (4.0 * vref ** 2.0 * (dz2i + dy2i) - dz2i * dy2i * (ta - tb) ** 2.0) ** 0.5) / (dz2i + dy2i)
+        t2d2 = (
+            (ta * dz2i + tb * dy2i)
+            + (4.0 * vref ** 2.0 * (dz2i + dy2i) - dz2i * dy2i * (ta - tb) ** 2.0)
+            ** 0.5
+        ) / (dz2i + dy2i)
 
     # XY plane
     t2d3 = Big
@@ -104,7 +141,11 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
     if te < tn + dy * vref and tn < te + dx * vref:
         ta = te - tn + ten
         tb = tn - te + ten
-        t2d3 = ((ta * dx2i + tb * dy2i) + (4.0 * vref ** 2.0 * (dx2i + dy2i) - dx2i * dy2i * (ta - tb) ** 2.0) ** 0.5) / (dx2i + dy2i)
+        t2d3 = (
+            (ta * dx2i + tb * dy2i)
+            + (4.0 * vref ** 2.0 * (dx2i + dy2i) - dx2i * dy2i * (ta - tb) ** 2.0)
+            ** 0.5
+        ) / (dx2i + dy2i)
 
     t2d = min(t2d1, t2d2, t2d3)
 
@@ -115,7 +156,7 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
         ta = te - 0.5 * tn + 0.5 * ten - 0.5 * tv + 0.5 * tev - tnv + tnve
         tb = tv - 0.5 * tn + 0.5 * tnv - 0.5 * te + 0.5 * tev - ten + tnve
         tc = tn - 0.5 * te + 0.5 * ten - 0.5 * tv + 0.5 * tnv - tev + tnve
-        
+
         t2 = vref ** 2.0 * dsum * 9.0
         t3 = dz2dx2 * (ta - tb) ** 2.0
         t3 += dz2dy2 * (tb - tc) ** 2.0
@@ -166,8 +207,29 @@ def sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k,
             ttgrad[i, j, k, 2] = sgnty
 
 
-@jitted("void(f8[:, :, :], f8[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8, f8, f8, i4, i4, i4, b1, b1)")
-def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, ny, grad, init=False):
+@jitted(
+    "void(f8[:, :, :], f8[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8, f8, f8, i4, i4, i4, b1, b1)"
+)
+def sweep3d(
+    tt,
+    ttgrad,
+    slow,
+    dz,
+    dx,
+    dy,
+    zsi,
+    xsi,
+    ysi,
+    zsa,
+    xsa,
+    ysa,
+    vzero,
+    nz,
+    nx,
+    ny,
+    grad,
+    init=False,
+):
     """Perform one sweeping."""
     dz2i = 1.0 / dz / dz
     dx2i = 1.0 / dx / dx
@@ -187,7 +249,32 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, ny):
         for j in range(j0, nx):
             for i in range(i0, nz):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 1, 1, 1, 1, 1, 1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Second sweeping: Top -> Bottom; East -> West; South -> North
     if init:
@@ -198,7 +285,32 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, ny):
         for j in range(j0, -1, -1):
             for i in range(i0, nz):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 1, 0, 1, 1, -1, 1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    1,
+                    0,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Third sweeping: Top -> Bottom; West -> East; North -> South
     if init:
@@ -209,7 +321,32 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, -1, -1):
         for j in range(j0, nx):
             for i in range(i0, nz):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 1, 1, 0, 1, 1, -1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    1,
+                    1,
+                    0,
+                    1,
+                    1,
+                    -1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Fouth sweeping: Top -> Bottom; East -> West; North -> South
     if init:
@@ -220,7 +357,32 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, -1, -1):
         for j in range(j0, -1, -1):
             for i in range(i0, nz):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 1, 0, 0, 1, -1, -1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    1,
+                    0,
+                    0,
+                    1,
+                    -1,
+                    -1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Fifth sweeping: Bottom -> Top; West -> East; South -> North
     if init:
@@ -231,7 +393,32 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, ny):
         for j in range(j0, nx):
             for i in range(i0, -1, -1):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 0, 1, 1, -1, 1, 1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    0,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Sixth sweeping: Bottom -> Top; East -> West; South -> North
     if init:
@@ -241,18 +428,68 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, ny):
         for j in range(j0, -1, -1):
             for i in range(i0, -1, -1):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 0, 0, 1, -1, -1, 1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    0,
+                    0,
+                    1,
+                    -1,
+                    -1,
+                    1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Seventh sweeping: Bottom -> Top; West -> East; North -> South
     if init:
         i0, j0, k0 = zsi + 1, max(1, xsi - 1), ysi + 1
     else:
         i0, j0, k0 = nz - 2, 1, ny - 2
-    
+
     for k in range(k0, -1, -1):
         for j in range(j0, nx):
             for i in range(i0, -1, -1):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 0, 1, 0, -1, 1, -1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    0,
+                    1,
+                    0,
+                    -1,
+                    1,
+                    -1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
     # Eighth sweeping: Bottom -> Top; East -> West; North -> South
     if init:
@@ -263,10 +500,37 @@ def sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, n
     for k in range(k0, -1, -1):
         for j in range(j0, -1, -1):
             for i in range(i0, -1, -1):
-                sweep(tt, ttgrad, slow, dargs, zsi, xsi, ysi, zsa, xsa, ysa, vzero, i, j, k, 0, 0, 0, -1, -1, -1, nz, nx, ny, grad)
+                sweep(
+                    tt,
+                    ttgrad,
+                    slow,
+                    dargs,
+                    zsi,
+                    xsi,
+                    ysi,
+                    zsa,
+                    xsa,
+                    ysa,
+                    vzero,
+                    i,
+                    j,
+                    k,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    -1,
+                    -1,
+                    nz,
+                    nx,
+                    ny,
+                    grad,
+                )
 
 
-@jitted("Tuple((f8[:, :, :], f8[:, :, :, :], f8))(f8[:, :, :], f8, f8, f8, f8, f8, f8, i4, b1)")
+@jitted(
+    "Tuple((f8[:, :, :], f8[:, :, :, :], f8))(f8[:, :, :], f8, f8, f8, f8, f8, f8, i4, b1)"
+)
 def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     """Calculate traveltimes given a 3D velocity model."""
     # Parameters
@@ -316,14 +580,33 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     )
     for i, j, k in iterables:
         tt[i, j, k], tzc, txc, tyc = t_anad(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero)
-        
+
         if grad:
             ttgrad[i, j, k, 0] = tzc
             ttgrad[i, j, k, 1] = txc
             ttgrad[i, j, k, 2] = tyc
 
     for i in range(nsweep):
-        sweep3d(tt, ttgrad, slow, dz, dx, dy, zsi, xsi, ysi, zsa, xsa, ysa, vzero, nz, nx, ny, grad, i == 0)
+        sweep3d(
+            tt,
+            ttgrad,
+            slow,
+            dz,
+            dx,
+            dy,
+            zsi,
+            xsi,
+            ysi,
+            zsa,
+            xsa,
+            ysa,
+            vzero,
+            nz,
+            nx,
+            ny,
+            grad,
+            i == 0,
+        )
 
     if grad:
         for i in range(nz):
@@ -362,7 +645,9 @@ def fteik3d_vectorized(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False)
     )
     vzero = numpy.empty(nsrc, dtype=numpy.float64)
     for i in prange(nsrc):
-        tt[i], ttgrad[i], vzero[i] = fteik3d(slow, dz, dx, dy, zsrc[i], xsrc[i], ysrc[i], nsweep, grad)
+        tt[i], ttgrad[i], vzero[i] = fteik3d(
+            slow, dz, dx, dy, zsrc[i], xsrc[i], ysrc[i], nsweep, grad
+        )
 
     return tt, ttgrad, vzero
 
@@ -373,4 +658,6 @@ def solve3d(slow, dz, dx, dy, src, nsweep=2, grad=False):
         return fteik3d(slow, dz, dx, dy, src[0], src[1], src[2], nsweep, grad)
 
     else:
-        return fteik3d_vectorized(slow, dz, dx, dy, src[:, 0], src[:, 1], src[:, 2], nsweep, grad)
+        return fteik3d_vectorized(
+            slow, dz, dx, dy, src[:, 0], src[:, 1], src[:, 2], nsweep, grad
+        )
