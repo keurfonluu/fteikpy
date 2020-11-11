@@ -5,7 +5,7 @@ from ._fteik import solve2d, solve3d
 from ._grid import TraveltimeGrid2D, TraveltimeGrid3D
 
 
-class EikonalSolver2D(BaseGrid2D):
+class Eikonal2D(BaseGrid2D):
     def __init__(self, grid, gridsize, origin=None):
         super().__init__(
             grid=grid,
@@ -46,7 +46,7 @@ class EikonalSolver2D(BaseGrid2D):
             )
 
 
-class EikonalSolver3D(BaseGrid3D):
+class Eikonal3D(BaseGrid3D):
     def __init__(self, grid, gridsize, origin=None):
         super().__init__(
             grid=grid,

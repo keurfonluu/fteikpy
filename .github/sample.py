@@ -2,7 +2,7 @@ import numpy
 import pyvista
 from scipy.ndimage import gaussian_filter
 
-from fteikpy import EikonalSolver2D
+from fteikpy import Eikonal2D
 
 pyvista.set_plot_theme("document")
 
@@ -23,7 +23,7 @@ vel = numpy.load("marmousi.npy")
 vel = gaussian_filter(vel, 5)
 
 # Calculate traveltime grid for one source point
-eik = EikonalSolver2D(vel, gridsize=(10.0, 10.0))
+eik = Eikonal2D(vel, gridsize=(10.0, 10.0))
 tt = eik.solve((0.0, 0.0), nsweep=3, return_gradient=True)
 ttgrid = tt.grid.ravel()
 

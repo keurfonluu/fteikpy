@@ -1,17 +1,17 @@
 import numpy
 
-from fteikpy import EikonalSolver2D, EikonalSolver3D
+from fteikpy import Eikonal2D, Eikonal3D
 
 numpy.random.seed(42)
 
 
-eik2d = EikonalSolver2D(
+eik2d = Eikonal2D(
     grid=numpy.ones((16, 16), dtype=numpy.float64),
     gridsize=(1.0, 1.0),
 )
 
 
-eik3d = EikonalSolver3D(
+eik3d = Eikonal3D(
     grid=numpy.ones((16, 16, 16), dtype=numpy.float64),
     gridsize=(1.0, 1.0, 1.0),
 )
