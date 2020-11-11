@@ -7,13 +7,13 @@ from helpers import eik3d, allclose
 @pytest.mark.parametrize(
     "sources, tref",
     (
-        ([0.0, 0.0, 0.0], 60015.56014379),
-        ([0.5, 0.5, 0.5], 57442.51188274),
-        ([[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]], [60015.56014379, 57442.51188274]),
+        ([0.0, 0.0, 0.0], 59952.28855941),
+        ([3.5, 3.5, 3.5], 41432.44786414),
+        ([[0.0, 0.0, 0.0], [3.5, 3.5, 3.5]], [59952.28855941, 41432.44786414]),
     ),
 )
 def test_solve(sources, tref):
-    tt = eik3d.solve(sources, nsweep=2)
+    tt = eik3d.solve(sources, nsweep=3)
 
     allclose(tref, tt, lambda tt: tt.grid.sum())
 

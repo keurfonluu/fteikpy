@@ -28,7 +28,7 @@ from helpers import eik3d, allclose
 )
 def test_call(points, tref):
     sources = 0.0, 0.0, 0.0
-    tt = eik3d.solve(sources, nsweep=2)
+    tt = eik3d.solve(sources, nsweep=3)
 
     allclose(tref, points, lambda points: tt(points))
 
@@ -43,7 +43,7 @@ def test_call(points, tref):
 )
 def test_raytrace(points, pref):
     sources = 0.0, 0.0, 0.0
-    tt = eik3d.solve(sources, nsweep=2, return_gradient=True)
+    tt = eik3d.solve(sources, nsweep=3, return_gradient=True)
     rays = tt.raytrace(points, stepsize=1.0)
 
     allclose(pref, rays, lambda rays: rays.sum())

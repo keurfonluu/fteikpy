@@ -5,11 +5,13 @@ from helpers import eik2d, allclose
 
 
 @pytest.mark.parametrize(
-    "points, gzref, gxref",
+    "sources, points, gzref, gxref",
     (
-        ([0.0, 0.0], 0.0, 0.0),
-        ([-1.0, -1.0], numpy.nan, numpy.nan),
+        ([0.0, 0.0], [0.0, 0.0], 0.0, 0.0),
+        ([3.5, 3.5], [0.0, 0.0], -0.64858483, -0.64858483),
+        ([0.0, 0.0], [-1.0, -1.0], numpy.nan, numpy.nan),
         (
+            [0.0, 0.0],
             [
                 [0.0, 0.0],
                 [15.0, 0.0],
@@ -21,8 +23,7 @@ from helpers import eik2d, allclose
         ),
     ),
 )
-def test_call(points, gzref, gxref):
-    sources = 0.0, 0.0
+def test_call(sources, points, gzref, gxref):
     tt = eik2d.solve(sources, nsweep=2, return_gradient=True)
 
     allclose(gzref, points, lambda points: tt.gradient[0](points))
