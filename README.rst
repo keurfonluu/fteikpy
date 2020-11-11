@@ -1,148 +1,126 @@
-*******
-FTeikPy
-*******
+fteikpy
+=======
 
-.. figure:: examples/marmousi.png
+|License| |Stars| |Pyversions| |Version| |Downloads| |Code style: black| |Codacy Badge| |Codecov| |Build| |Travis|
 
-FTeikPy is a Python package that computes accurate first arrival traveltimes in
-2-D and 3-D heterogeneous isotropic velocity model, with the possibility to use
-a different grid spacing in Z, X and Y directions. The algorithm handles
-properly the curvature of wavefronts close to the source. The source can be
-placed without any problem between grid points.
+**fteikpy** is a Python library that computes accurate first arrival traveltimes in 2D and 3D heterogenous isotropic velocity models. The algorithm handles properly the curvature of wavefronts close to the source which can be placed without any problem between grid points.
 
-:Version: 1.5.0
-:Author: Mark Noble
-:Maintainer: Keurfon Luu
-:Web site: https://github.com/keurfonluu/fteikpy
-:Copyright: This document has been placed in the public domain.
-:License: FTeikPy is released under the MIT License.
+The code is based on `FTeik <https://github.com/Mark-Noble/FTeik-Eikonal-Solver>`__ implemented in Python and compiled `just-in-time <https://en.wikipedia.org/wiki/Just-in-time_compilation>`__ with `numba <https://numba.pydata.org/>`__.
 
-**NOTE**: the 2-D and 3-D Eikonal solvers included in FTeikPy are written in
-Fortran. The original source codes can be found `here <https://github.com/Mark-Noble/FTEIK2D>`__.
-Detailed implementation of local operators and global propagation scheme
-implemented in this package are inspired from [1]_. If you find this algorithm
-and/or package useful, citing this paper would be appreciated.
+Features
+--------
 
+Forward modeling:
+
+-  Compute traveltimes in 2D and 3D Cartesian grids with the possibility to use a different grid spacing in Z, X and Y directions,
+-  Compute traveltime gradients at runtime or a posteriori,
+-  A posteriori 2D and 3D ray-tracing.
+
+Parallel:
+
+-  Traveltime grids are seemlessly computed in parallel for different sources,
+-  Raypaths from a given source to different locations are also evaluated in parallel.
 
 Installation
-============
+------------
 
-The recommended way to install FTeikPy is through pip (internet required):
+The recommended way to install **fteikpy** and all its dependencies is through the Python Package Index:
 
-.. code-block:: bash
+.. code:: bash
 
-    pip install fteikpy
+   pip install fteikpy --user
 
-Otherwise, download and extract the package, then run:
+Otherwise, clone and extract the package, then run from the package location:
 
-.. code-block:: bash
+.. code:: bash
 
-    python setup.py install
+   pip install . --user
 
+To test the integrity of the installed package, check out this repository and run:
+
+.. code:: bash
+
+   pytest
 
 Usage
-=====
+-----
 
-**New in 1.4.0**: added a posteriori ray tracer for 2-D velocity models.
-
-First, import FTeikPy and define (or import) your velocity model (here in 2-D):
+The following example computes the traveltime grid in a 3D homogenous velocity model:
 
 .. code-block:: python
 
-    import numpy as np
-    from fteikpy import Eikonal
+   import numpy
+   from fteikpy import Eikonal3D
 
-    nz, nx = 351, 1000
-    dz, dx = 10., 10.
-    vel2d = np.full((nz, nx), 1500.)
+   # Velocity model
+   velocity_model = numpy.ones((8, 8, 8))
+   dz, dx, dy = 1.0, 1.0, 1.0
 
-Then, initialize the Eikonal solver:
+   # Solve Eikonal at source
+   eik = Eikonal3D(velocity_model, gridsize=(dz, dx, dy))
+   tt = eik.solve((0.0, 0.0, 0.0))
 
-.. code-block:: python
+   # Get traveltime at any point in the grid
+   t = tt(numpy.random.rand(3) * 7.0)
 
-    eik = Eikonal(vel2d, grid_size = (dz, dx), n_sweep = 2)
+Contributing
+------------
 
-Finally, for a given source point with coordinate (z,x), run the method *solve*:
+Please refer to the `Contributing
+Guidelines <https://github.com/keurfonluu/fteikpy/blob/master/CONTRIBUTING.rst>`__ to see how you can help. This project is released with a `Code of Conduct <https://github.com/keurfonluu/fteikpy/blob/master/CODE_OF_CONDUCT.rst>`__ which you agree to abide by when contributing.
 
-.. code-block:: python
+Citing fteikpy
+--------------
 
-    source = (0., 5000.)
-    tt = eik.solve(source)
+If you are using **fteikpy** in your scientific research, please consider mentioning it (e.g., in Acknowledgements) and citing the following paper:
 
-The same can be done on a 3-D velocity model (just a bit slower...).
+..
 
+   M. Noble, A. Gesret and N. Belayouni, (2014). Accurate 3-D finite difference computation of traveltimes in strongly heterogeneous media. Geophysical Journal International, 199(3): 1572-1585, https://doi.org/10.1093/gji/ggu358
 
-Troubleshooting on Windows
-==========================
-
-A Fortran compiler is required to install this package. While it is
-straightforward on Unix systems, it can be quite a pain on Windows. We recommend
-installing `Anaconda <https://www.continuum.io/downloads>`__ that contains all
-the required packages to install FTeikPy on Windows systems.
-
-1. Download `MinGW 64 bits <https://sourceforge.net/projects/mingw-w64/files/>`__
-   (choose *x86_64-posix-sjlj*) and extract the archive in your drive root.
-
-2. Add MinGW to your system path:
-
-    C:\\<Your MinGW directory>\\bin
-
-3. Create the file *distutils.cfg* in *<Your Python directory path>\\Lib\\distutils*
-   with the following content to use MinGW compiler:
+BibTex:
 
 .. code-block::
 
-    [build]
-    compiler=mingw32
+   @article{Noble2014,
+      doi = {10.1093/gji/ggu358},
+      url = {https://doi.org/10.1093/gji/ggu358},
+      year = {2014},
+      issn = {1365246X},
+      volume = {199},
+      number = {3},
+      pages = {1572--1585},
+      author = {Noble, Mark and Gesret, Alexandrine and Belayouni, Nidhal},
+      title = {Accurate 3-{D} finite difference computation of traveltimes in strongly heterogeneous media},
+      journal = {Geophysical Journal International},
+   }
 
-4. Open a terminal and install *libpython*:
+.. |License| image:: https://img.shields.io/github/license/keurfonluu/fteikpy
+   :target: https://github.com/keurfonluu/fteikpy/blob/master/LICENSE
 
-.. code-block:: batch
+.. |Stars| image:: https://img.shields.io/github/stars/keurfonluu/fteikpy?logo=github
+   :target: https://github.com/keurfonluu/fteikpy
 
-    conda install libpython
+.. |Pyversions| image:: https://img.shields.io/pypi/pyversions/fteikpy.svg?style=flat
+   :target: https://pypi.org/pypi/fteikpy/
 
+.. |Version| image:: https://img.shields.io/pypi/v/fteikpy.svg?style=flat
+   :target: https://pypi.org/project/fteikpy
 
-If you got the error:
+.. |Downloads| image:: https://pepy.tech/badge/fteikpy
+   :target: https://pepy.tech/project/fteikpy
 
-    Error: ValueError: Unknown MS Compiler version 1900
+.. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
+   :target: https://github.com/psf/black
 
-You may need to manually patch the file *cygwinccompiler.py* located in:
+.. |Codacy Badge| image:: https://img.shields.io/codacy/grade/29b21d65d07e40219dcc9ad1c978cbeb.svg?style=flat
+   :target: https://www.codacy.com/manual/keurfonluu/fteikpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=keurfonluu/fteikpy&amp;utm_campaign=Badge_Grade
 
-    <Your Python directory path>\\Lib\\distutils
+.. |Codecov| image:: https://img.shields.io/codecov/c/github/keurfonluu/fteikpy.svg?style=flat
+   :target: https://codecov.io/gh/keurfonluu/fteikpy
 
-by replacing:
+.. |Build| image:: https://img.shields.io/github/workflow/status/keurfonluu/fteikpy/Python%20package
+   :target: https://github.com/keurfonluu/fteikpy
 
-.. code-block:: python
-
-    self.dll_libraries = get_msvcr()
-
-in lines 157 and 318 by (be careful with indentation):
-
-.. code-block:: python
-
-    pass
-
-You should also patch the file *mingw32compiler.py* located in:
-
-    <Your Python directory path>\\Lib\\site-packages\\numpy\\distutils
-
-by commenting out from lines 96 to 104:
-
-.. code-block:: python
-
-    #        msvcr_success = build_msvcr_library()
-    #        msvcr_dbg_success = build_msvcr_library(debug=True)
-    #        if msvcr_success or msvcr_dbg_success:
-    #            # add preprocessor statement for using customized msvcr lib
-    #            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
-    #
-    #        # Define the MSVC version as hint for MinGW
-    #        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
-    #        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
-
-
-References
-==========
-.. [1] M. Noble, A. Gesret and N. Belayouni, *Accurate 3-D finite difference
-       computation of traveltimes in strongly heterogeneous media*, Geophysical
-       Journal International, 2014, 199(3): 1572-1585
+.. |Travis| image:: https://img.shields.io/travis/com/keurfonluu/fteikpy/master?label=docs
+   :target: https://keurfonluu.github.io/fteikpy/
