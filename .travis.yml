@@ -1,0 +1,21 @@
+dist: xenial
+
+language: python
+python:
+  - 3.8
+
+env:
+  global:
+    # Doctr deploy key for keurfonluu/fteikpy
+    - secure: "4ZAIWdfHwdJpecBL2Mu9hBel7PWtToDunL5bwn3x4QzJmH2EEkXvV3csm5slgnm6dHExBgvUkRV2Ci0OmFg3c1T5rqHolNILbgNyO3qxNiQ7Djdj38k8QBxjaBTXnzczrNGrRsYt9wwzxYfYZUXiwDZL49EawofEar198pctBcPrfNtAFE6c8KzW2nSqG+FO47HAs0Zm5xlIgv26s9RDmufHkvJtR1b8/DS5j+Fe15ZNzdc1mPIjka2Gf5a/6oZbrgtXo52CAKXuzWPI6rtz1p2Xyni1XQ/+y78Basej6ib4jJLej+yffbUUssNcSkMDXlitwESyCS8WZOcx/iJnb2PfMexY7kSKtc4nxAkygVjWuzkOAhyPWvHOKpr6O6CmifwcMEzuDiiWh8gytDpV0+uvB5Qi3PpFQRrHjMDokyKwP4vEx+pUe9SzFKGr8sziGJkpYGJp0EWtzriRHWAOPxBppfoJFWOGRx35RDEb6W9pPk5yELug005oWAVm2dR1FsegseQa88kVwHbpHsL4Av+0gi62F8VbPcJqV+97v3XnkVohGo9bp+K7kjZeeFxnu8dfuSVD4mIlNccqo2FFxBv6POfdfs6f17USln1iVJfMtDn1e4qSzjqKkK+4iAmpv083yFaZ4D/OPnaw8LCJ21NhoxeNtFf2xNeBYEJh4Sc="
+
+install:
+  - pip install .
+  - pip install scipy
+  - pip install -r doc/requirements.txt
+
+script:
+  - set -e
+  - sphinx-build -b html doc/source doc/build
+  - pip install doctr
+  - doctr deploy . --built-docs ./doc/build/

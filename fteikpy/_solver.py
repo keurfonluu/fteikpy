@@ -7,6 +7,19 @@ from ._grid import TraveltimeGrid2D, TraveltimeGrid3D
 
 class Eikonal2D(BaseGrid2D):
     def __init__(self, grid, gridsize, origin=None):
+        """
+        2D Eikonal solver.
+
+        Parameters
+        ----------
+        grid : array_like
+            Velocity model array.
+        gridsize : array_like
+            Grid size (dz, dx).
+        origin : array_like or None, optional, default None
+            Grid origin coordinates.
+
+        """
         super().__init__(
             grid=grid,
             gridsize=gridsize,
@@ -14,6 +27,24 @@ class Eikonal2D(BaseGrid2D):
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
+        """
+        Solve Eikonal for given sources.
+
+        Parameters
+        ----------
+        sources : array_like
+            Source coordinates or list of source coordinates.
+        nsweep : int, optional, default 2
+            Number of sweeps.
+        return_gradient : bool, optional, default False
+            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`.
+
+        Returns
+        -------
+        :class:`fteikpy.TraveltimeGrid2D` or list of :class:`fteikpy.TraveltimeGrid2D`
+            Traveltime grid or list of traveltime grids.
+
+        """
         tt, ttgrad, vzero = solve2d(
             1.0 / self._grid,
             *self._gridsize,
@@ -48,6 +79,19 @@ class Eikonal2D(BaseGrid2D):
 
 class Eikonal3D(BaseGrid3D):
     def __init__(self, grid, gridsize, origin=None):
+        """
+        3D Eikonal solver.
+
+        Parameters
+        ----------
+        grid : array_like
+            Velocity model array.
+        gridsize : array_like
+            Grid size (dz, dx, dy).
+        origin : array_like or None, optional, default None
+            Grid origin coordinates.
+
+        """
         super().__init__(
             grid=grid,
             gridsize=gridsize,
@@ -55,6 +99,24 @@ class Eikonal3D(BaseGrid3D):
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
+        """
+        Solve Eikonal for given sources.
+
+        Parameters
+        ----------
+        sources : array_like
+            Source coordinates or list of source coordinates.
+        nsweep : int, optional, default 2
+            Number of sweeps.
+        return_gradient : bool, optional, default False
+            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`.
+
+        Returns
+        -------
+        :class:`fteikpy.TraveltimeGrid3D` or list of :class:`fteikpy.TraveltimeGrid3D`
+            Traveltime grid or list of traveltime grids.
+
+        """
         tt, ttgrad, vzero = solve3d(
             1.0 / self._grid,
             *self._gridsize,

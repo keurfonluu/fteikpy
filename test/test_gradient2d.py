@@ -25,5 +25,5 @@ from helpers import allclose, eik2d
 def test_call(sources, points, gzref, gxref):
     tt = eik2d.solve(sources, nsweep=2, return_gradient=True)
 
-    allclose(gzref, points, lambda points: tt.gradient[0](points))
-    allclose(gxref, points, lambda points: tt.gradient[1](points))
+    allclose(gzref, points, lambda x: tt.gradient[0](x))
+    allclose(gxref, points, lambda x: tt.gradient[1](x))

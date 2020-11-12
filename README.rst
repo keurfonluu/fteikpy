@@ -7,12 +7,12 @@ fteikpy
 
 The code is based on `FTeik <https://github.com/Mark-Noble/FTeik-Eikonal-Solver>`__ implemented in Python and compiled `just-in-time <https://en.wikipedia.org/wiki/Just-in-time_compilation>`__ with `numba <https://numba.pydata.org/>`__.
 
-.. figure:: https://github.com/keurfonluu/fteikpy/blob/master/.github/sample.gif
+.. figure:: https://raw.githubusercontent.com/keurfonluu/fteikpy/master/.github/sample.gif
    :alt: sample-marmousi
    :width: 100%
    :align: center
 
-   Computing traveltimes and ray-tracing on smoothed Marmousi velocity model.
+   Computation of traveltimes and ray-tracing on smoothed Marmousi velocity model.
 
 Features
 --------
@@ -49,6 +49,18 @@ To test the integrity of the installed package, check out this repository and ru
 
    pytest
 
+Documentation
+-------------
+
+Refer to the online `documentation <https://keurfonluu.github.io/fteikpy/>`__ for detailed description of the API and examples.
+
+Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-doc.org/en/master/>`__
+
+.. code:: bash
+
+   pip install -r doc/requirements.txt
+   sphinx-build -b html doc/source doc/build
+
 Usage
 -----
 
@@ -67,8 +79,11 @@ The following example computes the traveltime grid in a 3D homogenous velocity m
    eik = Eikonal3D(velocity_model, gridsize=(dz, dx, dy))
    tt = eik.solve((0.0, 0.0, 0.0))
 
-   # Get traveltime at any point in the grid
-   t = tt(numpy.random.rand(3) * 7.0)
+   # Get traveltime at specific grid point
+   t1 = tt[0, 1, 2]
+
+   # Or get traveltime at any point in the grid
+   t2 = tt(numpy.random.rand(3) * 7.0)
 
 Contributing
 ------------
@@ -79,7 +94,7 @@ Guidelines <https://github.com/keurfonluu/fteikpy/blob/master/CONTRIBUTING.rst>`
 Citing fteikpy
 --------------
 
-If you are using **fteikpy** in your scientific research, please consider mentioning it (e.g., in Acknowledgements) and citing the following paper:
+If you are using **fteikpy** in your scientific research, please consider mentioning it (e.g. in Acknowledgements) and citing the following paper:
 
 ..
 

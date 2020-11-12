@@ -7,6 +7,7 @@ from .._interp import interp2d
 
 @jitted("f8[:, :](f8[:], f8[:], f8[:, :], f8[:, :],f8, f8, f8, f8, f8)")
 def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize):
+    """Perform a posteriori 2D ray-tracing."""
     condz = z[0] <= zend <= z[-1]
     condx = x[0] <= xend <= x[-1]
     if not (condz and condx):
@@ -38,6 +39,7 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize):
 
 @jitted(parallel=True)
 def _ray2d_vectorized(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize):
+    """Perform ray-tracing in parallel for different points."""
     out = []
     for i in prange(len(zend)):
         out.append(_ray2d(z, x, zgrad, xgrad, zend[i], xend[i], zsrc, xsrc, stepsize))
@@ -47,6 +49,7 @@ def _ray2d_vectorized(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize):
 
 @jitted
 def ray2d(z, x, zgrad, xgrad, p, src, stepsize):
+    """Perform ray-tracing."""
     if p.ndim == 1:
         return _ray2d(z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize)
 

@@ -7,16 +7,61 @@ from ._interp import vinterp2d, vinterp3d
 
 class Grid2D(BaseGrid2D):
     def __init__(self, *args, **kwargs):
+        """
+        2D grid class.
+
+        Parameters
+        ----------
+        grid : array_like
+            Grid array.
+        gridsize : array_like
+            Grid size (dz, dx).
+        origin : array_like
+            Grid origin coordinates.
+
+        """
         super().__init__(*args, **kwargs)
 
 
 class Grid3D(BaseGrid3D):
     def __init__(self, *args, **kwargs):
+        """
+        3D grid class.
+
+        Parameters
+        ----------
+        grid : array_like
+            Grid array.
+        gridsize : array_like
+            Grid size (dz, dx, dy).
+        origin : array_like
+            Grid origin coordinates.
+
+        """
         super().__init__(*args, **kwargs)
 
 
 class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
     def __init__(self, grid, gridsize, origin, source, gradient, vzero):
+        """
+        2D traveltime grid class.
+
+        Parameters
+        ----------
+        grid : array_like
+            Traveltime grid array.
+        gridsize : array_like
+            Grid size (dz, dx).
+        origin : array_like
+            Grid origin coordinates.
+        source : array_like
+            Source coordinates.
+        gradient : array_like
+            Gradient grid.
+        vzero : scalar
+            Slowness at the source.
+
+        """
         super().__init__(
             grid=grid,
             gridsize=gridsize,
@@ -27,6 +72,22 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         )
 
     def __call__(self, points, fill_value=numpy.nan):
+        """
+        Bilinear apparent velocity interpolation.
+
+        Parameters
+        ----------
+        points : array_like
+            Query point coordinates or list of point coordinates.
+        fill_value : scalar, optional, default nan
+            Returned value for out-of-bound query points.
+
+        Returns
+        -------
+        scalar or :class:`numpy.ndarray`
+            Interpolated traveltime(s).
+
+        """
         return vinterp2d(
             self.zaxis,
             self.xaxis,
@@ -38,6 +99,22 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         )
 
     def raytrace(self, points, stepsize=None):
+        """
+        2D a posteriori ray-tracing.
+
+        Parameters
+        ----------
+        points : array_like
+            Query point coordinates or list of point coordinates.
+        stepsize : scalar or None, optional, default None
+            Unit length of ray.
+
+        Returns
+        -------
+        :class:`numpy.ndarray` or list of :class:`numpy.ndarray`
+            Raypath(s).
+
+        """
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
 
@@ -53,6 +130,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
 
     @property
     def gradient(self):
+        """Return Z and X gradient grids as a list of :class:`fteikpy.Grid2D`."""
         return (
             [
                 Grid2D(self._gradient[:, :, i], self._gridsize, self._origin)
@@ -68,6 +146,25 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
 
 class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
     def __init__(self, grid, gridsize, origin, source, gradient, vzero):
+        """
+        3D traveltime grid class.
+
+        Parameters
+        ----------
+        grid : array_like
+            Traveltime grid array.
+        gridsize : array_like
+            Grid size (dz, dx, dy).
+        origin : array_like
+            Grid origin coordinates.
+        source : array_like
+            Source coordinates.
+        gradient : array_like
+            Gradient grid.
+        vzero : scalar
+            Slowness at the source.
+
+        """
         super().__init__(
             grid=grid,
             gridsize=gridsize,
@@ -78,6 +175,22 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         )
 
     def __call__(self, points, fill_value=numpy.nan):
+        """
+        Trilinear apparent velocity interpolation.
+
+        Parameters
+        ----------
+        points : array_like
+            Query point coordinates or list of point coordinates.
+        fill_value : scalar, optional, default nan
+            Returned value for out-of-bound query points.
+
+        Returns
+        -------
+        scalar or :class:`numpy.ndarray`
+            Interpolated traveltime(s).
+
+        """
         return vinterp3d(
             self.zaxis,
             self.xaxis,
@@ -90,6 +203,22 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         )
 
     def raytrace(self, points, stepsize=None):
+        """
+        3D a posteriori ray-tracing.
+
+        Parameters
+        ----------
+        points : array_like
+            Query point coordinates or list of point coordinates.
+        stepsize : scalar or None, optional, default None
+            Unit length of ray.
+
+        Returns
+        -------
+        :class:`numpy.ndarray` or list of :class:`numpy.ndarray`
+            Raypath(s).
+
+        """
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
 
@@ -107,6 +236,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
 
     @property
     def gradient(self):
+        """Return Z, X and Y gradient grids as a list of :class:`fteikpy.Grid3D`."""
         return (
             [
                 Grid3D(self._gradient[:, :, :, i], self._gridsize, self._origin)
