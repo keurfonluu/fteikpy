@@ -86,7 +86,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         -------
         scalar or :class:`numpy.ndarray`
             Interpolated traveltime(s).
-        
+
         """
         return vinterp2d(
             self.zaxis,
@@ -108,12 +108,12 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
             Unit length of ray.
-        
+
         Returns
         -------
         :class:`numpy.ndarray` or list of :class:`numpy.ndarray`
             Raypath(s).
-        
+
         """
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
@@ -189,7 +189,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         -------
         scalar or :class:`numpy.ndarray`
             Interpolated traveltime(s).
-        
+
         """
         return vinterp3d(
             self.zaxis,
@@ -212,12 +212,12 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
             Unit length of ray.
-        
+
         Returns
         -------
         :class:`numpy.ndarray` or list of :class:`numpy.ndarray`
             Raypath(s).
-        
+
         """
         stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient

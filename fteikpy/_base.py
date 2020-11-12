@@ -7,7 +7,7 @@ from ._interp import interp2d, interp3d
 
 class BaseGrid(ABC):
     def __init__(self, grid, gridsize, origin, **kwargs):
-        """Base grid class"""
+        """Base grid class."""
         super().__init__(**kwargs)
         self._grid = numpy.asarray(grid, dtype=numpy.float64)
         self._gridsize = tuple(float(x) for x in gridsize)
@@ -64,7 +64,7 @@ class BaseGrid2D(BaseGrid):
         -------
         scalar or :class:`numpy.ndarray`
             Interpolated value(s).
-        
+
         """
         return interp2d(
             self.zaxis,
@@ -89,7 +89,7 @@ class BaseGrid3D(BaseGrid):
     def __call__(self, points, fill_value=numpy.nan):
         """
         Trilinear interpolaton.
-        
+
         Parameters
         ----------
         points : array_like
@@ -101,7 +101,7 @@ class BaseGrid3D(BaseGrid):
         -------
         scalar or :class:`numpy.ndarray`
             Interpolated value(s).
-        
+
         """
         return interp3d(
             self.zaxis,

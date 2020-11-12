@@ -4,7 +4,7 @@ import numba
 def get_num_threads():
     """
     Get current number of threads.
-    
+
     Returns
     -------
     int
