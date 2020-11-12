@@ -14,7 +14,7 @@ from helpers import allclose, eik3d
 def test_solve(sources, tref):
     tt = eik3d.solve(sources, nsweep=3)
 
-    allclose(tref, tt, lambda tt: tt.grid.sum())
+    allclose(tref, tt, lambda x: x.grid.sum())
 
 
 @pytest.mark.parametrize(
@@ -38,4 +38,4 @@ def test_solve(sources, tref):
     ),
 )
 def test_call(points, vref):
-    allclose(vref, points, lambda points: eik3d(points))
+    allclose(vref, points, lambda x: eik3d(x))
