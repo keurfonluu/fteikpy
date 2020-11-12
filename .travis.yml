@@ -11,6 +11,7 @@ env:
 
 install:
   - pip install .
+  - pip install scipy
   - pip install -r doc/requirements.txt
 
 script:
