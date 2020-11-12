@@ -6,6 +6,7 @@ from .._common import jitted
 
 @jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8)")
 def _interp3d(x, y, z, v, xq, yq, zq, fval):
+    """Perform trilinear interpolation."""
     condx = x[0] <= xq <= x[-1]
     condy = y[0] <= yq <= y[-1]
     condz = z[0] <= zq <= z[-1]
@@ -174,6 +175,7 @@ def _interp3d(x, y, z, v, xq, yq, zq, fval):
 
 @jitted(parallel=True)
 def _interp3d_vectorized(x, y, z, v, xq, yq, zq, fval):
+    """Perform trilinear interpolation for different points."""
     nq = len(xq)
     out = numpy.empty(nq, dtype=numpy.float64)
     for i in prange(nq):
@@ -184,6 +186,7 @@ def _interp3d_vectorized(x, y, z, v, xq, yq, zq, fval):
 
 @jitted
 def interp3d(x, y, z, v, q, fval=numpy.nan):
+    """Perform trilinear interpolation."""
     if q.ndim == 1:
         return _interp3d(x, y, z, v, q[0], q[1], q[2], fval)
 

@@ -6,6 +6,7 @@ from .._common import dist3d, jitted
 
 @jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8)")
 def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
+    """Perform triilinear apparent velocity interpolation."""
     condx = x[0] <= xq <= x[-1]
     condy = y[0] <= yq <= y[-1]
     condz = z[0] <= zq <= z[-1]
@@ -254,6 +255,7 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
 
 @jitted(parallel=True)
 def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
+    """Perform trilinear apparent velocity interpolation for different points."""
     nq = len(xq)
     out = numpy.empty(nq, dtype=numpy.float64)
     for i in prange(nq):
@@ -266,6 +268,7 @@ def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval)
 
 @jitted
 def vinterp3d(x, y, z, v, q, src, vzero, fval=numpy.nan):
+    """Perform trilinear apparent velocity interpolation."""
     if q.ndim == 1:
         return _vinterp3d(
             x, y, z, v, q[0], q[1], q[2], src[0], src[1], src[2], vzero, fval

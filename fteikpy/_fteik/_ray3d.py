@@ -9,6 +9,7 @@ from .._interp import interp3d
     "f8[:, :](f8[:], f8[:], f8[:], f8[:, :, :], f8[:, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8)"
 )
 def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize):
+    """Perform a posteriori 3D ray-tracing."""
     condz = z[0] <= zend <= z[-1]
     condx = x[0] <= xend <= x[-1]
     condy = y[0] <= yend <= y[-1]
@@ -45,6 +46,7 @@ def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, ste
 def _ray3d_vectorized(
     z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize
 ):
+    """Perform ray-tracing in parallel for different points."""
     out = []
     for i in prange(len(zend)):
         out.append(
@@ -70,6 +72,7 @@ def _ray3d_vectorized(
 
 @jitted
 def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize):
+    """Perform ray-tracing."""
     if p.ndim == 1:
         return _ray3d(
             z,

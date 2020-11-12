@@ -6,6 +6,7 @@ from .._common import jitted
 
 @jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8)")
 def _interp2d(x, y, v, xq, yq, fval):
+    """Perform bilinear interpolation."""
     condx = x[0] <= xq <= x[-1]
     condy = y[0] <= yq <= y[-1]
     if not (condx and condy):
@@ -75,6 +76,7 @@ def _interp2d(x, y, v, xq, yq, fval):
 
 @jitted(parallel=True)
 def _interp2d_vectorized(x, y, v, xq, yq, fval):
+    """Perform bilinear interpolation for different points."""
     nq = len(xq)
     out = numpy.empty(nq, dtype=numpy.float64)
     for i in prange(nq):
@@ -85,6 +87,7 @@ def _interp2d_vectorized(x, y, v, xq, yq, fval):
 
 @jitted
 def interp2d(x, y, v, q, fval=numpy.nan):
+    """Perform bilinear interpolation."""
     if q.ndim == 1:
         return _interp2d(x, y, v, q[0], q[1], fval)
 

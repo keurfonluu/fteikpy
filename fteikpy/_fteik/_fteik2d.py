@@ -629,6 +629,7 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     parallel=True,
 )
 def fteik2d_vectorized(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
+    """Calculate traveltimes given a 2D velocity model in parallel for different sources."""
     nsrc = len(zsrc)
     nz, nx = slow.shape
     tt = numpy.empty((nsrc, nz, nx), dtype=numpy.float64)
@@ -648,6 +649,7 @@ def fteik2d_vectorized(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
 
 @jitted
 def solve2d(slow, dz, dx, src, nsweep=2, grad=False):
+    """Solve Eikonal."""
     if src.ndim == 1:
         return fteik2d(slow, dz, dx, src[0], src[1], nsweep, grad)
 

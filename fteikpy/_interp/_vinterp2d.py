@@ -6,6 +6,7 @@ from .._common import dist2d, jitted
 
 @jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8, f8)")
 def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
+    """Perform bilinear apparent velocity interpolation."""
     condx = x[0] <= xq <= x[-1]
     condy = y[0] <= yq <= y[-1]
     if not (condx and condy):
@@ -102,6 +103,7 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 
 @jitted(parallel=True)
 def _vinterp2d_vectorized(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
+    """Perform bilinear apparent velocity interpolation for different points."""
     nq = len(xq)
     out = numpy.empty(nq, dtype=numpy.float64)
     for i in prange(nq):
@@ -112,6 +114,7 @@ def _vinterp2d_vectorized(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 
 @jitted
 def vinterp2d(x, y, v, q, src, vzero, fval=numpy.nan):
+    """Perform bilinear apparent velocity interpolation."""
     if q.ndim == 1:
         return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero, fval)
 
