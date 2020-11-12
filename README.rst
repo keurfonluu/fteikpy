@@ -7,12 +7,12 @@ fteikpy
 
 The code is based on `FTeik <https://github.com/Mark-Noble/FTeik-Eikonal-Solver>`__ implemented in Python and compiled `just-in-time <https://en.wikipedia.org/wiki/Just-in-time_compilation>`__ with `numba <https://numba.pydata.org/>`__.
 
-.. figure:: https://github.com/keurfonluu/fteikpy/blob/master/.github/sample.gif
+.. figure:: https://raw.githubusercontent.com/keurfonluu/fteikpy/master/.github/sample.gif
    :alt: sample-marmousi
    :width: 100%
    :align: center
 
-   Computing traveltimes and ray-tracing on smoothed Marmousi velocity model.
+   Computation of traveltimes and ray-tracing on smoothed Marmousi velocity model.
 
 Features
 --------
