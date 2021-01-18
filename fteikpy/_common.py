@@ -7,7 +7,10 @@ def jitted(*args, **kwargs):
         {
             "nopython": True,
             "nogil": True,
-            "fastmath": True,
+            # Disable fast-math flag "nnan"
+            # <https://llvm.org/docs/LangRef.html#fast-math-flags>
+            "fastmath": {"ninf", "nsz", "arcp", "contract", "afn", "reassoc"},
+            # "fastmath": True,
             # "boundscheck": False,
             "cache": True,
         }
