@@ -322,9 +322,9 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
 
     # Do our best to initialize source
     dzu = numpy.abs(zsa - float(zsi))
-    dzd = numpy.abs(float(zsi) - zsa + 1.0)
+    dzd = 1.0 - dzu
     dxw = numpy.abs(xsa - float(xsi))
-    dxe = numpy.abs(float(xsi) - xsa + 1.0)
+    dxe = 1.0 - dxw
 
     # Source seems close enough to a grid point in X and Y direction
     dzv_min = min(dzu, dzd)
@@ -351,9 +351,9 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
         td = numpy.full(max(nz, nx), Big, dtype=numpy.float64)
 
         dzu = numpy.abs(zsa - float(zsi))
-        dzd = numpy.abs(float(zsi) - zsa + 1.0)
+        dzd = 1.0 - dzu
         dxw = numpy.abs(xsa - float(xsi))
-        dxe = numpy.abs(float(xsi) - xsa + 1.0)
+        dxe = 1.0 - dxw
 
         # First initialize 4 points around source
         iterables = (
@@ -403,30 +403,31 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 ttgrad[zsi + 1, j, 0] = tzc
                 ttgrad[zsi + 1, j, 1] = txc
 
-            dzi = 1.0 / dzu
-            dz2i = dz / dzu / dzu
-            taue = tt[zsi, j - 1] - t_ana(zsi, j - 1, dz, dx, zsa, xsa, vzero)
-            t0c, tzc, txc = t_anad(zsi, j, dz, dx, zsa, xsa, vzero)
-            tt[zsi, j] = delta(
-                tt[zsi, j],
-                tauv,
-                taue,
-                tauev,
-                t0c,
-                tzc,
-                txc,
-                dzi,
-                dxi,
-                dz2i,
-                dx2i,
-                vzero,
-                vref,
-                -1,
-                1,
-            )
-            if grad:
-                ttgrad[zsi, j, 0] = tzc
-                ttgrad[zsi, j, 1] = txc
+            if dzu > 0.0:
+                dzi = 1.0 / dzu
+                dz2i = dz / dzu / dzu
+                taue = tt[zsi, j - 1] - t_ana(zsi, j - 1, dz, dx, zsa, xsa, vzero)
+                t0c, tzc, txc = t_anad(zsi, j, dz, dx, zsa, xsa, vzero)
+                tt[zsi, j] = delta(
+                    tt[zsi, j],
+                    tauv,
+                    taue,
+                    tauev,
+                    t0c,
+                    tzc,
+                    txc,
+                    dzi,
+                    dxi,
+                    dz2i,
+                    dx2i,
+                    vzero,
+                    vref,
+                    -1,
+                    1,
+                )
+                if grad:
+                    ttgrad[zsi, j, 0] = tzc
+                    ttgrad[zsi, j, 1] = txc
 
         td[xsi] = vzero * dxw * dx
         for j in range(xsi - 1, -1, -1):
@@ -460,30 +461,31 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 ttgrad[zsi + 1, j, 0] = tzc
                 ttgrad[zsi + 1, j, 1] = txc
 
-            dzi = 1.0 / dzu
-            dz2i = dz / dzu / dzu
-            taue = tt[zsi + 1, j + 1] - t_ana(zsi + 1, j + 1, dz, dx, zsa, xsa, vzero)
-            t0c, tzc, txc = t_anad(zsi, j, dz, dx, zsa, xsa, vzero)
-            tt[zsi, j] = delta(
-                tt[zsi, j],
-                tauv,
-                taue,
-                tauev,
-                t0c,
-                tzc,
-                txc,
-                dzi,
-                dxi,
-                dz2i,
-                dx2i,
-                vzero,
-                vref,
-                -1,
-                -1,
-            )
-            if grad:
-                ttgrad[zsi, j, 0] = tzc
-                ttgrad[zsi, j, 1] = txc
+            if dzu > 0.0:
+                dzi = 1.0 / dzu
+                dz2i = dz / dzu / dzu
+                taue = tt[zsi + 1, j + 1] - t_ana(zsi + 1, j + 1, dz, dx, zsa, xsa, vzero)
+                t0c, tzc, txc = t_anad(zsi, j, dz, dx, zsa, xsa, vzero)
+                tt[zsi, j] = delta(
+                    tt[zsi, j],
+                    tauv,
+                    taue,
+                    tauev,
+                    t0c,
+                    tzc,
+                    txc,
+                    dzi,
+                    dxi,
+                    dz2i,
+                    dx2i,
+                    vzero,
+                    vref,
+                    -1,
+                    -1,
+                )
+                if grad:
+                    ttgrad[zsi, j, 0] = tzc
+                    ttgrad[zsi, j, 1] = txc
 
         dzi = 1.0 / dz
         dz2i = dzi / dz
@@ -520,30 +522,31 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 ttgrad[i, xsi + 1, 0] = tzc
                 ttgrad[i, xsi + 1, 1] = txc
 
-            dxi = 1.0 / dxw
-            dx2i = dx / dxw / dxw
-            tauv = tt[i - 1, xsi] - t_ana(i - 1, xsi, dz, dx, zsa, xsa, vzero)
-            t0c, tzc, txc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
-            tt[i, xsi] = delta(
-                tt[i, xsi],
-                tauv,
-                taue,
-                tauev,
-                t0c,
-                tzc,
-                txc,
-                dzi,
-                dxi,
-                dz2i,
-                dx2i,
-                vzero,
-                vref,
-                1,
-                -1,
-            )
-            if grad:
-                ttgrad[i, xsi, 0] = tzc
-                ttgrad[i, xsi, 1] = txc
+            if dxw > 0.0:
+                dxi = 1.0 / dxw
+                dx2i = dx / dxw / dxw
+                tauv = tt[i - 1, xsi] - t_ana(i - 1, xsi, dz, dx, zsa, xsa, vzero)
+                t0c, tzc, txc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
+                tt[i, xsi] = delta(
+                    tt[i, xsi],
+                    tauv,
+                    taue,
+                    tauev,
+                    t0c,
+                    tzc,
+                    txc,
+                    dzi,
+                    dxi,
+                    dz2i,
+                    dx2i,
+                    vzero,
+                    vref,
+                    1,
+                    -1,
+                )
+                if grad:
+                    ttgrad[i, xsi, 0] = tzc
+                    ttgrad[i, xsi, 1] = txc
 
         td[zsi] = vzero * dzu * dz
         for i in range(zsi - 1, -1, -1):
@@ -577,30 +580,31 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 ttgrad[i, xsi + 1, 0] = tzc
                 ttgrad[i, xsi + 1, 1] = txc
 
-            dxi = 1.0 / dxw
-            dx2i = dx / dxw / dxw
-            tauv = tt[i + 1, xsi] - t_ana(i + 1, xsi, dz, dx, zsa, xsa, vzero)
-            t0c, tzc, txc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
-            tt[i, xsi] = delta(
-                tt[i, xsi],
-                tauv,
-                taue,
-                tauev,
-                t0c,
-                tzc,
-                txc,
-                dzi,
-                dxi,
-                dz2i,
-                dx2i,
-                vzero,
-                vref,
-                -1,
-                -1,
-            )
-            if grad:
-                ttgrad[i, xsi, 0] = tzc
-                ttgrad[i, xsi, 1] = txc
+            if dxw > 0.0:
+                dxi = 1.0 / dxw
+                dx2i = dx / dxw / dxw
+                tauv = tt[i + 1, xsi] - t_ana(i + 1, xsi, dz, dx, zsa, xsa, vzero)
+                t0c, tzc, txc = t_anad(i, xsi, dz, dx, zsa, xsa, vzero)
+                tt[i, xsi] = delta(
+                    tt[i, xsi],
+                    tauv,
+                    taue,
+                    tauev,
+                    t0c,
+                    tzc,
+                    txc,
+                    dzi,
+                    dxi,
+                    dz2i,
+                    dx2i,
+                    vzero,
+                    vref,
+                    -1,
+                    -1,
+                )
+                if grad:
+                    ttgrad[i, xsi, 0] = tzc
+                    ttgrad[i, xsi, 1] = txc
 
     else:
         tt[int(zsa), int(xsa)] = 0.0
