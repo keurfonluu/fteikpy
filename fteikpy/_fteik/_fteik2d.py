@@ -464,7 +464,9 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
             if dzu > 0.0:
                 dzi = 1.0 / dzu
                 dz2i = dz / dzu / dzu
-                taue = tt[zsi + 1, j + 1] - t_ana(zsi + 1, j + 1, dz, dx, zsa, xsa, vzero)
+                taue = tt[zsi + 1, j + 1] - t_ana(
+                    zsi + 1, j + 1, dz, dx, zsa, xsa, vzero
+                )
                 t0c, tzc, txc = t_anad(zsi, j, dz, dx, zsa, xsa, vzero)
                 tt[zsi, j] = delta(
                     tt[zsi, j],
