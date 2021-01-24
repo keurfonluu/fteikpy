@@ -205,7 +205,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             fill_value,
         )
 
-    def raytrace(self, points, stepsize=None):
+    def raytrace(self, points, stepsize=None, honor_grid=False):
         """
         3D a posteriori ray-tracing.
 
@@ -215,6 +215,8 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
             Unit length of ray.
+        honor_grid : bool, optional, default False
+            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization. `stepsize` might not be honored.
 
         Returns
         -------
@@ -235,6 +237,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
+            honor_grid,
         )
 
     @property
