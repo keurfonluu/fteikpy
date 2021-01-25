@@ -1,7 +1,7 @@
 import numpy
 from numba import prange
 
-from ._common import shrink
+from ._common import first_index, shrink
 from .._common import dist2d, jitted, norm2d
 from .._interp import interp2d
 
@@ -83,6 +83,12 @@ def ray2d(z, x, zgrad, xgrad, p, src, stepsize, honor_grid=False):
         return _ray2d(z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize, honor_grid)
 
     else:
-        return _ray2d_vectorized(
+        rays = _ray2d_vectorized(
             z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize, honor_grid,
         )
+
+        # Hack: append does not work in parallel, sort back list
+        end_points = [ray[-1] for ray in rays]
+        idx = [first_index(x, end_points) for x in p]
+
+        return [rays[i] for i in idx]

@@ -1,7 +1,7 @@
 import numpy
 from numba import prange
 
-from ._common import shrink
+from ._common import first_index, shrink
 from .._common import dist3d, jitted, norm3d
 from .._interp import interp3d
 
@@ -127,7 +127,7 @@ def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize, honor_grid=False):
         )
 
     else:
-        return _ray3d_vectorized(
+        rays = _ray3d_vectorized(
             z,
             x,
             y,
@@ -143,3 +143,9 @@ def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize, honor_grid=False):
             stepsize,
             honor_grid,
         )
+
+        # Hack: append does not work in parallel, sort back list
+        end_points = [ray[-1] for ray in rays]
+        idx = [first_index(x, end_points) for x in p]
+
+        return [rays[i] for i in idx]
