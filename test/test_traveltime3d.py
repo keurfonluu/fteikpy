@@ -33,16 +33,19 @@ def test_call(points, tref):
 
 
 @pytest.mark.parametrize(
-    "points, pref",
+    "points, pref, honor_grid",
     (
-        ([0.5, 0.5, 0.5], 1.5),
-        ([1.5, 1.5, 1.5], 8.30384757),
-        ([[0.5, 0.5, 0.5], [1.5, 1.5, 1.5]], [1.5, 8.30384757]),
+        ([0.5, 0.5, 0.5], 1.5, False),
+        ([0.5, 0.5, 0.5], 1.5, True),
+        ([1.5, 1.5, 1.5], 8.30384757, False),
+        ([1.5, 1.5, 1.5], 7.5, True),
+        ([[0.5, 0.5, 0.5], [1.5, 1.5, 1.5]], [1.5, 8.30384757], False),
+        ([[0.5, 0.5, 0.5], [1.5, 1.5, 1.5]], [1.5, 7.5], True),
     ),
 )
-def test_raytrace(points, pref):
+def test_raytrace(points, pref, honor_grid):
     sources = 0.0, 0.0, 0.0
     tt = eik3d.solve(sources, nsweep=3, return_gradient=True)
-    rays = tt.raytrace(points, stepsize=1.0)
+    rays = tt.raytrace(points, stepsize=1.0, honor_grid=honor_grid)
 
     allclose(pref, rays, lambda x: x.sum())
