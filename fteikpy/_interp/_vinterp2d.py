@@ -11,11 +11,11 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
     condy = y[0] <= yq <= y[-1]
     if not (condx and condy):
         return fval
-
-    xsi = numpy.nonzero(x <= xsrc)[0][-1]
-    ysi = numpy.nonzero(y <= ysrc)[0][-1]
-    i1 = numpy.nonzero(x <= xq)[0][-1]
-    j1 = numpy.nonzero(y <= yq)[0][-1]
+    
+    xsi = numpy.searchsorted(x, xsrc, side="right") - 1
+    ysi = numpy.searchsorted(y, ysrc, side="right") - 1
+    i1 = numpy.searchsorted(x, xq, side="right") - 1
+    j1 = numpy.searchsorted(y, yq, side="right") - 1
 
     if xsi == i1 and ysi == j1:
         vq = vzero * dist2d(xsrc, ysrc, xq, yq)

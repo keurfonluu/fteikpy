@@ -20,9 +20,9 @@ def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, ste
     if honor_grid:
         nz, nx, ny = len(z), len(x), len(y)
 
-        i = numpy.nonzero(z <= zend)[0][-1]
-        j = numpy.nonzero(x <= xend)[0][-1]
-        k = numpy.nonzero(y <= yend)[0][-1]
+        i = numpy.searchsorted(z, zend, side="right") - 1
+        j = numpy.searchsorted(x, xend, side="right") - 1
+        k = numpy.searchsorted(y, yend, side="right") - 1
         zmin = z[max(i - 1, 0)] if zend == z[i] else z[i]
         xmin = x[max(j - 1, 0)] if xend == x[j] else x[j]
         ymin = y[max(k - 1, 0)] if yend == y[k] else y[k]
@@ -52,9 +52,9 @@ def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, ste
             pcur -= fac * delta
 
             if fac < 1.0:
-                i = numpy.nonzero(z <= pcur[0])[0][-1]
-                j = numpy.nonzero(x <= pcur[1])[0][-1]
-                k = numpy.nonzero(y <= pcur[2])[0][-1]
+                i = numpy.searchsorted(z, pcur[0], side="right") - 1
+                j = numpy.searchsorted(x, pcur[1], side="right") - 1
+                k = numpy.searchsorted(y, pcur[2], side="right") - 1
                 lower[0] = z[max(i - 1, 0)] if pcur[0] == z[i] else z[i]
                 lower[1] = x[max(j - 1, 0)] if pcur[1] == x[j] else x[j]
                 lower[2] = y[max(k - 1, 0)] if pcur[2] == y[k] else y[k]

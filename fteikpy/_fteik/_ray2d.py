@@ -17,8 +17,8 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
     if honor_grid:
         nz, nx = len(z), len(x)
 
-        i = numpy.nonzero(z <= zend)[0][-1]
-        j = numpy.nonzero(x <= xend)[0][-1]
+        i = numpy.searchsorted(z, zend, side="right") - 1
+        j = numpy.searchsorted(x, xend, side="right") - 1
         zmin = z[max(i - 1, 0)] if zend == z[i] else z[i]
         xmin = x[max(j - 1, 0)] if xend == x[j] else x[j]
         lower = numpy.array([zmin, xmin])
@@ -45,8 +45,8 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
             pcur -= fac * delta
 
             if fac < 1.0:
-                i = numpy.nonzero(z <= pcur[0])[0][-1]
-                j = numpy.nonzero(x <= pcur[1])[0][-1]
+                i = numpy.searchsorted(z, pcur[0], side="right") - 1
+                j = numpy.searchsorted(x, pcur[1], side="right") - 1
                 lower[0] = z[max(i - 1, 0)] if pcur[0] == z[i] else z[i]
                 lower[1] = x[max(j - 1, 0)] if pcur[1] == x[j] else x[j]
                 upper[0] = z[i + 1]

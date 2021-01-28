@@ -13,12 +13,12 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
     if not (condx and condy and condz):
         return fval
 
-    xsi = numpy.nonzero(x <= xsrc)[0][-1]
-    ysi = numpy.nonzero(y <= ysrc)[0][-1]
-    zsi = numpy.nonzero(z <= zsrc)[0][-1]
-    i1 = numpy.nonzero(x <= xq)[0][-1]
-    j1 = numpy.nonzero(y <= yq)[0][-1]
-    k1 = numpy.nonzero(z <= zq)[0][-1]
+    xsi = numpy.searchsorted(x, xsrc, side="right") - 1
+    ysi = numpy.searchsorted(y, ysrc, side="right") - 1
+    zsi = numpy.searchsorted(z, zsrc, side="right") - 1
+    i1 = numpy.searchsorted(x, xq, side="right") - 1
+    j1 = numpy.searchsorted(y, yq, side="right") - 1
+    k1 = numpy.searchsorted(z, zq, side="right") - 1
 
     if xsi == i1 and ysi == j1 and zsi == k1:
         vq = vzero * dist3d(xsrc, ysrc, zsrc, xq, yq, zq)

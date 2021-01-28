@@ -16,8 +16,8 @@ def _interp2d(x, y, v, xq, yq, fval):
     nx -= 1
     ny -= 1
 
-    i1 = numpy.nonzero(x <= xq)[0][-1]
-    j1 = numpy.nonzero(y <= yq)[0][-1]
+    i1 = numpy.searchsorted(x, xq, side="right") - 1
+    j1 = numpy.searchsorted(y, yq, side="right") - 1
     i2 = i1 + 1
     j2 = j1 + 1
 
