@@ -240,15 +240,16 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
             v122 = v[i1, j2, k2]
             v222 = v[i2, j2, k2]
 
-        ax = numpy.array([x2, x1, x2, x1, x2, x1, x2, x1])
-        ay = numpy.array([y2, y2, y1, y1, y2, y2, y1, y1])
-        az = numpy.array([z2, z2, z2, z2, z1, z1, z1, z1])
-        av = numpy.array([v111, v211, v121, v221, v112, v212, v122, v222])
-        ad = numpy.array([d111, d211, d121, d221, d112, d212, d122, d222])
-        N = numpy.abs((ax - xq) * (ay - yq) * (az - zq)) / numpy.abs(
-            (x2 - x1) * (y2 - y1) * (z2 - z1)
-        )
-        vq = dist3d(xsrc, ysrc, zsrc, xq, yq, zq) / numpy.dot(ad / av, N)
+        vq = d111 / v111 * numpy.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
+        vq += d211 / v211 * numpy.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
+        vq += d121 / v121 * numpy.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
+        vq += d221 / v221 * numpy.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
+        vq += d112 / v112 * numpy.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
+        vq += d212 / v212 * numpy.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
+        vq += d122 / v122 * numpy.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
+        vq += d222 / v222 * numpy.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
+        vq /= numpy.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
+        vq = dist3d(xsrc, ysrc, zsrc, xq, yq, zq) / vq
 
     return vq
 

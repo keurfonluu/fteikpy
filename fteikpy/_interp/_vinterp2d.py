@@ -91,12 +91,12 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
             v12 = v[i1, j2]
             v22 = v[i2, j2]
 
-        ax = numpy.array([x2, x1, x2, x1])
-        ay = numpy.array([y2, y2, y1, y1])
-        av = numpy.array([v11, v21, v12, v22])
-        ad = numpy.array([d11, d21, d12, d22])
-        N = numpy.abs((ax - xq) * (ay - yq)) / numpy.abs((x2 - x1) * (y2 - y1))
-        vq = dist2d(xsrc, ysrc, xq, yq) / numpy.dot(ad / av, N)
+        vq = d11 / v11 * numpy.abs((x2 - xq) * (y2 - yq))
+        vq += d21 / v21 * numpy.abs((x1 - xq) * (y2 - yq))
+        vq += d12 / v12 * numpy.abs((x2 - xq) * (y1 - yq))
+        vq += d22 / v22 * numpy.abs((x1 - xq) * (y1 - yq))
+        vq /= numpy.abs((x2 - x1) * (y2 - y1))
+        vq = dist2d(xsrc, ysrc, xq, yq) / vq
 
     return vq
 

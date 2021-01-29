@@ -65,11 +65,11 @@ def _interp2d(x, y, v, xq, yq, fval):
         v12 = v[i1, j2]
         v22 = v[i2, j2]
 
-    ax = numpy.array([x2, x1, x2, x1])
-    ay = numpy.array([y2, y2, y1, y1])
-    av = numpy.array([v11, v21, v12, v22])
-    N = numpy.abs((ax - xq) * (ay - yq)) / numpy.abs((x2 - x1) * (y2 - y1))
-    vq = numpy.dot(av, N)
+    vq = v11 * numpy.abs((x2 - xq) * (y2 - yq))
+    vq += v21 * numpy.abs((x1 - xq) * (y2 - yq))
+    vq += v12 * numpy.abs((x2 - xq) * (y1 - yq))
+    vq += v22 * numpy.abs((x1 - xq) * (y1 - yq))
+    vq /= numpy.abs((x2 - x1) * (y2 - y1))
 
     return vq
 
