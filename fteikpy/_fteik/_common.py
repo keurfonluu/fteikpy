@@ -19,7 +19,7 @@ def shrink(pcur, delta, lower, upper):
     tmp = pcur - delta
     maskl = tmp < lower
     masku = tmp > upper
-    
+
     if maskl.any():
         return numpy.min((pcur[maskl] - lower[maskl]) / delta[maskl])
 

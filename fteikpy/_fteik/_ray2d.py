@@ -1,9 +1,9 @@
 import numpy
 from numba import prange
 
-from ._common import first_index, shrink
 from .._common import dist2d, jitted, norm2d
 from .._interp import interp2d
+from ._common import first_index, shrink
 
 
 @jitted("f8[:, :](f8[:], f8[:], f8[:, :], f8[:, :], f8, f8, f8, f8, f8, b1)")
@@ -67,11 +67,17 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
 
 
 @jitted(parallel=True)
-def _ray2d_vectorized(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid=False):
+def _ray2d_vectorized(
+    z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid=False
+):
     """Perform ray-tracing in parallel for different points."""
     out = []
     for i in prange(len(zend)):
-        out.append(_ray2d(z, x, zgrad, xgrad, zend[i], xend[i], zsrc, xsrc, stepsize, honor_grid))
+        out.append(
+            _ray2d(
+                z, x, zgrad, xgrad, zend[i], xend[i], zsrc, xsrc, stepsize, honor_grid
+            )
+        )
 
     return out
 
@@ -80,11 +86,22 @@ def _ray2d_vectorized(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, hono
 def ray2d(z, x, zgrad, xgrad, p, src, stepsize, honor_grid=False):
     """Perform ray-tracing."""
     if p.ndim == 1:
-        return _ray2d(z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize, honor_grid)
+        return _ray2d(
+            z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize, honor_grid
+        )
 
     else:
         rays = _ray2d_vectorized(
-            z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize, honor_grid,
+            z,
+            x,
+            zgrad,
+            xgrad,
+            p[:, 0],
+            p[:, 1],
+            src[0],
+            src[1],
+            stepsize,
+            honor_grid,
         )
 
         # Hack: append does not work in parallel, sort back list

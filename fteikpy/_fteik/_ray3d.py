@@ -1,15 +1,30 @@
 import numpy
 from numba import prange
 
-from ._common import first_index, shrink
 from .._common import dist3d, jitted, norm3d
 from .._interp import interp3d
+from ._common import first_index, shrink
 
 
 @jitted(
     "f8[:, :](f8[:], f8[:], f8[:], f8[:, :, :], f8[:, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, b1)"
 )
-def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize, honor_grid):
+def _ray3d(
+    z,
+    x,
+    y,
+    zgrad,
+    xgrad,
+    ygrad,
+    zend,
+    xend,
+    yend,
+    zsrc,
+    xsrc,
+    ysrc,
+    stepsize,
+    honor_grid,
+):
     """Perform a posteriori 3D ray-tracing."""
     condz = z[0] <= zend <= z[-1]
     condx = x[0] <= xend <= x[-1]
@@ -27,7 +42,9 @@ def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, ste
         xmin = x[max(j - 1, 0)] if xend == x[j] else x[j]
         ymin = y[max(k - 1, 0)] if yend == y[k] else y[k]
         lower = numpy.array([zmin, xmin, ymin])
-        upper = numpy.array([z[min(i + 1, nz - 1)], x[min(j + 1, nx - 1)], y[min(k + 1, ny - 1)]])
+        upper = numpy.array(
+            [z[min(i + 1, nz - 1)], x[min(j + 1, nx - 1)], y[min(k + 1, ny - 1)]]
+        )
 
     pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
     delta = numpy.empty(3, dtype=numpy.float64)
@@ -78,7 +95,20 @@ def _ray3d(z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, ste
 
 @jitted(parallel=True)
 def _ray3d_vectorized(
-    z, x, y, zgrad, xgrad, ygrad, zend, xend, yend, zsrc, xsrc, ysrc, stepsize, honor_grid=False,
+    z,
+    x,
+    y,
+    zgrad,
+    xgrad,
+    ygrad,
+    zend,
+    xend,
+    yend,
+    zsrc,
+    xsrc,
+    ysrc,
+    stepsize,
+    honor_grid=False,
 ):
     """Perform ray-tracing in parallel for different points."""
     out = []

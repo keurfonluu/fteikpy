@@ -11,7 +11,7 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
     condy = y[0] <= yq <= y[-1]
     if not (condx and condy):
         return fval
-    
+
     xsi = numpy.searchsorted(x, xsrc, side="right") - 1
     ysi = numpy.searchsorted(y, ysrc, side="right") - 1
     i1 = numpy.searchsorted(x, xq, side="right") - 1
