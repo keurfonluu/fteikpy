@@ -1,3 +1,5 @@
+#%%
+
 import numpy
 import pytest
 from helpers import allclose, eik2d
@@ -6,9 +8,9 @@ from helpers import allclose, eik2d
 @pytest.mark.parametrize(
     "sources, tref",
     (
-        ([0.0, 0.0], 2969.40942920),
-        ([3.5, 3.5], 2002.26724555),
-        ([[0.0, 0.0], [3.5, 3.5]], [2969.40942920, 2002.26724555]),
+        ([0.0, 0.0], 3573.41870888),
+        ([3.5, 3.5], 2462.96106736),
+        ([[0.0, 0.0], [3.5, 3.5]], [3573.41870888, 2462.96106736]),
     ),
 )
 def test_solve(sources, tref):
@@ -22,7 +24,7 @@ def test_solve(sources, tref):
     (
         ([0.0, 0.0], 1.0),
         ([-1.0, -1.0], numpy.nan),
-        ([[0.0, 0.0], [15.0, 0.0], [15.0, 15.0], [0.0, 15.0],], numpy.ones(4),),
+        ([[0.0, 0.0], [15.0, 0.0], [15.0, 15.0], [0.0, 15.0],], numpy.ones(4)),
     ),
 )
 def test_call(points, vref):
