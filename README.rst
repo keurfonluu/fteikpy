@@ -135,7 +135,7 @@ BibTex:
 .. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
    :target: https://github.com/psf/black
 
-.. |Codacy Badge| image:: https://img.shields.io/codacy/grade/29b21d65d07e40219dcc9ad1c978cbeb.svg?style=flat
+.. |Codacy Badge| image:: https://img.shields.io/codacy/grade/bec3d2ad6b8c45cf9bb0da110fe04838.svg?style=flat
    :target: https://www.codacy.com/gh/keurfonluu/fteikpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=keurfonluu/fteikpy&amp;utm_campaign=Badge_Grade
 
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/keurfonluu/fteikpy.svg?style=flat
