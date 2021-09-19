@@ -49,7 +49,7 @@ def _ray3d(
     pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
     delta = numpy.empty(3, dtype=numpy.float64)
     ray = [pcur.copy()]
-    while dist3d(zsrc, xsrc, ysrc, pcur[0], pcur[1], pcur[2]) > stepsize:
+    while dist3d(zsrc, xsrc, ysrc, pcur[0], pcur[1], pcur[2]) >= stepsize:
         gz = interp3d(z, x, y, zgrad, pcur)
         gx = interp3d(z, x, y, xgrad, pcur)
         gy = interp3d(z, x, y, ygrad, pcur)
@@ -79,7 +79,15 @@ def _ray3d(
                 upper[1] = x[j + 1]
                 upper[2] = y[k + 1]
 
-                ray.append(pcur.copy())
+                # Handle precision issues due to fac
+                for i in range(3):
+                    pcur[i] = numpy.round(pcur[i], 8)
+
+                if (pcur != ray[-1]).any():
+                    ray.append(pcur.copy())
+
+                else:
+                    ray[-1] = pcur.copy()
 
         else:
             pcur -= delta

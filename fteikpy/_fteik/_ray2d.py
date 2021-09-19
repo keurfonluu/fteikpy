@@ -27,7 +27,7 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
     pcur = numpy.array([zend, xend], dtype=numpy.float64)
     delta = numpy.empty(2, dtype=numpy.float64)
     ray = [pcur.copy()]
-    while dist2d(zsrc, xsrc, pcur[0], pcur[1]) > stepsize:
+    while dist2d(zsrc, xsrc, pcur[0], pcur[1]) >= stepsize:
         gz = interp2d(z, x, zgrad, pcur)
         gx = interp2d(z, x, xgrad, pcur)
         gn = norm2d(gz, gx)
@@ -52,7 +52,15 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
                 upper[0] = z[i + 1]
                 upper[1] = x[j + 1]
 
-                ray.append(pcur.copy())
+                # Handle precision issues due to fac
+                for i in range(2):
+                    pcur[i] = numpy.round(pcur[i], 8)
+
+                if (pcur != ray[-1]).any():
+                    ray.append(pcur.copy())
+
+                else:
+                    ray[-1] = pcur.copy()
 
         else:
             pcur -= delta
