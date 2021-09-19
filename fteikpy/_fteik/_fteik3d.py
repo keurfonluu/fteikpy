@@ -641,9 +641,9 @@ def fteik3d_vectorized(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False)
     """Calculate traveltimes in parallel for different sources."""
     nsrc = len(zsrc)
     nz, nx, ny = slow.shape
-    tt = numpy.empty((nsrc, nz, nx, ny), dtype=numpy.float64)
+    tt = numpy.empty((nsrc, nz + 1, nx + 1, ny + 1), dtype=numpy.float64)
     ttgrad = (
-        numpy.empty((nsrc, nz, nx, ny, 3), dtype=numpy.float64)
+        numpy.empty((nsrc, nz + 1, nx + 1, ny + 1, 3), dtype=numpy.float64)
         if grad
         else numpy.empty((nsrc, 0, 0, 0, 0), dtype=numpy.float64)
     )
