@@ -313,6 +313,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     vzero = slow[zsi, xsi]
 
     # Allocate work array
+    nz += 1
+    nx += 1
     tt = numpy.full((nz, nx), Big, dtype=numpy.float64)
     ttgrad = (
         numpy.zeros((nz, nx, 2), dtype=numpy.float64)

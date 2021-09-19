@@ -560,6 +560,9 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     vzero = slow[zsi, xsi, ysi]
 
     # Allocate work array
+    nz += 1
+    nx += 1
+    ny += 1
     tt = numpy.full((nz, nx, ny), Big, dtype=numpy.float64)
     ttgrad = (
         numpy.zeros((nz, nx, ny, 3), dtype=numpy.float64)
