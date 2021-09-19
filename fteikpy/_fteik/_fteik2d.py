@@ -313,6 +313,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     vzero = slow[zsi, xsi]
 
     # Allocate work array
+    nz += 1
+    nx += 1
     tt = numpy.full((nz, nx), Big, dtype=numpy.float64)
     ttgrad = (
         numpy.zeros((nz, nx, 2), dtype=numpy.float64)
@@ -638,9 +640,9 @@ def fteik2d_vectorized(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     """Calculate traveltimes in parallel for different sources."""
     nsrc = len(zsrc)
     nz, nx = slow.shape
-    tt = numpy.empty((nsrc, nz, nx), dtype=numpy.float64)
+    tt = numpy.empty((nsrc, nz + 1, nx + 1), dtype=numpy.float64)
     ttgrad = (
-        numpy.empty((nsrc, nz, nx, 2), dtype=numpy.float64)
+        numpy.empty((nsrc, nz + 1, nx + 1, 2), dtype=numpy.float64)
         if grad
         else numpy.empty((nsrc, 0, 0, 0), dtype=numpy.float64)
     )

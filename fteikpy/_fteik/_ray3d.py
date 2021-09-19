@@ -46,10 +46,14 @@ def _ray3d(
             [z[min(i + 1, nz - 1)], x[min(j + 1, nx - 1)], y[min(k + 1, ny - 1)]]
         )
 
+        isrc = numpy.searchsorted(z, zsrc, side="right") - 1
+        jsrc = numpy.searchsorted(x, xsrc, side="right") - 1
+        ksrc = numpy.searchsorted(y, ysrc, side="right") - 1
+
     pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
     delta = numpy.empty(3, dtype=numpy.float64)
     ray = [pcur.copy()]
-    while dist3d(zsrc, xsrc, ysrc, pcur[0], pcur[1], pcur[2]) > stepsize:
+    while dist3d(zsrc, xsrc, ysrc, pcur[0], pcur[1], pcur[2]) >= stepsize:
         gz = interp3d(z, x, y, zgrad, pcur)
         gx = interp3d(z, x, y, xgrad, pcur)
         gy = interp3d(z, x, y, ygrad, pcur)
@@ -79,7 +83,19 @@ def _ray3d(
                 upper[1] = x[j + 1]
                 upper[2] = y[k + 1]
 
-                ray.append(pcur.copy())
+                # Handle precision issues due to fac
+                pcur[0] = numpy.round(pcur[0], 8)
+                pcur[1] = numpy.round(pcur[1], 8)
+                pcur[2] = numpy.round(pcur[2], 8)
+
+                if (pcur != ray[-1]).any():
+                    ray.append(pcur.copy())
+
+                else:
+                    ray[-1] = pcur.copy()
+
+                if i == isrc and j == jsrc and k == ksrc:
+                    break
 
         else:
             pcur -= delta
