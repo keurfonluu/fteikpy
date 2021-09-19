@@ -100,16 +100,7 @@ def ray2d(z, x, zgrad, xgrad, p, src, stepsize, honor_grid=False):
 
     else:
         rays = _ray2d_vectorized(
-            z,
-            x,
-            zgrad,
-            xgrad,
-            p[:, 0],
-            p[:, 1],
-            src[0],
-            src[1],
-            stepsize,
-            honor_grid,
+            z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize, honor_grid,
         )
 
         # Hack: append does not work in parallel, sort back list
