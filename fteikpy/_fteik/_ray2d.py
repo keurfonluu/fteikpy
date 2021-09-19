@@ -24,6 +24,9 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
         lower = numpy.array([zmin, xmin])
         upper = numpy.array([z[min(i + 1, nz - 1)], x[min(j + 1, nx - 1)]])
 
+        isrc = numpy.searchsorted(z, zsrc, side="right") - 1
+        jsrc = numpy.searchsorted(x, xsrc, side="right") - 1
+
     pcur = numpy.array([zend, xend], dtype=numpy.float64)
     delta = numpy.empty(2, dtype=numpy.float64)
     ray = [pcur.copy()]
@@ -53,14 +56,17 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
                 upper[1] = x[j + 1]
 
                 # Handle precision issues due to fac
-                for i in range(2):
-                    pcur[i] = numpy.round(pcur[i], 8)
+                pcur[0] = numpy.round(pcur[0], 8)
+                pcur[1] = numpy.round(pcur[1], 8)
 
                 if (pcur != ray[-1]).any():
                     ray.append(pcur.copy())
 
                 else:
                     ray[-1] = pcur.copy()
+
+                if i == isrc and j == jsrc:
+                    break
 
         else:
             pcur -= delta

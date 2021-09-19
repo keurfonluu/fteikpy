@@ -46,6 +46,10 @@ def _ray3d(
             [z[min(i + 1, nz - 1)], x[min(j + 1, nx - 1)], y[min(k + 1, ny - 1)]]
         )
 
+        isrc = numpy.searchsorted(z, zsrc, side="right") - 1
+        jsrc = numpy.searchsorted(x, xsrc, side="right") - 1
+        ksrc = numpy.searchsorted(y, ysrc, side="right") - 1
+
     pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
     delta = numpy.empty(3, dtype=numpy.float64)
     ray = [pcur.copy()]
@@ -80,14 +84,18 @@ def _ray3d(
                 upper[2] = y[k + 1]
 
                 # Handle precision issues due to fac
-                for i in range(3):
-                    pcur[i] = numpy.round(pcur[i], 8)
+                pcur[0] = numpy.round(pcur[0], 8)
+                pcur[1] = numpy.round(pcur[1], 8)
+                pcur[2] = numpy.round(pcur[2], 8)
 
                 if (pcur != ray[-1]).any():
                     ray.append(pcur.copy())
 
                 else:
                     ray[-1] = pcur.copy()
+
+                if i == isrc and j == jsrc and k == ksrc:
+                    break
 
         else:
             pcur -= delta
