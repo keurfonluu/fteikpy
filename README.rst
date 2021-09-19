@@ -91,32 +91,6 @@ Contributing
 Please refer to the `Contributing
 Guidelines <https://github.com/keurfonluu/fteikpy/blob/master/CONTRIBUTING.rst>`__ to see how you can help. This project is released with a `Code of Conduct <https://github.com/keurfonluu/fteikpy/blob/master/CODE_OF_CONDUCT.rst>`__ which you agree to abide by when contributing.
 
-Citing fteikpy
---------------
-
-If you are using **fteikpy** in your scientific research, please consider mentioning it (e.g. in Acknowledgements) and citing the following paper:
-
-..
-
-   Noble, M., Gesret, A., and Belayouni, N., (2014). Accurate 3-D finite difference computation of traveltimes in strongly heterogeneous media. Geophysical Journal International, 199(3): 1572-1585, https://doi.org/10.1093/gji/ggu358
-
-BibTex:
-
-.. code-block::
-
-   @article{Noble2014,
-      doi = {10.1093/gji/ggu358},
-      url = {https://doi.org/10.1093/gji/ggu358},
-      year = {2014},
-      issn = {1365246X},
-      volume = {199},
-      number = {3},
-      pages = {1572--1585},
-      author = {Noble, Mark and Gesret, Alexandrine and Belayouni, Nidhal},
-      title = {Accurate 3-{D} finite difference computation of traveltimes in strongly heterogeneous media},
-      journal = {Geophysical Journal International},
-   }
-
 .. |License| image:: https://img.shields.io/github/license/keurfonluu/fteikpy
    :target: https://github.com/keurfonluu/fteikpy/blob/master/LICENSE
 

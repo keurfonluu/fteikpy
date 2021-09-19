@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Luu"
+  given-names: "Keurfon"
+  orcid: "https://orcid.org/0000-0001-7927-0019"
+title: "fteikpy: Accurate Eikonal solver for Python"
+url: https://github.com/keurfonluu/fteikpy
+license: BSD-3-Clause
