@@ -37,7 +37,7 @@ class Eikonal2D(BaseGrid2D):
         nsweep : int, optional, default 2
             Number of sweeps.
         return_gradient : bool, optional, default False
-            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`.
+            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`. It is recommended to enable this option for a posteriori raytracing.
 
         Returns
         -------
@@ -109,7 +109,7 @@ class Eikonal3D(BaseGrid3D):
         nsweep : int, optional, default 2
             Number of sweeps.
         return_gradient : bool, optional, default False
-            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`.
+            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`. It is recommended to enable this option for a posteriori raytracing.
 
         Returns
         -------
