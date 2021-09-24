@@ -50,6 +50,7 @@ def _ray3d(
         jsrc = numpy.searchsorted(x, xsrc, side="right") - 1
         ksrc = numpy.searchsorted(y, ysrc, side="right") - 1
 
+    count = 1
     pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
     delta = numpy.empty(3, dtype=numpy.float64)
     ray = [pcur.copy()]
@@ -100,6 +101,12 @@ def _ray3d(
         else:
             pcur -= delta
             ray.append(pcur.copy())
+
+        # Fix a conservative maximum number of steps to avoid infinite loop
+        # (can happen when using return_gradient=False)
+        count += 1
+        if count >= 99999:
+            raise RuntimeError("maximum number of steps reached")
 
     ray.append(numpy.array([zsrc, xsrc, ysrc], dtype=numpy.float64))
     out = numpy.empty((len(ray), 3), dtype=numpy.float64)

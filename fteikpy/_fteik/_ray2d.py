@@ -27,6 +27,7 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
         isrc = numpy.searchsorted(z, zsrc, side="right") - 1
         jsrc = numpy.searchsorted(x, xsrc, side="right") - 1
 
+    count = 1
     pcur = numpy.array([zend, xend], dtype=numpy.float64)
     delta = numpy.empty(2, dtype=numpy.float64)
     ray = [pcur.copy()]
@@ -71,6 +72,12 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
         else:
             pcur -= delta
             ray.append(pcur.copy())
+
+        # Fix a conservative maximum number of steps to avoid infinite loop
+        # (can happen when using return_gradient=False)
+        count += 1
+        if count >= 99999:
+            raise RuntimeError("maximum number of steps reached")
 
     ray.append(numpy.array([zsrc, xsrc], dtype=numpy.float64))
     out = numpy.empty((len(ray), 2), dtype=numpy.float64)
