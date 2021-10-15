@@ -64,7 +64,7 @@ Alternatively, the documentation can be built using `Sphinx <https://www.sphinx-
 Usage
 -----
 
-The following example computes the traveltime grid in a 3D homogenous velocity model:
+The following example computes the traveltime grid in a 3D homogeneous velocity model:
 
 .. code-block:: python
 
