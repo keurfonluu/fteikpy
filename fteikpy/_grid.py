@@ -236,7 +236,9 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         gradient = self.gradient
 
         nz, nx, ny = self.shape
-        max_step = max_step if max_step else 2 * int((nz ** 2 + nx ** 2 + ny ** 2) ** 0.5)
+        max_step = (
+            max_step if max_step else 2 * int((nz ** 2 + nx ** 2 + ny ** 2) ** 0.5)
+        )
 
         return ray3d(
             self.zaxis,

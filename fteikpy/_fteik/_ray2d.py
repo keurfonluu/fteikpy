@@ -6,7 +6,9 @@ from .._interp import interp2d
 from ._common import shrink
 
 
-@jitted("Tuple((f8[:, :], i4))(f8[:], f8[:], f8[:, :], f8[:, :], f8, f8, f8, f8, f8, i4, b1)")
+@jitted(
+    "Tuple((f8[:, :], i4))(f8[:], f8[:], f8[:, :], f8[:, :], f8, f8, f8, f8, f8, i4, b1)"
+)
 def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor_grid):
     """Perform a posteriori 2D ray-tracing."""
     condz = z[0] <= zend <= z[-1]
@@ -93,7 +95,19 @@ def _ray2d_vectorized(
     rays = numpy.empty((n, max_step, 2), dtype=numpy.float64)
     counts = numpy.empty(n, dtype=numpy.int32)
     for i in prange(n):
-        rays[i], counts[i] = _ray2d(z, x, zgrad, xgrad, zend[i], xend[i], zsrc, xsrc, stepsize, max_step, honor_grid)
+        rays[i], counts[i] = _ray2d(
+            z,
+            x,
+            zgrad,
+            xgrad,
+            zend[i],
+            xend[i],
+            zsrc,
+            xsrc,
+            stepsize,
+            max_step,
+            honor_grid,
+        )
 
     return rays, counts
 
@@ -103,12 +117,32 @@ def ray2d(z, x, zgrad, xgrad, p, src, stepsize, max_step, honor_grid=False):
     """Perform ray-tracing."""
     if p.ndim == 1:
         ray, count = _ray2d(
-            z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize, max_step, honor_grid
+            z,
+            x,
+            zgrad,
+            xgrad,
+            p[0],
+            p[1],
+            src[0],
+            src[1],
+            stepsize,
+            max_step,
+            honor_grid,
         )
         return ray[count::-1]
 
     else:
         rays, counts = _ray2d_vectorized(
-            z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize, max_step, honor_grid
+            z,
+            x,
+            zgrad,
+            xgrad,
+            p[:, 0],
+            p[:, 1],
+            src[0],
+            src[1],
+            stepsize,
+            max_step,
+            honor_grid,
         )
         return [ray[count::-1] for ray, count in zip(rays, counts)]
