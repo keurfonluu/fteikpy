@@ -3,11 +3,11 @@ from numba import prange
 
 from .._common import dist3d, jitted, norm3d
 from .._interp import interp3d
-from ._common import first_index, shrink
+from ._common import shrink
 
 
 @jitted(
-    "f8[:, :](f8[:], f8[:], f8[:], f8[:, :, :], f8[:, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, b1)"
+    "Tuple((f8[:, :], i4))(f8[:], f8[:], f8[:], f8[:, :, :], f8[:, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, i4, b1)"
 )
 def _ray3d(
     z,
@@ -23,6 +23,7 @@ def _ray3d(
     xsrc,
     ysrc,
     stepsize,
+    max_step,
     honor_grid,
 ):
     """Perform a posteriori 3D ray-tracing."""
@@ -53,7 +54,8 @@ def _ray3d(
     count = 1
     pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
     delta = numpy.empty(3, dtype=numpy.float64)
-    ray = [pcur.copy()]
+    ray = numpy.empty((max_step, 3), dtype=numpy.float64)
+    ray[0] = pcur.copy()
     while dist3d(zsrc, xsrc, ysrc, pcur[0], pcur[1], pcur[2]) >= stepsize:
         gz = interp3d(z, x, y, zgrad, pcur)
         gx = interp3d(z, x, y, xgrad, pcur)
@@ -89,31 +91,27 @@ def _ray3d(
                 pcur[1] = numpy.round(pcur[1], 8)
                 pcur[2] = numpy.round(pcur[2], 8)
 
-                if (pcur != ray[-1]).any():
-                    ray.append(pcur.copy())
+                if (pcur != ray[count - 1]).any():
+                    ray[count] = pcur.copy()
+                    count += 1
 
                 else:
-                    ray[-1] = pcur.copy()
+                    ray[count - 1] = pcur.copy()
 
                 if i == isrc and j == jsrc and k == ksrc:
                     break
 
         else:
             pcur -= delta
-            ray.append(pcur.copy())
+            ray[count] = pcur.copy()
+            count += 1
 
-        # Fix a conservative maximum number of steps to avoid infinite loop
-        # (can happen when using return_gradient=False)
-        count += 1
-        if count >= 99999:
+        if count >= max_step:
             raise RuntimeError("maximum number of steps reached")
 
-    ray.append(numpy.array([zsrc, xsrc, ysrc], dtype=numpy.float64))
-    out = numpy.empty((len(ray), 3), dtype=numpy.float64)
-    for i, r in enumerate(ray):
-        out[-i - 1] = r
+    ray[count] = numpy.array([zsrc, xsrc, ysrc], dtype=numpy.float64)
 
-    return out
+    return ray, count
 
 
 @jitted(parallel=True)
@@ -131,38 +129,40 @@ def _ray3d_vectorized(
     xsrc,
     ysrc,
     stepsize,
+    max_step,
     honor_grid=False,
 ):
     """Perform ray-tracing in parallel for different points."""
-    out = []
-    for i in prange(len(zend)):
-        out.append(
-            _ray3d(
-                z,
-                x,
-                y,
-                zgrad,
-                xgrad,
-                ygrad,
-                zend[i],
-                xend[i],
-                yend[i],
-                zsrc,
-                xsrc,
-                ysrc,
-                stepsize,
-                honor_grid,
-            )
+    n = len(zend)
+    rays = numpy.empty((n, max_step, 3), dtype=numpy.float64)
+    counts = numpy.empty(n, dtype=numpy.int32)
+    for i in prange(n):
+        rays[i], counts[i] = _ray3d(
+            z,
+            x,
+            y,
+            zgrad,
+            xgrad,
+            ygrad,
+            zend[i],
+            xend[i],
+            yend[i],
+            zsrc,
+            xsrc,
+            ysrc,
+            stepsize,
+            max_step,
+            honor_grid,
         )
 
-    return out
+    return rays, counts
 
 
 @jitted
-def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize, honor_grid=False):
+def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize, max_step, honor_grid=False):
     """Perform ray-tracing."""
     if p.ndim == 1:
-        return _ray3d(
+        ray, count = _ray3d(
             z,
             x,
             y,
@@ -176,11 +176,13 @@ def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize, honor_grid=False):
             src[1],
             src[2],
             stepsize,
+            max_step,
             honor_grid,
         )
+        return ray[count::-1]
 
     else:
-        rays = _ray3d_vectorized(
+        rays, counts = _ray3d_vectorized(
             z,
             x,
             y,
@@ -194,11 +196,7 @@ def ray3d(z, x, y, zgrad, xgrad, ygrad, p, src, stepsize, honor_grid=False):
             src[1],
             src[2],
             stepsize,
+            max_step,
             honor_grid,
         )
-
-        # Hack: append does not work in parallel, sort back list
-        end_points = [ray[-1] for ray in rays]
-        idx = [first_index(x, end_points) for x in p]
-
-        return [rays[i] for i in idx]
+        return [ray[count::-1] for ray, count in zip(rays, counts)]

@@ -3,11 +3,11 @@ from numba import prange
 
 from .._common import dist2d, jitted, norm2d
 from .._interp import interp2d
-from ._common import first_index, shrink
+from ._common import shrink
 
 
-@jitted("f8[:, :](f8[:], f8[:], f8[:, :], f8[:, :], f8, f8, f8, f8, f8, b1)")
-def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
+@jitted("Tuple((f8[:, :], i4))(f8[:], f8[:], f8[:, :], f8[:, :], f8, f8, f8, f8, f8, i4, b1)")
+def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor_grid):
     """Perform a posteriori 2D ray-tracing."""
     condz = z[0] <= zend <= z[-1]
     condx = x[0] <= xend <= x[-1]
@@ -30,7 +30,8 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
     count = 1
     pcur = numpy.array([zend, xend], dtype=numpy.float64)
     delta = numpy.empty(2, dtype=numpy.float64)
-    ray = [pcur.copy()]
+    ray = numpy.empty((max_step, 2), dtype=numpy.float64)
+    ray[0] = pcur.copy()
     while dist2d(zsrc, xsrc, pcur[0], pcur[1]) >= stepsize:
         gz = interp2d(z, x, zgrad, pcur)
         gx = interp2d(z, x, xgrad, pcur)
@@ -60,64 +61,54 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid):
                 pcur[0] = numpy.round(pcur[0], 8)
                 pcur[1] = numpy.round(pcur[1], 8)
 
-                if (pcur != ray[-1]).any():
-                    ray.append(pcur.copy())
+                if (pcur != ray[count - 1]).any():
+                    ray[count] = pcur.copy()
+                    count += 1
 
                 else:
-                    ray[-1] = pcur.copy()
+                    ray[count - 1] = pcur.copy()
 
                 if i == isrc and j == jsrc:
                     break
 
         else:
             pcur -= delta
-            ray.append(pcur.copy())
+            ray[count] = pcur.copy()
+            count += 1
 
-        # Fix a conservative maximum number of steps to avoid infinite loop
-        # (can happen when using return_gradient=False)
-        count += 1
-        if count >= 99999:
+        if count >= max_step:
             raise RuntimeError("maximum number of steps reached")
 
-    ray.append(numpy.array([zsrc, xsrc], dtype=numpy.float64))
-    out = numpy.empty((len(ray), 2), dtype=numpy.float64)
-    for i, r in enumerate(ray):
-        out[-i - 1] = r
+    ray[count] = numpy.array([zsrc, xsrc], dtype=numpy.float64)
 
-    return out
+    return ray, count
 
 
 @jitted(parallel=True)
 def _ray2d_vectorized(
-    z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, honor_grid=False
+    z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor_grid=False
 ):
     """Perform ray-tracing in parallel for different points."""
-    out = []
-    for i in prange(len(zend)):
-        out.append(
-            _ray2d(
-                z, x, zgrad, xgrad, zend[i], xend[i], zsrc, xsrc, stepsize, honor_grid
-            )
-        )
+    n = len(zend)
+    rays = numpy.empty((n, max_step, 2), dtype=numpy.float64)
+    counts = numpy.empty(n, dtype=numpy.int32)
+    for i in prange(n):
+        rays[i], counts[i] = _ray2d(z, x, zgrad, xgrad, zend[i], xend[i], zsrc, xsrc, stepsize, max_step, honor_grid)
 
-    return out
+    return rays, counts
 
 
 @jitted
-def ray2d(z, x, zgrad, xgrad, p, src, stepsize, honor_grid=False):
+def ray2d(z, x, zgrad, xgrad, p, src, stepsize, max_step, honor_grid=False):
     """Perform ray-tracing."""
     if p.ndim == 1:
-        return _ray2d(
-            z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize, honor_grid
+        ray, count = _ray2d(
+            z, x, zgrad, xgrad, p[0], p[1], src[0], src[1], stepsize, max_step, honor_grid
         )
+        return ray[count::-1]
 
     else:
-        rays = _ray2d_vectorized(
-            z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize, honor_grid,
+        rays, counts = _ray2d_vectorized(
+            z, x, zgrad, xgrad, p[:, 0], p[:, 1], src[0], src[1], stepsize, max_step, honor_grid
         )
-
-        # Hack: append does not work in parallel, sort back list
-        end_points = [ray[-1] for ray in rays]
-        idx = [first_index(x, end_points) for x in p]
-
-        return [rays[i] for i in idx]
+        return [ray[count::-1] for ray, count in zip(rays, counts)]
