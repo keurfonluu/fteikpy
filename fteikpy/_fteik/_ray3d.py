@@ -74,8 +74,16 @@ def _ray3d(
         if honor_grid:
             fac = shrink(pcur, delta, lower, upper)
             pcur -= fac * delta
+            pcur[0] = min(max(pcur[0], z[0]), z[-1])
+            pcur[1] = min(max(pcur[1], x[0]), x[-1])
+            pcur[2] = min(max(pcur[2], y[0]), y[-1])
 
             if fac < 1.0:
+                # Handle precision issues due to fac
+                pcur[0] = numpy.round(pcur[0], 8)
+                pcur[1] = numpy.round(pcur[1], 8)
+                pcur[2] = numpy.round(pcur[2], 8)
+
                 i = numpy.searchsorted(z, pcur[0], side="right") - 1
                 j = numpy.searchsorted(x, pcur[1], side="right") - 1
                 k = numpy.searchsorted(y, pcur[2], side="right") - 1
@@ -85,11 +93,6 @@ def _ray3d(
                 upper[0] = z[i + 1]
                 upper[1] = x[j + 1]
                 upper[2] = y[k + 1]
-
-                # Handle precision issues due to fac
-                pcur[0] = numpy.round(pcur[0], 8)
-                pcur[1] = numpy.round(pcur[1], 8)
-                pcur[2] = numpy.round(pcur[2], 8)
 
                 if (pcur != ray[count - 1]).any():
                     ray[count] = pcur.copy()
@@ -103,6 +106,10 @@ def _ray3d(
 
         else:
             pcur -= delta
+            pcur[0] = min(max(pcur[0], z[0]), z[-1])
+            pcur[1] = min(max(pcur[1], x[0]), x[-1])
+            pcur[2] = min(max(pcur[2], y[0]), y[-1])
+
             ray[count] = pcur.copy()
             count += 1
 

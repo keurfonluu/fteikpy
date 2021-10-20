@@ -50,18 +50,20 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor
         if honor_grid:
             fac = shrink(pcur, delta, lower, upper)
             pcur -= fac * delta
+            pcur[0] = min(max(pcur[0], z[0]), z[-1])
+            pcur[1] = min(max(pcur[1], x[0]), x[-1])
 
             if fac < 1.0:
+                # Handle precision issues due to fac
+                pcur[0] = numpy.round(pcur[0], 8)
+                pcur[1] = numpy.round(pcur[1], 8)
+
                 i = numpy.searchsorted(z, pcur[0], side="right") - 1
                 j = numpy.searchsorted(x, pcur[1], side="right") - 1
                 lower[0] = z[max(i - 1, 0)] if pcur[0] == z[i] else z[i]
                 lower[1] = x[max(j - 1, 0)] if pcur[1] == x[j] else x[j]
                 upper[0] = z[i + 1]
                 upper[1] = x[j + 1]
-
-                # Handle precision issues due to fac
-                pcur[0] = numpy.round(pcur[0], 8)
-                pcur[1] = numpy.round(pcur[1], 8)
 
                 if (pcur != ray[count - 1]).any():
                     ray[count] = pcur.copy()
@@ -75,6 +77,9 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor
 
         else:
             pcur -= delta
+            pcur[0] = min(max(pcur[0], z[0]), z[-1])
+            pcur[1] = min(max(pcur[1], x[0]), x[-1])
+
             ray[count] = pcur.copy()
             count += 1
 
