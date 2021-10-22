@@ -243,23 +243,7 @@ def sweep3d(
         for j in range(j0, nx):
             for i in range(i0, nz):
                 sweep(
-                    tt,
-                    ttsgn,
-                    slow,
-                    dargs,
-                    i,
-                    j,
-                    k,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    nz,
-                    nx,
-                    ny,
-                    grad,
+                    tt, ttsgn, slow, dargs, i, j, k, 1, 1, 1, 1, 1, 1, nz, nx, ny, grad,
                 )
 
     # Second sweeping: Top -> Bottom; East -> West; South -> North
@@ -571,7 +555,9 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
                         ttgrad[i, j, k, 2] = sgnty * (tt[i, j, k] - t1) / dy
 
                     # Normalize gradients
-                    gn = norm3d(ttgrad[i, j, k, 0], ttgrad[i, j, k, 1], ttgrad[i, j, k, 2])
+                    gn = norm3d(
+                        ttgrad[i, j, k, 0], ttgrad[i, j, k, 1], ttgrad[i, j, k, 2]
+                    )
                     if gn > 0.0:
                         ttgrad[i, j, k] /= gn
 
