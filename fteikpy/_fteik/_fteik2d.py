@@ -1,7 +1,7 @@
 import numpy
 from numba import prange
 
-from .._common import jitted
+from .._common import jitted, norm2d
 
 Big = 1.0e5
 eps = 1.0e-15
@@ -68,11 +68,11 @@ def delta(
 
 
 @jitted(
-    "void(f8[:, :], f8[:, :, :], f8[:, :], UniTuple(f8, 6), f8, f8, f8, f8, f8, i4, i4, i4, i4, i4, i4, i4, i4, b1)"
+    "void(f8[:, :], i4[:, :, :], f8[:, :], UniTuple(f8, 6), f8, f8, f8, f8, f8, i4, i4, i4, i4, i4, i4, i4, i4, b1)"
 )
 def sweep(
     tt,
-    ttgrad,
+    ttsgn,
     slow,
     dargs,
     zsi,
@@ -177,18 +177,18 @@ def sweep(
     # Compute gradient according to minimum time direction
     if grad and tt[i, j] != t0:
         if tt[i, j] == t1d1:
-            ttgrad[i, j, 0] = sgntz
-            ttgrad[i, j, 1] = 0.0
+            ttsgn[i, j, 0] = sgntz
+            ttsgn[i, j, 1] = 0
         elif tt[i, j] == t1d2:
-            ttgrad[i, j, 0] = 0.0
-            ttgrad[i, j, 1] = sgntx
+            ttsgn[i, j, 0] = 0
+            ttsgn[i, j, 1] = sgntx
         else:
-            ttgrad[i, j, 0] = sgntz
-            ttgrad[i, j, 1] = sgntx
+            ttsgn[i, j, 0] = sgntz
+            ttsgn[i, j, 1] = sgntx
 
 
-@jitted("void(f8[:, :], f8[:, :, :], f8[:, :], f8, f8, f8, f8, f8, f8, f8, i4, i4, b1)")
-def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
+@jitted("void(f8[:, :], i4[:, :, :], f8[:, :], f8, f8, f8, f8, f8, f8, f8, i4, i4, b1)")
+def sweep2d(tt, ttsgn, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
     """Perform one sweeping."""
     dzi = 1.0 / dz
     dxi = 1.0 / dx
@@ -200,7 +200,7 @@ def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
         for i in range(1, nz):
             sweep(
                 tt,
-                ttgrad,
+                ttsgn,
                 slow,
                 dargs,
                 zsi,
@@ -222,7 +222,7 @@ def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
         for i in range(nz - 2, -1, -1):
             sweep(
                 tt,
-                ttgrad,
+                ttsgn,
                 slow,
                 dargs,
                 zsi,
@@ -245,7 +245,7 @@ def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
         for i in range(1, nz):
             sweep(
                 tt,
-                ttgrad,
+                ttsgn,
                 slow,
                 dargs,
                 zsi,
@@ -267,7 +267,7 @@ def sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
         for i in range(nz - 2, -1, -1):
             sweep(
                 tt,
-                ttgrad,
+                ttsgn,
                 slow,
                 dargs,
                 zsi,
@@ -316,11 +316,14 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     nz += 1
     nx += 1
     tt = numpy.full((nz, nx), Big, dtype=numpy.float64)
-    ttgrad = (
-        numpy.zeros((nz, nx, 2), dtype=numpy.float64)
-        if grad
-        else numpy.empty((0, 0, 0), dtype=numpy.float64)
-    )
+
+    if grad:
+        ttgrad = numpy.zeros((nz, nx, 2), dtype=numpy.float64)
+        ttsgn = numpy.zeros((nz, nx, 2), dtype=numpy.int32)
+
+    else:
+        ttgrad = numpy.empty((0, 0, 0), dtype=numpy.float64)
+        ttsgn = numpy.empty((0, 0, 0), dtype=numpy.int32)
 
     # Do our best to initialize source
     dzu = numpy.abs(zsa - float(zsi))
@@ -614,20 +617,25 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
         tt[int(zsa), int(xsa)] = 0.0
 
     for _ in range(nsweep):
-        sweep2d(tt, ttgrad, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad)
+        sweep2d(tt, ttsgn, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad)
 
     if grad:
         for i in range(nz):
             for j in range(nx):
-                sgntz = int(ttgrad[i, j, 0])
+                sgntz = ttsgn[i, j, 0]
                 if sgntz != 0:
                     t1 = tt[i - sgntz, j]
                     ttgrad[i, j, 0] = sgntz * (tt[i, j] - t1) / dz
 
-                sgntx = int(ttgrad[i, j, 1])
+                sgntx = ttsgn[i, j, 1]
                 if sgntx != 0:
                     t1 = tt[i, j - sgntx]
                     ttgrad[i, j, 1] = sgntx * (tt[i, j] - t1) / dx
+
+                # Normalize gradients
+                gn = norm2d(ttgrad[i, j, 0], ttgrad[i, j, 1])
+                if gn > 0.0:
+                    ttgrad[i, j] /= gn
 
     return tt, ttgrad, vzero
 
