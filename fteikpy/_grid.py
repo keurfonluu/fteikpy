@@ -140,17 +140,13 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
     @property
     def gradient(self):
         """Return Z and X gradient grids as a list of :class:`fteikpy.Grid2D`."""
-        return (
-            [
-                Grid2D(self._gradient[:, :, i], self._gridsize, self._origin)
-                for i in range(2)
-            ]
-            if self._gradient is not None
-            else [
-                Grid2D(grad, self._gridsize, self._origin)
-                for grad in numpy.gradient(self._grid, *self._gridsize)
-            ]
-        )
+        if self._gradient is None:
+            raise ValueError("no gradient grid, use option `return_gradient` to return gradient grids")
+
+        return [
+            Grid2D(self._gradient[:, :, i], self._gridsize, self._origin)
+            for i in range(2)
+        ]
 
 
 class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
@@ -257,14 +253,10 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
     @property
     def gradient(self):
         """Return Z, X and Y gradient grids as a list of :class:`fteikpy.Grid3D`."""
-        return (
-            [
-                Grid3D(self._gradient[:, :, :, i], self._gridsize, self._origin)
-                for i in range(3)
-            ]
-            if self._gradient is not None
-            else [
-                Grid3D(grad, self._gridsize, self._origin)
-                for grad in numpy.gradient(self._grid, *self._gridsize)
-            ]
-        )
+        if self._gradient is None:
+            raise ValueError("no gradient grid, use option `return_gradient` to return gradient grids")
+
+        return [
+            Grid3D(self._gradient[:, :, :, i], self._gridsize, self._origin)
+            for i in range(3)
+        ]
