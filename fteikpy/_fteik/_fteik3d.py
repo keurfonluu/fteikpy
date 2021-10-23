@@ -204,20 +204,7 @@ def sweep(
     "void(f8[:, :, :], i4[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, i4, i4, i4, b1, b1)"
 )
 def sweep3d(
-    tt,
-    ttsgn,
-    slow,
-    dz,
-    dx,
-    dy,
-    zsi,
-    xsi,
-    ysi,
-    nz,
-    nx,
-    ny,
-    grad,
-    init=False,
+    tt, ttsgn, slow, dz, dx, dy, zsi, xsi, ysi, nz, nx, ny, grad, init=False,
 ):
     """Perform one sweeping."""
     dz2i = 1.0 / dz / dz
@@ -512,20 +499,7 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     # Start sweeping
     for i in range(nsweep):
         sweep3d(
-            tt,
-            ttsgn,
-            slow,
-            dz,
-            dx,
-            dy,
-            zsi,
-            xsi,
-            ysi,
-            nz,
-            nx,
-            ny,
-            grad,
-            i == 0,
+            tt, ttsgn, slow, dz, dx, dy, zsi, xsi, ysi, nz, nx, ny, grad, i == 0,
         )
 
     if grad:
