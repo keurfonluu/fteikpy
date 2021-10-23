@@ -107,11 +107,11 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         points : array_like
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
-            Unit length of ray.
+            Unit length of ray. `stepsize` is ignored if `honor_grid` is `True`.
         max_step : scalar or None, optional, default None
             Maximum number of steps.
         honor_grid : bool, optional, default False
-            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization. `stepsize` might not be honored.
+            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization.
 
         Returns
         -------
@@ -119,11 +119,16 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             Raypath(s).
 
         """
-        stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
 
-        nz, nx = self.shape
-        max_step = max_step if max_step else 2 * int((nz ** 2 + nx ** 2) ** 0.5)
+        if honor_grid or not stepsize:
+            stepsize = numpy.min(self._gridsize)
+
+        if not max_step:
+            nz, nx = self.shape
+            dz, dx = self._gridsize
+            max_dist = 2.0 * ((nz * dz) ** 2 + (nx * dx) ** 2) ** 0.5
+            max_step = int(max_dist / stepsize)
 
         return ray2d(
             self.zaxis,
@@ -218,11 +223,11 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         points : array_like
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
-            Unit length of ray.
+            Unit length of ray. `stepsize` is ignored if `honor_grid` is `True`.
         max_step : scalar or None, optional, default None
             Maximum number of steps.
         honor_grid : bool, optional, default False
-            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization. `stepsize` might not be honored.
+            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization.
 
         Returns
         -------
@@ -230,13 +235,16 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             Raypath(s).
 
         """
-        stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
 
-        nz, nx, ny = self.shape
-        max_step = (
-            max_step if max_step else 2 * int((nz ** 2 + nx ** 2 + ny ** 2) ** 0.5)
-        )
+        if honor_grid or not stepsize:
+            stepsize = numpy.min(self._gridsize)
+
+        if not max_step:
+            nz, nx, ny = self.shape
+            dz, dx, dy = self._gridsize
+            max_dist = 2.0 * ((nz * dz) ** 2 + (nx * dx) ** 2 + (ny * dy) ** 2) ** 0.5
+            max_step = int(max_dist / stepsize)
 
         return ray3d(
             self.zaxis,
