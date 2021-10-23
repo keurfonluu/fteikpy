@@ -1,6 +1,7 @@
 from abc import ABC
 
 import numpy
+from scipy.interpolate import RegularGridInterpolator
 
 from ._interp import interp2d, interp3d
 
@@ -74,6 +75,40 @@ class BaseGrid2D(BaseGrid):
             fill_value,
         )
 
+    def resample(self, new_shape, method="linear"):
+        """
+        Resample grid.
+
+        Parameters
+        ----------
+        new_shape : array_like
+            New grid shape (nz, nx).
+        method : str ('linear' or 'nearest'), optional, default 'linear'
+            Interpolation method.
+
+        """
+        zaxis = self.zaxis
+        xaxis = self.xaxis
+        Z, X = numpy.meshgrid(
+            numpy.linspace(zaxis[0], zaxis[-1], new_shape[0]),
+            numpy.linspace(xaxis[0], xaxis[-1], new_shape[1]),
+            indexing="ij",
+        )
+
+        fn = RegularGridInterpolator(
+            points=(zaxis, xaxis),
+            values=self._grid,
+            method=method,
+            bounds_error=False,
+        )
+        self._grid = fn(
+            [[z, x] for z, x in zip(Z.ravel(), X.ravel())]
+        ).reshape(new_shape)
+
+        self._gridsize = tuple(
+            a * b / c for a, b, c in zip(self.gridsize, self.shape, new_shape)
+        )
+
     @property
     def zaxis(self):
         """Return grid Z axis."""
@@ -110,6 +145,42 @@ class BaseGrid3D(BaseGrid):
             self._grid,
             numpy.asarray(points, dtype=numpy.float64),
             fill_value,
+        )
+
+    def resample(self, new_shape, method="linear"):
+        """
+        Resample grid.
+
+        Parameters
+        ----------
+        new_shape : array_like
+            New grid shape (nz, nx, ny).
+        method : str ('linear' or 'nearest'), optional, default 'linear'
+            Interpolation method.
+
+        """
+        zaxis = self.zaxis
+        xaxis = self.xaxis
+        yaxis = self.yaxis
+        Z, X, Y = numpy.meshgrid(
+            numpy.linspace(zaxis[0], zaxis[-1], new_shape[0]),
+            numpy.linspace(xaxis[0], xaxis[-1], new_shape[1]),
+            numpy.linspace(yaxis[0], yaxis[-1], new_shape[2]),
+            indexing="ij",
+        )
+
+        fn = RegularGridInterpolator(
+            points=(zaxis, xaxis, yaxis),
+            values=self._grid,
+            method=method,
+            bounds_error=False,
+        )
+        self._grid = fn(
+            [[z, x, y] for z, x, y in zip(Z.ravel(), X.ravel(), Y.ravel())]
+        ).reshape(new_shape)
+
+        self._gridsize = tuple(
+            a * b / c for a, b, c in zip(self.gridsize, self.shape, new_shape)
         )
 
     @property
