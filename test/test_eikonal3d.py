@@ -50,3 +50,13 @@ def test_resample():
     eik3d.resample((nz * 2, nx * 2, ny * 2))
 
     assert eik3d.grid.sum() == nz * nx * ny * 8.0
+
+
+def test_smooth():
+    from copy import deepcopy
+    from helpers import eik3d
+
+    eik2d = deepcopy(eik3d)
+    eik2d.smooth(1.0)
+
+    assert eik2d.grid.sum() == eik3d.grid.size
