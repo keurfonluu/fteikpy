@@ -65,12 +65,8 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor
                 upper[0] = z[i + 1]
                 upper[1] = x[j + 1]
 
-                if (pcur != ray[count - 1]).any():
-                    ray[count] = pcur.copy()
-                    count += 1
-
-                else:
-                    ray[count - 1] = pcur.copy()
+                ray[count] = pcur.copy()
+                count += 1
 
                 if i == isrc and j == jsrc:
                     break

@@ -94,12 +94,8 @@ def _ray3d(
                 upper[1] = x[j + 1]
                 upper[2] = y[k + 1]
 
-                if (pcur != ray[count - 1]).any():
-                    ray[count] = pcur.copy()
-                    count += 1
-
-                else:
-                    ray[count - 1] = pcur.copy()
+                ray[count] = pcur.copy()
+                count += 1
 
                 if i == isrc and j == jsrc and k == ksrc:
                     break

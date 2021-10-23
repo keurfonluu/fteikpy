@@ -10,13 +10,13 @@ epsin = 5
 
 @jitted("f8(i4, i4, f8, f8, f8, f8, f8)")
 def t_ana(i, j, dz, dx, zsa, xsa, vzero):
-    """Calculate analytical times in homogenous model."""
+    """Calculate analytical times in homogeneous model."""
     return vzero * ((dz * (i - zsa)) ** 2.0 + (dx * (j - xsa)) ** 2.0) ** 0.5
 
 
 @jitted("UniTuple(f8, 3)(i4, i4, f8, f8, f8, f8, f8)")
 def t_anad(i, j, dz, dx, zsa, xsa, vzero):
-    """Calculate analytical times in homogenous model and derivatives of times."""
+    """Calculate analytical times in homogeneous model and derivatives of times."""
     t = t_ana(i, j, dz, dx, zsa, xsa, vzero)
 
     if t > 0.0:
@@ -405,8 +405,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 1,
             )
             if grad:
-                ttgrad[zsi + 1, j, 0] = tzc
-                ttgrad[zsi + 1, j, 1] = txc
+                ttsgn[zsi + 1, j, 0] = 1
+                ttsgn[zsi + 1, j, 1] = 1
 
             if dzu > 0.0:
                 dzi = 1.0 / dzu
@@ -431,8 +431,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                     1,
                 )
                 if grad:
-                    ttgrad[zsi, j, 0] = tzc
-                    ttgrad[zsi, j, 1] = txc
+                    ttsgn[zsi, j, 0] = -1
+                    ttsgn[zsi, j, 1] = 1
 
         td[xsi] = vzero * dxw * dx
         for j in range(xsi - 1, -1, -1):
@@ -463,8 +463,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 -1,
             )
             if grad:
-                ttgrad[zsi + 1, j, 0] = tzc
-                ttgrad[zsi + 1, j, 1] = txc
+                ttsgn[zsi + 1, j, 0] = 1
+                ttsgn[zsi + 1, j, 1] = -1
 
             if dzu > 0.0:
                 dzi = 1.0 / dzu
@@ -491,8 +491,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                     -1,
                 )
                 if grad:
-                    ttgrad[zsi, j, 0] = tzc
-                    ttgrad[zsi, j, 1] = txc
+                    ttsgn[zsi, j, 0] = -1
+                    ttsgn[zsi, j, 1] = -1
 
         dzi = 1.0 / dz
         dz2i = dzi / dz
@@ -526,8 +526,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 1,
             )
             if grad:
-                ttgrad[i, xsi + 1, 0] = tzc
-                ttgrad[i, xsi + 1, 1] = txc
+                ttsgn[i, xsi + 1, 0] = 1
+                ttsgn[i, xsi + 1, 1] = 1
 
             if dxw > 0.0:
                 dxi = 1.0 / dxw
@@ -552,8 +552,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                     -1,
                 )
                 if grad:
-                    ttgrad[i, xsi, 0] = tzc
-                    ttgrad[i, xsi, 1] = txc
+                    ttsgn[i, xsi, 0] = 1
+                    ttsgn[i, xsi, 1] = -1
 
         td[zsi] = vzero * dzu * dz
         for i in range(zsi - 1, -1, -1):
@@ -584,8 +584,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                 1,
             )
             if grad:
-                ttgrad[i, xsi + 1, 0] = tzc
-                ttgrad[i, xsi + 1, 1] = txc
+                ttsgn[i, xsi + 1, 0] = -1
+                ttsgn[i, xsi + 1, 1] = 1
 
             if dxw > 0.0:
                 dxi = 1.0 / dxw
@@ -610,12 +610,13 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
                     -1,
                 )
                 if grad:
-                    ttgrad[i, xsi, 0] = tzc
-                    ttgrad[i, xsi, 1] = txc
+                    ttsgn[i, xsi, 0] = -1
+                    ttsgn[i, xsi, 1] = -1
 
     else:
         tt[int(zsa), int(xsa)] = 0.0
 
+    # Start sweeping
     for _ in range(nsweep):
         sweep2d(tt, ttsgn, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad)
 

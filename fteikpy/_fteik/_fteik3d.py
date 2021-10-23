@@ -9,7 +9,7 @@ eps = 1.0e-15
 
 @jitted("f8(i4, i4, i4, f8, f8, f8, f8, f8, f8, f8)")
 def t_ana(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero):
-    """Calculate analytical times in homogenous model."""
+    """Calculate analytical times in homogeneous model."""
     return (
         vzero
         * ((dz * (i - zsa)) ** 2.0 + (dx * (j - xsa)) ** 2.0 + (dy * (k - ysa)) ** 2.0)
@@ -19,7 +19,7 @@ def t_ana(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero):
 
 @jitted("UniTuple(f8, 4)(i4, i4, i4, f8, f8, f8, f8, f8, f8, f8)")
 def t_anad(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero):
-    """Calculate analytical times in homogenous model and derivatives of times."""
+    """Calculate analytical times in homogeneous model and derivatives of times."""
     t = t_ana(i, j, k, dz, dx, dy, zsa, xsa, ysa, vzero)
 
     if t > 0.0:
@@ -201,27 +201,10 @@ def sweep(
 
 
 @jitted(
-    "void(f8[:, :, :], i4[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8, f8, f8, i4, i4, i4, b1, b1)"
+    "void(f8[:, :, :], i4[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, i4, i4, i4, b1, b1)"
 )
 def sweep3d(
-    tt,
-    ttsgn,
-    slow,
-    dz,
-    dx,
-    dy,
-    zsi,
-    xsi,
-    ysi,
-    zsa,
-    xsa,
-    ysa,
-    vzero,
-    nz,
-    nx,
-    ny,
-    grad,
-    init=False,
+    tt, ttsgn, slow, dz, dx, dy, zsi, xsi, ysi, nz, nx, ny, grad, init=False,
 ):
     """Perform one sweeping."""
     dz2i = 1.0 / dz / dz
@@ -513,26 +496,10 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
             ttgrad[i, j, k, 1] = txc
             ttgrad[i, j, k, 2] = tyc
 
+    # Start sweeping
     for i in range(nsweep):
         sweep3d(
-            tt,
-            ttsgn,
-            slow,
-            dz,
-            dx,
-            dy,
-            zsi,
-            xsi,
-            ysi,
-            zsa,
-            xsa,
-            ysa,
-            vzero,
-            nz,
-            nx,
-            ny,
-            grad,
-            i == 0,
+            tt, ttsgn, slow, dz, dx, dy, zsi, xsi, ysi, nz, nx, ny, grad, i == 0,
         )
 
     if grad:
