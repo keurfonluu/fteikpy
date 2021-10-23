@@ -1,5 +1,3 @@
-#%%
-
 import numpy
 import pytest
 from helpers import allclose, eik2d
@@ -29,3 +27,14 @@ def test_solve(sources, tref):
 )
 def test_call(points, vref):
     allclose(vref, points, lambda x: eik2d(x))
+
+
+def test_resample():
+    from copy import deepcopy
+    from helpers import eik2d
+
+    eik2d = deepcopy(eik2d)
+    nz, nx = eik2d.shape
+    eik2d.resample((nz * 2, nx * 2))
+
+    assert eik2d.grid.sum() == nz * nx * 4.0

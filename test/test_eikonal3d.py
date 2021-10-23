@@ -39,3 +39,14 @@ def test_solve(sources, tref):
 )
 def test_call(points, vref):
     allclose(vref, points, lambda x: eik3d(x))
+
+
+def test_resample():
+    from copy import deepcopy
+    from helpers import eik3d
+
+    eik3d = deepcopy(eik3d)
+    nz, nx, ny = eik3d.shape
+    eik3d.resample((nz * 2, nx * 2, ny * 2))
+
+    assert eik3d.grid.sum() == nz * nx * ny * 8.0
