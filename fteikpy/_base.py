@@ -2,6 +2,7 @@ from abc import ABC
 
 import numpy
 from scipy.interpolate import RegularGridInterpolator
+from scipy.ndimage import gaussian_filter
 
 from ._interp import interp2d, interp3d
 
@@ -109,6 +110,19 @@ class BaseGrid2D(BaseGrid):
             a * b / c for a, b, c in zip(self.gridsize, self.shape, new_shape)
         )
 
+    def smooth(self, sigma):
+        """
+        Smooth grid.
+
+        Parameters
+        ----------
+        sigma : scalar or array_like
+            Standard deviation in meters for Gaussian kernel.
+
+        """
+        sigma = numpy.full(2, sigma) if numpy.ndim(sigma) == 0 else numpy.asarray(sigma)
+        self._grid = gaussian_filter(self._grid, sigma / self._gridsize)
+
     @property
     def zaxis(self):
         """Return grid Z axis."""
@@ -182,6 +196,19 @@ class BaseGrid3D(BaseGrid):
         self._gridsize = tuple(
             a * b / c for a, b, c in zip(self.gridsize, self.shape, new_shape)
         )
+
+    def smooth(self, sigma):
+        """
+        Smooth grid.
+
+        Parameters
+        ----------
+        sigma : scalar or array_like
+            Standard deviation in meters for Gaussian kernel.
+
+        """
+        sigma = numpy.full(3, sigma) if numpy.ndim(sigma) == 0 else numpy.asarray(sigma)
+        self._grid = gaussian_filter(self._grid, sigma / self._gridsize)
 
     @property
     def zaxis(self):
