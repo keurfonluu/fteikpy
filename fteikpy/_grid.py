@@ -65,9 +65,9 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin,
-            source=source,
-            gradient=gradient,
+            origin=numpy.asarray(origin, dtype=numpy.float64),
+            source=numpy.asarray(source, dtype=numpy.float64),
+            gradient=numpy.asarray(gradient, dtype=numpy.float64),
             vzero=vzero,
         )
 
@@ -175,9 +175,9 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin,
-            source=source,
-            gradient=gradient,
+            origin=numpy.asarray(origin, dtype=numpy.float64),
+            source=numpy.asarray(source, dtype=numpy.float64),
+            gradient=numpy.asarray(gradient, dtype=numpy.float64),
             vzero=vzero,
         )
 
