@@ -51,6 +51,8 @@ class BaseGrid(ABC):
 
 
 class BaseGrid2D(BaseGrid):
+    _ndim = 2
+
     def __call__(self, points, fill_value=numpy.nan):
         """
         Bilinear interpolation.
@@ -135,6 +137,8 @@ class BaseGrid2D(BaseGrid):
 
 
 class BaseGrid3D(BaseGrid):
+    _ndim = 3
+
     def __call__(self, points, fill_value=numpy.nan):
         """
         Trilinear interpolaton.
