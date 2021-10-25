@@ -92,9 +92,11 @@ def grid_to_meshio(*args):
             if arg._gradient is not None:
                 name = f"Gradient {tt_count}" if tt_count > 1 else "Gradient"
                 gradient = numpy.column_stack([
-                    *[_ravel_grid(grad.grid, ndim) for grad in arg.gradient],
-                    numpy.zeros(len(points)),
+                    _ravel_grid(grad.grid, ndim) for grad in arg.gradient
                 ])
+
+                if ndim == 2:
+                    gradient = numpy.column_stack((gradient, numpy.zeros(len(points))))
                 gradient = gradient[:, [1, 2, 0]]    
                 gradient[:, 2] *= -1.0
                 point_data[name] = gradient
