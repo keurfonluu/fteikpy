@@ -10,7 +10,7 @@ import fteikpy
 @task
 def build(c):
     shutil.rmtree("dist", ignore_errors=True)
-    c.run("python -m pep517.build --source --binary .")
+    c.run("python -m build --sdist --wheel .")
 
 
 @task
