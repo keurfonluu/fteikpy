@@ -67,7 +67,11 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             gridsize=gridsize,
             origin=numpy.asarray(origin, dtype=numpy.float64),
             source=numpy.asarray(source, dtype=numpy.float64),
-            gradient=numpy.asarray(gradient, dtype=numpy.float64),
+            gradient=(
+                numpy.asarray(gradient, dtype=numpy.float64)
+                if gradient is not None
+                else None
+            ),
             vzero=vzero,
         )
 
@@ -182,7 +186,11 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             gridsize=gridsize,
             origin=numpy.asarray(origin, dtype=numpy.float64),
             source=numpy.asarray(source, dtype=numpy.float64),
-            gradient=numpy.asarray(gradient, dtype=numpy.float64),
+            gradient=(
+                numpy.asarray(gradient, dtype=numpy.float64)
+                if gradient is not None
+                else None
+            ),
             vzero=vzero,
         )
 
