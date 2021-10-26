@@ -10,7 +10,7 @@ def grid_to_meshio(*args):
 
     Parameters
     ----------
-    arg1, arg2, ..., argn : grid_like
+    args : grid_like
         Grid objects to convert to mesh. Should be one of:
 
          - :class:`fteikpy.Eikonal2D`
@@ -110,7 +110,7 @@ def ray_to_meshio(*args):
 
     Parameters
     ----------
-    arg1, arg2, ..., argn : array_like
+    args : array_like
         Raypaths to convert to mesh.
 
     Returns
