@@ -48,7 +48,7 @@ def grid_to_meshio(*args):
 
         points, cells = _generate_mesh_2d(nx, nz, dx, dz, x0, z0)
 
-        # Append third dimension and swap axis
+        # Append third dimension and swap axes
         points = numpy.column_stack((points, numpy.zeros(len(points))))
         points = points[:, [0, 2, 1]]
 
@@ -102,6 +102,57 @@ def grid_to_meshio(*args):
                 point_data[name] = gradient
 
     return meshio.Mesh(points, cells, point_data, cell_data)
+
+
+def ray_to_meshio(*args):
+    """
+    Return a :class:`meshio.Mesh` object from raypaths.
+
+    Parameters
+    ----------
+    arg1, arg2, ..., argn : array_like
+        Raypaths to convert to mesh.
+
+    Returns
+    -------
+    :class:`meshio.Mesh`
+        Output mesh.
+    
+    """
+    import meshio
+
+    for i, arg in enumerate(args):
+        if numpy.ndim(arg) != 2:
+            raise ValueError(f"argument {i + 1} does not seem to be a ray")
+
+        if i == 0:
+            ndim = numpy.shape(arg)[1]
+
+    # Generate points and cells
+    points = []
+    cells = []
+
+    for ray in args:
+        points = (
+            numpy.array(ray)
+            if len(points) == 0
+            else numpy.row_stack((points, ray))
+        )
+        cell = numpy.arange(len(ray)) + len(points)
+        cells.append(("line", numpy.column_stack((cell[:-1], cell[1:]))))
+    
+    # Swap axes (Z, X, Y -> X, Y, Z)
+    points = (
+        numpy.column_stack((points, numpy.zeros(len(points))))
+        if ndim == 2
+        else numpy.array(points)
+    )
+    points = points[:, [1, 2, 0]]
+
+    # Invert z-axis (depth -> elevation)
+    points[:, 2] *= -1.0
+
+    return meshio.Mesh(points, cells)
 
 
 def _generate_mesh_2d(nx, ny, dx, dy, x0, y0, order="F"):
