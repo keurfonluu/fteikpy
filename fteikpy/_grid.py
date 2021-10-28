@@ -65,9 +65,13 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin,
-            source=source,
-            gradient=gradient,
+            origin=numpy.asarray(origin, dtype=numpy.float64),
+            source=numpy.asarray(source, dtype=numpy.float64),
+            gradient=(
+                numpy.asarray(gradient, dtype=numpy.float64)
+                if gradient is not None
+                else None
+            ),
             vzero=vzero,
         )
 
@@ -98,7 +102,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             fill_value,
         )
 
-    def raytrace(self, points, stepsize=None, honor_grid=False):
+    def raytrace(self, points, stepsize=None, max_step=None, honor_grid=False):
         """
         2D a posteriori ray-tracing.
 
@@ -107,9 +111,11 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         points : array_like
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
-            Unit length of ray.
+            Unit length of ray. `stepsize` is ignored if `honor_grid` is `True`.
+        max_step : scalar or None, optional, default None
+            Maximum number of steps.
         honor_grid : bool, optional, default False
-            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization. `stepsize` might not be honored.
+            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization.
 
         Returns
         -------
@@ -117,8 +123,16 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             Raypath(s).
 
         """
-        stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
+
+        if honor_grid or not stepsize:
+            stepsize = numpy.min(self._gridsize)
+
+        if not max_step:
+            nz, nx = self.shape
+            dz, dx = self._gridsize
+            max_dist = 2.0 * ((nz * dz) ** 2 + (nx * dx) ** 2) ** 0.5
+            max_step = int(max_dist / stepsize)
 
         return ray2d(
             self.zaxis,
@@ -128,23 +142,22 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
+            max_step,
             honor_grid,
         )
 
     @property
     def gradient(self):
         """Return Z and X gradient grids as a list of :class:`fteikpy.Grid2D`."""
-        return (
-            [
-                Grid2D(self._gradient[:, :, i], self._gridsize, self._origin)
-                for i in range(2)
-            ]
-            if self._gradient is not None
-            else [
-                Grid2D(grad, self._gridsize, self._origin)
-                for grad in numpy.gradient(self._grid, *self._gridsize)
-            ]
-        )
+        if self._gradient is None:
+            raise ValueError(
+                "no gradient grid, use option `return_gradient` to return gradient grids"
+            )
+
+        return [
+            Grid2D(self._gradient[:, :, i], self._gridsize, self._origin)
+            for i in range(2)
+        ]
 
 
 class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
@@ -171,9 +184,13 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin,
-            source=source,
-            gradient=gradient,
+            origin=numpy.asarray(origin, dtype=numpy.float64),
+            source=numpy.asarray(source, dtype=numpy.float64),
+            gradient=(
+                numpy.asarray(gradient, dtype=numpy.float64)
+                if gradient is not None
+                else None
+            ),
             vzero=vzero,
         )
 
@@ -205,7 +222,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             fill_value,
         )
 
-    def raytrace(self, points, stepsize=None, honor_grid=False):
+    def raytrace(self, points, stepsize=None, max_step=None, honor_grid=False):
         """
         3D a posteriori ray-tracing.
 
@@ -214,9 +231,11 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         points : array_like
             Query point coordinates or list of point coordinates.
         stepsize : scalar or None, optional, default None
-            Unit length of ray.
+            Unit length of ray. `stepsize` is ignored if `honor_grid` is `True`.
+        max_step : scalar or None, optional, default None
+            Maximum number of steps.
         honor_grid : bool, optional, default False
-            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization. `stepsize` might not be honored.
+            If `True`, coordinates of raypaths are calculated with respect to traveltime grid discretization.
 
         Returns
         -------
@@ -224,8 +243,16 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             Raypath(s).
 
         """
-        stepsize = stepsize if stepsize else numpy.min(self._gridsize)
         gradient = self.gradient
+
+        if honor_grid or not stepsize:
+            stepsize = numpy.min(self._gridsize)
+
+        if not max_step:
+            nz, nx, ny = self.shape
+            dz, dx, dy = self._gridsize
+            max_dist = 2.0 * ((nz * dz) ** 2 + (nx * dx) ** 2 + (ny * dy) ** 2) ** 0.5
+            max_step = int(max_dist / stepsize)
 
         return ray3d(
             self.zaxis,
@@ -237,20 +264,19 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             numpy.asarray(points, dtype=numpy.float64),
             self._source,
             stepsize,
+            max_step,
             honor_grid,
         )
 
     @property
     def gradient(self):
         """Return Z, X and Y gradient grids as a list of :class:`fteikpy.Grid3D`."""
-        return (
-            [
-                Grid3D(self._gradient[:, :, :, i], self._gridsize, self._origin)
-                for i in range(3)
-            ]
-            if self._gradient is not None
-            else [
-                Grid3D(grad, self._gridsize, self._origin)
-                for grad in numpy.gradient(self._grid, *self._gridsize)
-            ]
-        )
+        if self._gradient is None:
+            raise ValueError(
+                "no gradient grid, use option `return_gradient` to return gradient grids"
+            )
+
+        return [
+            Grid3D(self._gradient[:, :, :, i], self._gridsize, self._origin)
+            for i in range(3)
+        ]

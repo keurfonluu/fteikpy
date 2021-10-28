@@ -23,7 +23,9 @@ class Eikonal2D(BaseGrid2D):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin if origin is not None else numpy.zeros(2),
+            origin=origin
+            if origin is not None
+            else numpy.zeros(2, dtype=numpy.float64),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
@@ -37,7 +39,7 @@ class Eikonal2D(BaseGrid2D):
         nsweep : int, optional, default 2
             Number of sweeps.
         return_gradient : bool, optional, default False
-            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`.
+            If `True`, directions of gradient are computed at runtime. However, this option uses more memory as the gradient grid is saved. Gradient grids are required for a posteriori ray-tracing.
 
         Returns
         -------
@@ -95,7 +97,9 @@ class Eikonal3D(BaseGrid3D):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin if origin is not None else numpy.zeros(3),
+            origin=origin
+            if origin is not None
+            else numpy.zeros(3, dtype=numpy.float64),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
@@ -109,7 +113,7 @@ class Eikonal3D(BaseGrid3D):
         nsweep : int, optional, default 2
             Number of sweeps.
         return_gradient : bool, optional, default False
-            If `True`, directions of gradient are computed at runtime which yield more accurate gradient especially at the edges of the grid. However, this option uses more memory as the gradient grid is saved. Otherwise, gradient is estimated using :func:`numpy.gradient`.
+            If `True`, directions of gradient are computed at runtime. However, this option uses more memory as the gradient grid is saved. Gradient grids are required for a posteriori ray-tracing.
 
         Returns
         -------
