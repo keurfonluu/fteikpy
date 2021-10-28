@@ -43,6 +43,7 @@ def test_call(points, vref):
 
 def test_resample():
     from copy import deepcopy
+
     from helpers import eik3d
 
     eik3d = deepcopy(eik3d)
@@ -54,6 +55,7 @@ def test_resample():
 
 def test_smooth():
     from copy import deepcopy
+
     from helpers import eik3d
 
     eik2d = deepcopy(eik3d)

@@ -33,7 +33,9 @@ def test_meshio_2d():
 def test_meshio_3d():
     nz, nx, ny = 8, 10, 12
     eik = Eikonal3D(numpy.ones((nz, nx, ny)), (1.0, 1.0, 1.0))
-    tt = eik.solve((float(nz // 2), float(nx // 2), float(ny // 2)), return_gradient=True)
+    tt = eik.solve(
+        (float(nz // 2), float(nx // 2), float(ny // 2)), return_gradient=True
+    )
     ray = tt.raytrace((0.0, 0.0, 0.0), honor_grid=True)
 
     mesh = grid_to_meshio(eik, tt)

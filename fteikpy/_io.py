@@ -1,7 +1,7 @@
 import numpy
 
-from ._solver import Eikonal2D, Eikonal3D
 from ._grid import TraveltimeGrid2D, TraveltimeGrid3D
+from ._solver import Eikonal2D, Eikonal3D
 
 
 def grid_to_meshio(*args):
@@ -22,12 +22,14 @@ def grid_to_meshio(*args):
     -------
     :class:`meshio.Mesh`
         Output mesh.
-    
+
     """
     import meshio
 
     for i, arg in enumerate(args):
-        if not isinstance(arg, (Eikonal2D, Eikonal3D, TraveltimeGrid2D, TraveltimeGrid3D)):
+        if not isinstance(
+            arg, (Eikonal2D, Eikonal3D, TraveltimeGrid2D, TraveltimeGrid3D)
+        ):
             raise ValueError(f"argument {i + 1} is not a supported grid")
 
         if i == 0:
@@ -91,13 +93,13 @@ def grid_to_meshio(*args):
             # Gradient grid
             if arg._gradient is not None:
                 name = f"Gradient {tt_count}" if tt_count > 1 else "Gradient"
-                gradient = numpy.column_stack([
-                    _ravel_grid(grad.grid, ndim) for grad in arg.gradient
-                ])
+                gradient = numpy.column_stack(
+                    [_ravel_grid(grad.grid, ndim) for grad in arg.gradient]
+                )
 
                 if ndim == 2:
                     gradient = numpy.column_stack((gradient, numpy.zeros(len(points))))
-                gradient = gradient[:, [1, 2, 0]]    
+                gradient = gradient[:, [1, 2, 0]]
                 gradient[:, 2] *= -1.0
                 point_data[name] = gradient
 
@@ -117,7 +119,7 @@ def ray_to_meshio(*args):
     -------
     :class:`meshio.Mesh`
         Output mesh.
-    
+
     """
     import meshio
 
@@ -136,11 +138,9 @@ def ray_to_meshio(*args):
         cell = numpy.arange(len(ray)) + len(points)
         cells.append(("line", numpy.column_stack((cell[:-1], cell[1:]))))
         points = (
-            numpy.array(ray)
-            if len(points) == 0
-            else numpy.row_stack((points, ray))
+            numpy.array(ray) if len(points) == 0 else numpy.row_stack((points, ray))
         )
-    
+
     # Swap axes (Z, X, Y -> X, Y, Z)
     points = (
         numpy.column_stack((points, numpy.zeros(len(points))))
@@ -241,8 +241,4 @@ def _generate_mesh_3d(nx, ny, nz, dx, dy, dz, x0, y0, z0):
 
 def _ravel_grid(grid, ndim):
     """Ravel grid."""
-    return (
-        grid.ravel()
-        if ndim == 2
-        else numpy.transpose(grid, axes=[1, 2, 0]).ravel()
-    )
+    return grid.ravel() if ndim == 2 else numpy.transpose(grid, axes=[1, 2, 0]).ravel()
