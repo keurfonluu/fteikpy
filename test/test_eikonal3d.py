@@ -1,6 +1,10 @@
+from copy import deepcopy
+
 import numpy
 import pytest
 from helpers import allclose, eik3d
+
+eik3d_copy = deepcopy(eik3d)
 
 
 @pytest.mark.parametrize(
@@ -42,11 +46,7 @@ def test_call(points, vref):
 
 
 def test_resample():
-    from copy import deepcopy
-
-    from helpers import eik3d
-
-    eik3d = deepcopy(eik3d)
+    eik3d = deepcopy(eik3d_copy)
     nz, nx, ny = eik3d.shape
     eik3d.resample((nz * 2, nx * 2, ny * 2))
 
@@ -54,11 +54,7 @@ def test_resample():
 
 
 def test_smooth():
-    from copy import deepcopy
-
-    from helpers import eik3d
-
-    eik2d = deepcopy(eik3d)
+    eik2d = deepcopy(eik3d_copy)
     eik2d.smooth(1.0)
 
     assert eik2d.grid.sum() == eik3d.grid.size
