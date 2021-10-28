@@ -8,6 +8,7 @@ API Reference
    eikonal2d
    eikonal3d
    grids
+   io
 
 
 * :ref:`genindex`
