@@ -27,7 +27,7 @@ def test_meshio_2d():
 
     assert len(mesh_ray.points) == len(ray)
     assert len(mesh_ray.cells[0][1]) == len(ray) - 1
-    assert mesh_ray.cells[0][1].sum() == 208.0
+    assert mesh_ray.cells[0][1].sum() == 64.0
 
 
 def test_meshio_3d():
@@ -54,4 +54,4 @@ def test_meshio_3d():
 
     assert len(mesh_ray.points) == len(ray)
     assert len(mesh_ray.cells[0][1]) == len(ray) - 1
-    assert mesh_ray.cells[0][1].sum() == 533.0
+    assert mesh_ray.cells[0][1].sum() == 169.0

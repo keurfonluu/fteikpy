@@ -133,13 +133,13 @@ def ray_to_meshio(*args):
     cells = []
 
     for ray in args:
+        cell = numpy.arange(len(ray)) + len(points)
+        cells.append(("line", numpy.column_stack((cell[:-1], cell[1:]))))
         points = (
             numpy.array(ray)
             if len(points) == 0
             else numpy.row_stack((points, ray))
         )
-        cell = numpy.arange(len(ray)) + len(points)
-        cells.append(("line", numpy.column_stack((cell[:-1], cell[1:]))))
     
     # Swap axes (Z, X, Y -> X, Y, Z)
     points = (
