@@ -1,57 +1,51 @@
 import numpy
 import pyvista
-from scipy.ndimage import gaussian_filter
 
-from fteikpy import Eikonal2D
+from fteikpy import Eikonal2D, grid_to_meshio
 
 pyvista.set_plot_theme("document")
 
 
 def ray2line(ray):
     """Convert a ray array to PolyData."""
-    poly = pyvista.PolyData()
-
     nr = len(ray)
-    poly.points = numpy.column_stack((ray[:, 1], numpy.zeros(nr), -ray[:, 0])) * 1.0e-3
-    poly.lines = numpy.column_stack((numpy.full(nr - 1, 2), numpy.arange(nr - 1), numpy.arange(1, nr)))
+    points = numpy.column_stack((ray[:, 1], numpy.zeros(nr), -ray[:, 0]))
+    lines = numpy.column_stack((numpy.full(nr - 1, 2), numpy.arange(nr - 1), numpy.arange(1, nr)))
 
-    return poly
+    return pyvista.PolyData(points, lines=lines)
 
 
 # Import Marmousi velocity model
 vel = numpy.load("marmousi.npy")
-vel = gaussian_filter(vel, 5)
 
 # Calculate traveltime grid for one source point
-eik = Eikonal2D(vel, gridsize=(10.0, 10.0))
+eik = Eikonal2D(vel * 1.0e-3, gridsize=(0.01, 0.01))
+eik.smooth(0.05)
 tt = eik.solve((0.0, 0.0), nsweep=3, return_gradient=True)
 ttgrid = tt.grid.ravel()
 
 # Trace rays for 100 locations
 nrays = 100
 end_points = numpy.zeros((nrays, 2))
-end_points[:, 1] = numpy.linspace(4400.0, eik.xaxis[-1], nrays)
+end_points[:, 1] = numpy.linspace(4.4, eik.xaxis[-1], nrays)
 rays = tt.raytrace(end_points)
 trays = [tt(ray) for ray in rays]
 
 # Create mesh
-x, y, z = numpy.meshgrid(eik.xaxis * 1.0e-3, [0.0], -eik.zaxis * 1.0e-3)
-mesh = pyvista.StructuredGrid(x, y, z).cast_to_unstructured_grid()
-mesh["velocity"] = eik.grid.ravel() * 1.0e-3
-mesh["traveltime"] = ttgrid.copy()
+mesh = pyvista.from_meshio(grid_to_meshio(eik, tt))
 mesh2 = mesh.copy()
 
 # Create contour and lines
-contour = mesh.contour(isosurfaces=100, scalars="traveltime")
+contour = mesh.contour(isosurfaces=100, scalars="Traveltime")
 lines = [ray2line(ray) for ray in rays]
 
 # Initialize plotter
 p = pyvista.Plotter(window_size=(1500, 600), notebook=False)
 p.add_mesh(
     mesh,
-    scalars="velocity",
-    stitle="Velocity [km/s]",
+    scalars="Velocity",
     scalar_bar_args={
+        "title": "Velocity [km/s]",
         "height": 0.7,
         "width": 0.05,
         "position_x": 0.92,
@@ -61,7 +55,6 @@ p.add_mesh(
         "title_font_size": 20,
         "label_font_size": 20,
         "font_family": "arial",
-        "shadow": True,
     },
 )
 p.add_mesh(
@@ -91,7 +84,6 @@ p.show_grid(
     zlabel="Elevation [km]",
     font_size=20,
     font_family="arial",
-    shadow=True,
 )
 p.show(
     cpos=[
@@ -112,9 +104,9 @@ for n, t in zip(nisos, times):
     time.SetText(3, "Time: {:.2f} seconds".format(t))
 
     # Update isochrones
-    mesh2["traveltime"] = ttgrid.copy()
-    mesh2["traveltime"][ttgrid > t] = t
-    c = mesh2.contour(isosurfaces=int(n), scalars="traveltime")
+    mesh2["Traveltime"] = ttgrid.copy()
+    mesh2["Traveltime"][ttgrid > t] = t
+    c = mesh2.contour(isosurfaces=int(n), scalars="Traveltime")
     contour.points = c.points
     contour.lines = c.lines
 
