@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(".../"))
 import fteikpy
 
 project = "fteikpy"
-copyright = "2020, Keurfon Luu"
+copyright = "2021, Keurfon Luu"
 author = "Keurfon Luu"
 
 version = fteikpy.__version__
@@ -123,7 +123,7 @@ autoclass_content = "both"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 html_theme_path = [
     "_themes",
 ]
