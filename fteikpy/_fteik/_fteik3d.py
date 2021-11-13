@@ -441,9 +441,9 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     nz, nx, ny = numpy.shape(slow)
 
     # Check inputs
-    condz = 0.0 <= zsrc <= dz * (nz - 1)
-    condx = 0.0 <= xsrc <= dx * (nx - 1)
-    condy = 0.0 <= ysrc <= dy * (ny - 1)
+    condz = 0.0 <= zsrc <= dz * nz
+    condx = 0.0 <= xsrc <= dx * nx
+    condy = 0.0 <= ysrc <= dy * ny
     if not (condz and condx and condy):
         raise ValueError("source out of bound")
 
