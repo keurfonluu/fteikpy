@@ -294,8 +294,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     nz, nx = numpy.shape(slow)
 
     # Check inputs
-    condz = 0.0 <= zsrc <= dz * (nz - 1)
-    condx = 0.0 <= xsrc <= dx * (nx - 1)
+    condz = 0.0 <= zsrc <= dz * nz
+    condx = 0.0 <= xsrc <= dx * nx
     if not (condz and condx):
         raise ValueError("source out of bound")
 
