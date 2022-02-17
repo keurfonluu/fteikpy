@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numba import prange
 
 from .._common import dist2d, jitted
@@ -12,15 +12,15 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
     if not (condx and condy):
         return fval
 
-    xsi = numpy.searchsorted(x, xsrc, side="right") - 1
-    ysi = numpy.searchsorted(y, ysrc, side="right") - 1
-    i1 = numpy.searchsorted(x, xq, side="right") - 1
-    j1 = numpy.searchsorted(y, yq, side="right") - 1
+    xsi = np.searchsorted(x, xsrc, side="right") - 1
+    ysi = np.searchsorted(y, ysrc, side="right") - 1
+    i1 = np.searchsorted(x, xq, side="right") - 1
+    j1 = np.searchsorted(y, yq, side="right") - 1
 
     if xsi == i1 and ysi == j1:
         vq = vzero * dist2d(xsrc, ysrc, xq, yq)
     else:
-        nx, ny = numpy.shape(v)
+        nx, ny = np.shape(v)
         nx -= 1
         ny -= 1
 
@@ -91,11 +91,11 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
             v12 = v[i1, j2]
             v22 = v[i2, j2]
 
-        vq = d11 / v11 * numpy.abs((x2 - xq) * (y2 - yq))
-        vq += d21 / v21 * numpy.abs((x1 - xq) * (y2 - yq))
-        vq += d12 / v12 * numpy.abs((x2 - xq) * (y1 - yq))
-        vq += d22 / v22 * numpy.abs((x1 - xq) * (y1 - yq))
-        vq /= numpy.abs((x2 - x1) * (y2 - y1))
+        vq = d11 / v11 * np.abs((x2 - xq) * (y2 - yq))
+        vq += d21 / v21 * np.abs((x1 - xq) * (y2 - yq))
+        vq += d12 / v12 * np.abs((x2 - xq) * (y1 - yq))
+        vq += d22 / v22 * np.abs((x1 - xq) * (y1 - yq))
+        vq /= np.abs((x2 - x1) * (y2 - y1))
         vq = dist2d(xsrc, ysrc, xq, yq) / vq
 
     return vq
@@ -105,7 +105,7 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 def _vinterp2d_vectorized(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
     """Perform bilinear apparent velocity interpolation for different points."""
     nq = len(xq)
-    out = numpy.empty(nq, dtype=numpy.float64)
+    out = np.empty(nq, dtype=np.float64)
     for i in prange(nq):
         out[i] = _vinterp2d(x, y, v, xq[i], yq[i], xsrc, ysrc, vzero, fval)
 
@@ -113,7 +113,7 @@ def _vinterp2d_vectorized(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
 
 
 @jitted
-def vinterp2d(x, y, v, q, src, vzero, fval=numpy.nan):
+def vinterp2d(x, y, v, q, src, vzero, fval=np.nan):
     """Perform bilinear apparent velocity interpolation."""
     if q.ndim == 1:
         return _vinterp2d(x, y, v, q[0], q[1], src[0], src[1], vzero, fval)

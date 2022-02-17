@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numba import prange
 
 from .._common import dist3d, jitted
@@ -13,17 +13,17 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
     if not (condx and condy and condz):
         return fval
 
-    xsi = numpy.searchsorted(x, xsrc, side="right") - 1
-    ysi = numpy.searchsorted(y, ysrc, side="right") - 1
-    zsi = numpy.searchsorted(z, zsrc, side="right") - 1
-    i1 = numpy.searchsorted(x, xq, side="right") - 1
-    j1 = numpy.searchsorted(y, yq, side="right") - 1
-    k1 = numpy.searchsorted(z, zq, side="right") - 1
+    xsi = np.searchsorted(x, xsrc, side="right") - 1
+    ysi = np.searchsorted(y, ysrc, side="right") - 1
+    zsi = np.searchsorted(z, zsrc, side="right") - 1
+    i1 = np.searchsorted(x, xq, side="right") - 1
+    j1 = np.searchsorted(y, yq, side="right") - 1
+    k1 = np.searchsorted(z, zq, side="right") - 1
 
     if xsi == i1 and ysi == j1 and zsi == k1:
         vq = vzero * dist3d(xsrc, ysrc, zsrc, xq, yq, zq)
     else:
-        nx, ny, nz = numpy.shape(v)
+        nx, ny, nz = np.shape(v)
         nx -= 1
         ny -= 1
         nz -= 1
@@ -240,15 +240,15 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
             v122 = v[i1, j2, k2]
             v222 = v[i2, j2, k2]
 
-        vq = d111 / v111 * numpy.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
-        vq += d211 / v211 * numpy.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
-        vq += d121 / v121 * numpy.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
-        vq += d221 / v221 * numpy.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
-        vq += d112 / v112 * numpy.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
-        vq += d212 / v212 * numpy.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
-        vq += d122 / v122 * numpy.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
-        vq += d222 / v222 * numpy.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
-        vq /= numpy.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
+        vq = d111 / v111 * np.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
+        vq += d211 / v211 * np.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
+        vq += d121 / v121 * np.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
+        vq += d221 / v221 * np.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
+        vq += d112 / v112 * np.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
+        vq += d212 / v212 * np.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
+        vq += d122 / v122 * np.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
+        vq += d222 / v222 * np.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
+        vq /= np.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
         vq = dist3d(xsrc, ysrc, zsrc, xq, yq, zq) / vq
 
     return vq
@@ -258,7 +258,7 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
 def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
     """Perform trilinear apparent velocity interpolation for different points."""
     nq = len(xq)
-    out = numpy.empty(nq, dtype=numpy.float64)
+    out = np.empty(nq, dtype=np.float64)
     for i in prange(nq):
         out[i] = _vinterp3d(
             x, y, z, v, xq[i], yq[i], zq[i], xsrc, ysrc, zsrc, vzero, fval
@@ -268,7 +268,7 @@ def _vinterp3d_vectorized(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval)
 
 
 @jitted
-def vinterp3d(x, y, z, v, q, src, vzero, fval=numpy.nan):
+def vinterp3d(x, y, z, v, q, src, vzero, fval=np.nan):
     """Perform trilinear apparent velocity interpolation."""
     if q.ndim == 1:
         return _vinterp3d(

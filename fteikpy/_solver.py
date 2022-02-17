@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 from ._base import BaseGrid2D, BaseGrid3D
 from ._fteik import solve2d, solve3d
@@ -25,7 +25,7 @@ class Eikonal2D(BaseGrid2D):
             gridsize=gridsize,
             origin=origin
             if origin is not None
-            else numpy.zeros(2, dtype=numpy.float64),
+            else np.zeros(2, dtype=np.float64),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
@@ -55,7 +55,7 @@ class Eikonal2D(BaseGrid2D):
             return_gradient,
         )
 
-        if isinstance(vzero, numpy.ndarray):
+        if isinstance(vzero, np.ndarray):
             return [
                 TraveltimeGrid2D(
                     grid=t,
@@ -99,7 +99,7 @@ class Eikonal3D(BaseGrid3D):
             gridsize=gridsize,
             origin=origin
             if origin is not None
-            else numpy.zeros(3, dtype=numpy.float64),
+            else np.zeros(3, dtype=np.float64),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
@@ -129,7 +129,7 @@ class Eikonal3D(BaseGrid3D):
             return_gradient,
         )
 
-        if isinstance(vzero, numpy.ndarray):
+        if isinstance(vzero, np.ndarray):
             return [
                 TraveltimeGrid3D(
                     grid=t,

@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numba import prange
 
 from .._common import jitted, norm2d
@@ -117,7 +117,7 @@ def sweep(
 
     # Choose plane wave or spherical
     # Test for plane wave
-    if numpy.abs(i - zsi) > epsin or numpy.abs(j - xsi) > epsin:
+    if np.abs(i - zsi) > epsin or np.abs(j - xsi) > epsin:
         # 4 points operator if possible, otherwise do three points
         if tv <= te + dx * vref and te <= tv + dz * vref and te >= tev and tv >= tev:
             ta = tev + te - tv
@@ -291,7 +291,7 @@ def sweep2d(tt, ttsgn, slow, dz, dx, zsi, xsi, zsa, xsa, vzero, nz, nx, grad):
 def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     """Calculate traveltimes given a 2D velocity model."""
     # Parameters
-    nz, nx = numpy.shape(slow)
+    nz, nx = np.shape(slow)
 
     # Check inputs
     condz = 0.0 <= zsrc <= dz * nz
@@ -315,49 +315,49 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     # Allocate work array
     nz += 1
     nx += 1
-    tt = numpy.full((nz, nx), Big, dtype=numpy.float64)
+    tt = np.full((nz, nx), Big, dtype=np.float64)
 
     if grad:
-        ttgrad = numpy.zeros((nz, nx, 2), dtype=numpy.float64)
-        ttsgn = numpy.zeros((nz, nx, 2), dtype=numpy.int32)
+        ttgrad = np.zeros((nz, nx, 2), dtype=np.float64)
+        ttsgn = np.zeros((nz, nx, 2), dtype=np.int32)
 
     else:
-        ttgrad = numpy.empty((0, 0, 0), dtype=numpy.float64)
-        ttsgn = numpy.empty((0, 0, 0), dtype=numpy.int32)
+        ttgrad = np.empty((0, 0, 0), dtype=np.float64)
+        ttsgn = np.empty((0, 0, 0), dtype=np.int32)
 
     # Do our best to initialize source
-    dzu = numpy.abs(zsa - float(zsi))
+    dzu = np.abs(zsa - float(zsi))
     dzd = 1.0 - dzu
-    dxw = numpy.abs(xsa - float(xsi))
+    dxw = np.abs(xsa - float(xsi))
     dxe = 1.0 - dxw
 
     # Source seems close enough to a grid point in X and Y direction
     dzv_min = min(dzu, dzd)
     dzh_min = min(dxw, dxe)
     if dzv_min < eps and dzh_min < eps:
-        zsa = numpy.round(zsa)
-        xsa = numpy.round(xsa)
+        zsa = np.round(zsa)
+        xsa = np.round(xsa)
         iflag = 1
 
     # At least one of coordinates not close to any grid point in X and Y direction
     elif dzv_min > eps or dzh_min > eps:
-        zsa = numpy.round(zsa) if dzv_min < eps else zsa
-        xsa = numpy.round(xsa) if dzh_min < eps else xsa
+        zsa = np.round(zsa) if dzv_min < eps else zsa
+        xsa = np.round(xsa) if dzh_min < eps else xsa
         iflag = 2
 
     # Oops we are lost, not sure this happens - fix src to nearest grid point
     else:
-        zsa = numpy.round(zsa)
-        xsa = numpy.round(xsa)
+        zsa = np.round(zsa)
+        xsa = np.round(xsa)
         iflag = 3
 
     # We know where src is - start first propagation
     if iflag == 2:
-        td = numpy.full(max(nz, nx), Big, dtype=numpy.float64)
+        td = np.full(max(nz, nx), Big, dtype=np.float64)
 
-        dzu = numpy.abs(zsa - float(zsi))
+        dzu = np.abs(zsa - float(zsi))
         dzd = 1.0 - dzu
-        dxw = numpy.abs(xsa - float(xsi))
+        dxw = np.abs(xsa - float(xsi))
         dxe = 1.0 - dxw
 
         # First initialize 4 points around source
@@ -380,8 +380,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
         for j in range(xsi + 2, nx):
             vref = slow[zsi, j - 1]
             td[j] = td[j - 1] + dx * vref
-            tauv = td[j] - vzero * numpy.abs(j - xsa) * dx
-            tauev = td[j - 1] - vzero * numpy.abs(j - xsa - 1.0) * dx
+            tauv = td[j] - vzero * np.abs(j - xsa) * dx
+            tauev = td[j - 1] - vzero * np.abs(j - xsa - 1.0) * dx
 
             dzi = 1.0 / dzd
             dz2i = dz / dzd / dzd
@@ -438,8 +438,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
         for j in range(xsi - 1, -1, -1):
             vref = slow[zsi, j]
             td[j] = td[j + 1] + dx * vref
-            tauv = td[j] - vzero * numpy.abs(j - xsa) * dx
-            tauev = td[j + 1] - vzero * numpy.abs(j - xsa + 1.0) * dx
+            tauv = td[j] - vzero * np.abs(j - xsa) * dx
+            tauev = td[j + 1] - vzero * np.abs(j - xsa + 1.0) * dx
 
             dzi = 1.0 / dzd
             dz2i = dz / dzd / dzd
@@ -501,8 +501,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
         for i in range(zsi + 2, nz):
             vref = slow[i - 1, xsi]
             td[i] = td[i - 1] + dz * vref
-            taue = td[i] - vzero * numpy.abs(i - zsa) * dz
-            tauev = td[i - 1] - vzero * numpy.abs(i - zsa - 1.0) * dz
+            taue = td[i] - vzero * np.abs(i - zsa) * dz
+            tauev = td[i - 1] - vzero * np.abs(i - zsa - 1.0) * dz
 
             dxi = 1.0 / dxe
             dx2i = dx / dxe / dxe
@@ -559,8 +559,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
         for i in range(zsi - 1, -1, -1):
             vref = slow[i, xsi]
             td[i] = td[i + 1] + dz * vref
-            taue = td[i] - vzero * numpy.abs(i - zsa) * dz
-            tauev = td[i + 1] - vzero * numpy.abs(i - zsa + 1.0) * dz
+            taue = td[i] - vzero * np.abs(i - zsa) * dz
+            tauev = td[i + 1] - vzero * np.abs(i - zsa + 1.0) * dz
 
             dxi = 1.0 / dxe
             dx2i = dx / dxe / dxe
@@ -649,13 +649,13 @@ def fteik2d_vectorized(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     """Calculate traveltimes in parallel for different sources."""
     nsrc = len(zsrc)
     nz, nx = slow.shape
-    tt = numpy.empty((nsrc, nz + 1, nx + 1), dtype=numpy.float64)
+    tt = np.empty((nsrc, nz + 1, nx + 1), dtype=np.float64)
     ttgrad = (
-        numpy.empty((nsrc, nz + 1, nx + 1, 2), dtype=numpy.float64)
+        np.empty((nsrc, nz + 1, nx + 1, 2), dtype=np.float64)
         if grad
-        else numpy.empty((nsrc, 0, 0, 0), dtype=numpy.float64)
+        else np.empty((nsrc, 0, 0, 0), dtype=np.float64)
     )
-    vzero = numpy.empty(nsrc, dtype=numpy.float64)
+    vzero = np.empty(nsrc, dtype=np.float64)
     for i in prange(nsrc):
         tt[i], ttgrad[i], vzero[i] = fteik2d(
             slow, dz, dx, zsrc[i], xsrc[i], nsweep, grad

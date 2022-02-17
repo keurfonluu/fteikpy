@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numba import prange
 
 from .._common import jitted
@@ -13,14 +13,14 @@ def _interp3d(x, y, z, v, xq, yq, zq, fval):
     if not (condx and condy and condz):
         return fval
 
-    nx, ny, nz = numpy.shape(v)
+    nx, ny, nz = np.shape(v)
     nx -= 1
     ny -= 1
     nz -= 1
 
-    i1 = numpy.searchsorted(x, xq, side="right") - 1
-    j1 = numpy.searchsorted(y, yq, side="right") - 1
-    k1 = numpy.searchsorted(z, zq, side="right") - 1
+    i1 = np.searchsorted(x, xq, side="right") - 1
+    j1 = np.searchsorted(y, yq, side="right") - 1
+    k1 = np.searchsorted(z, zq, side="right") - 1
     i2 = i1 + 1
     j2 = j1 + 1
     k2 = k1 + 1
@@ -161,15 +161,15 @@ def _interp3d(x, y, z, v, xq, yq, zq, fval):
         v122 = v[i1, j2, k2]
         v222 = v[i2, j2, k2]
 
-    vq = v111 * numpy.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
-    vq += v211 * numpy.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
-    vq += v121 * numpy.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
-    vq += v221 * numpy.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
-    vq += v112 * numpy.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
-    vq += v212 * numpy.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
-    vq += v122 * numpy.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
-    vq += v222 * numpy.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
-    vq /= numpy.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
+    vq = v111 * np.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
+    vq += v211 * np.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
+    vq += v121 * np.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
+    vq += v221 * np.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
+    vq += v112 * np.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
+    vq += v212 * np.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
+    vq += v122 * np.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
+    vq += v222 * np.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
+    vq /= np.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
 
     return vq
 
@@ -178,7 +178,7 @@ def _interp3d(x, y, z, v, xq, yq, zq, fval):
 def _interp3d_vectorized(x, y, z, v, xq, yq, zq, fval):
     """Perform trilinear interpolation for different points."""
     nq = len(xq)
-    out = numpy.empty(nq, dtype=numpy.float64)
+    out = np.empty(nq, dtype=np.float64)
     for i in prange(nq):
         out[i] = _interp3d(x, y, z, v, xq[i], yq[i], zq[i], fval)
 
@@ -186,7 +186,7 @@ def _interp3d_vectorized(x, y, z, v, xq, yq, zq, fval):
 
 
 @jitted
-def interp3d(x, y, z, v, q, fval=numpy.nan):
+def interp3d(x, y, z, v, q, fval=np.nan):
     """Perform trilinear interpolation."""
     if q.ndim == 1:
         return _interp3d(x, y, z, v, q[0], q[1], q[2], fval)

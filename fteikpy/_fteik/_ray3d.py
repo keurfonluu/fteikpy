@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numba import prange
 
 from .._common import dist3d, jitted, norm3d
@@ -36,25 +36,25 @@ def _ray3d(
     if honor_grid:
         nz, nx, ny = len(z), len(x), len(y)
 
-        i = numpy.searchsorted(z, zend, side="right") - 1
-        j = numpy.searchsorted(x, xend, side="right") - 1
-        k = numpy.searchsorted(y, yend, side="right") - 1
+        i = np.searchsorted(z, zend, side="right") - 1
+        j = np.searchsorted(x, xend, side="right") - 1
+        k = np.searchsorted(y, yend, side="right") - 1
         zmin = z[max(i - 1, 0)] if zend == z[i] else z[i]
         xmin = x[max(j - 1, 0)] if xend == x[j] else x[j]
         ymin = y[max(k - 1, 0)] if yend == y[k] else y[k]
-        lower = numpy.array([zmin, xmin, ymin])
-        upper = numpy.array(
+        lower = np.array([zmin, xmin, ymin])
+        upper = np.array(
             [z[min(i + 1, nz - 1)], x[min(j + 1, nx - 1)], y[min(k + 1, ny - 1)]]
         )
 
-        isrc = numpy.searchsorted(z, zsrc, side="right") - 1
-        jsrc = numpy.searchsorted(x, xsrc, side="right") - 1
-        ksrc = numpy.searchsorted(y, ysrc, side="right") - 1
+        isrc = np.searchsorted(z, zsrc, side="right") - 1
+        jsrc = np.searchsorted(x, xsrc, side="right") - 1
+        ksrc = np.searchsorted(y, ysrc, side="right") - 1
 
     count = 1
-    pcur = numpy.array([zend, xend, yend], dtype=numpy.float64)
-    delta = numpy.empty(3, dtype=numpy.float64)
-    ray = numpy.empty((max_step, 3), dtype=numpy.float64)
+    pcur = np.array([zend, xend, yend], dtype=np.float64)
+    delta = np.empty(3, dtype=np.float64)
+    ray = np.empty((max_step, 3), dtype=np.float64)
     ray[0] = pcur.copy()
     while dist3d(zsrc, xsrc, ysrc, pcur[0], pcur[1], pcur[2]) >= stepsize:
         gz = interp3d(z, x, y, zgrad, pcur)
@@ -80,13 +80,13 @@ def _ray3d(
 
             if fac < 1.0:
                 # Handle precision issues due to fac
-                pcur[0] = numpy.round(pcur[0], 8)
-                pcur[1] = numpy.round(pcur[1], 8)
-                pcur[2] = numpy.round(pcur[2], 8)
+                pcur[0] = np.round(pcur[0], 8)
+                pcur[1] = np.round(pcur[1], 8)
+                pcur[2] = np.round(pcur[2], 8)
 
-                i = numpy.searchsorted(z, pcur[0], side="right") - 1
-                j = numpy.searchsorted(x, pcur[1], side="right") - 1
-                k = numpy.searchsorted(y, pcur[2], side="right") - 1
+                i = np.searchsorted(z, pcur[0], side="right") - 1
+                j = np.searchsorted(x, pcur[1], side="right") - 1
+                k = np.searchsorted(y, pcur[2], side="right") - 1
                 lower[0] = z[max(i - 1, 0)] if pcur[0] == z[i] else z[i]
                 lower[1] = x[max(j - 1, 0)] if pcur[1] == x[j] else x[j]
                 lower[2] = y[max(k - 1, 0)] if pcur[2] == y[k] else y[k]
@@ -112,7 +112,7 @@ def _ray3d(
         if count >= max_step:
             raise RuntimeError("maximum number of steps reached")
 
-    ray[count] = numpy.array([zsrc, xsrc, ysrc], dtype=numpy.float64)
+    ray[count] = np.array([zsrc, xsrc, ysrc], dtype=np.float64)
 
     return ray, count
 
@@ -137,8 +137,8 @@ def _ray3d_vectorized(
 ):
     """Perform ray-tracing in parallel for different points."""
     n = len(zend)
-    rays = numpy.empty((n, max_step, 3), dtype=numpy.float64)
-    counts = numpy.empty(n, dtype=numpy.int32)
+    rays = np.empty((n, max_step, 3), dtype=np.float64)
+    counts = np.empty(n, dtype=np.int32)
     for i in prange(n):
         rays[i], counts[i] = _ray3d(
             z,

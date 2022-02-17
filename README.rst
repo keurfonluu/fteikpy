@@ -68,11 +68,11 @@ The following example computes the traveltime grid in a 3D homogeneous velocity 
 
 .. code-block:: python
 
-   import numpy
+   import numpy as np
    from fteikpy import Eikonal3D
 
    # Velocity model
-   velocity_model = numpy.ones((8, 8, 8))
+   velocity_model = np.ones((8, 8, 8))
    dz, dx, dy = 1.0, 1.0, 1.0
 
    # Solve Eikonal at source
@@ -83,7 +83,7 @@ The following example computes the traveltime grid in a 3D homogeneous velocity 
    t1 = tt[0, 1, 2]
 
    # Or get traveltime at any point in the grid
-   t2 = tt(numpy.random.rand(3) * 7.0)
+   t2 = tt(np.random.rand(3) * 7.0)
 
 Contributing
 ------------

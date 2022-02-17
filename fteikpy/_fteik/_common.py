@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 from .._common import jitted
 
@@ -11,10 +11,10 @@ def shrink(pcur, delta, lower, upper):
     masku = tmp > upper
 
     if maskl.any():
-        return numpy.min((pcur[maskl] - lower[maskl]) / delta[maskl])
+        return np.min((pcur[maskl] - lower[maskl]) / delta[maskl])
 
     elif masku.any():
-        return numpy.min((pcur[masku] - upper[masku]) / delta[masku])
+        return np.min((pcur[masku] - upper[masku]) / delta[masku])
 
     else:
         return 1.0

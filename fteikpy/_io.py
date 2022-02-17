@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 from ._grid import TraveltimeGrid2D, TraveltimeGrid3D
 from ._solver import Eikonal2D, Eikonal3D
@@ -51,7 +51,7 @@ def grid_to_meshio(*args):
         points, cells = _generate_mesh_2d(nx, nz, dx, dz, x0, z0)
 
         # Append third dimension and swap axes
-        points = numpy.column_stack((points, numpy.zeros(len(points))))
+        points = np.column_stack((points, np.zeros(len(points))))
         points = points[:, [0, 2, 1]]
 
     else:
@@ -93,12 +93,12 @@ def grid_to_meshio(*args):
             # Gradient grid
             if arg._gradient is not None:
                 name = f"Gradient {tt_count}" if tt_count > 1 else "Gradient"
-                gradient = numpy.column_stack(
+                gradient = np.column_stack(
                     [_ravel_grid(grad.grid, ndim) for grad in arg.gradient]
                 )
 
                 if ndim == 2:
-                    gradient = numpy.column_stack((gradient, numpy.zeros(len(points))))
+                    gradient = np.column_stack((gradient, np.zeros(len(points))))
                 gradient = gradient[:, [1, 2, 0]]
                 gradient[:, 2] *= -1.0
                 point_data[name] = gradient
@@ -124,28 +124,28 @@ def ray_to_meshio(*args):
     import meshio
 
     for i, arg in enumerate(args):
-        if numpy.ndim(arg) != 2:
+        if np.ndim(arg) != 2:
             raise ValueError(f"argument {i + 1} does not seem to be a ray")
 
         if i == 0:
-            ndim = numpy.shape(arg)[1]
+            ndim = np.shape(arg)[1]
 
     # Generate points and cells
     points = []
     cells = []
 
     for ray in args:
-        cell = numpy.arange(len(ray)) + len(points)
-        cells.append(("line", numpy.column_stack((cell[:-1], cell[1:]))))
+        cell = np.arange(len(ray)) + len(points)
+        cells.append(("line", np.column_stack((cell[:-1], cell[1:]))))
         points = (
-            numpy.array(ray) if len(points) == 0 else numpy.row_stack((points, ray))
+            np.array(ray) if len(points) == 0 else np.row_stack((points, ray))
         )
 
     # Swap axes (Z, X, Y -> X, Y, Z)
     points = (
-        numpy.column_stack((points, numpy.zeros(len(points))))
+        np.column_stack((points, np.zeros(len(points))))
         if ndim == 2
-        else numpy.array(points)
+        else np.array(points)
     )
     points = points[:, [1, 2, 0]]
 
@@ -160,7 +160,7 @@ def _generate_mesh_2d(nx, ny, dx, dy, x0, y0, order="F"):
     # Internal functions
     def meshgrid(x, y, indexing="ij", order=order):
         """Generate mesh grid."""
-        X, Y = numpy.meshgrid(x, y, indexing=indexing)
+        X, Y = np.meshgrid(x, y, indexing=indexing)
         return X.ravel(order), Y.ravel(order)
 
     def mesh_vertices(i, j):
@@ -173,24 +173,24 @@ def _generate_mesh_2d(nx, ny, dx, dy, x0, y0, order="F"):
         ]
 
     # Grid
-    dx = numpy.arange(nx + 1) * dx + x0
-    dy = numpy.arange(ny + 1) * dy + y0
+    dx = np.arange(nx + 1) * dx + x0
+    dy = np.arange(ny + 1) * dy + y0
     xy_shape = [nx + 1, ny + 1]
     ij_shape = [nx, ny]
     X, Y = meshgrid(dx, dy)
-    I, J = meshgrid(*[numpy.arange(n) for n in ij_shape])
+    I, J = meshgrid(*[np.arange(n) for n in ij_shape])
 
     # Points and cells
     points = [[x, y] for x, y in zip(X, Y)]
     cells = [
         [
-            numpy.ravel_multi_index(vertex, xy_shape, order=order)
+            np.ravel_multi_index(vertex, xy_shape, order=order)
             for vertex in mesh_vertices(i, j)
         ]
         for i, j in zip(I, J)
     ]
 
-    return numpy.array(points, dtype=float), [("quad", numpy.array(cells))]
+    return np.array(points, dtype=float), [("quad", np.array(cells))]
 
 
 def _generate_mesh_3d(nx, ny, nz, dx, dy, dz, x0, y0, z0):
@@ -198,7 +198,7 @@ def _generate_mesh_3d(nx, ny, nz, dx, dy, dz, x0, y0, z0):
     # Internal functions
     def meshgrid(x, y, z, indexing="ij", order="C"):
         """Generate mesh grid."""
-        X, Y, Z = numpy.meshgrid(x, y, z, indexing=indexing)
+        X, Y, Z = np.meshgrid(x, y, z, indexing=indexing)
         return X.ravel(order), Y.ravel(order), Z.ravel(order)
 
     def mesh_vertices(i, j, k):
@@ -215,30 +215,30 @@ def _generate_mesh_3d(nx, ny, nz, dx, dy, dz, x0, y0, z0):
         ]
 
     # Grid
-    dx = numpy.arange(nx + 1) * dx + x0
-    dy = numpy.arange(ny + 1) * dy + y0
-    dz = numpy.arange(nz + 1) * dz + z0
+    dx = np.arange(nx + 1) * dx + x0
+    dy = np.arange(ny + 1) * dy + y0
+    dz = np.arange(nz + 1) * dz + z0
     xyz_shape = [nx + 1, ny + 1, nz + 1]
     ijk_shape = [nx, ny, nz]
     X, Y, Z = meshgrid(dx, dy, dz)
-    I, J, K = meshgrid(*[numpy.arange(n) for n in ijk_shape])
+    I, J, K = meshgrid(*[np.arange(n) for n in ijk_shape])
 
     # Points and cells
     points = [[x, y, z] for x, y, z in zip(X, Y, Z)]
     cells = [
         [
-            numpy.ravel_multi_index(vertex, xyz_shape, order="C")
+            np.ravel_multi_index(vertex, xyz_shape, order="C")
             for vertex in mesh_vertices(i, j, k)
         ]
         for i, j, k in zip(I, J, K)
     ]
 
     return (
-        numpy.array(points, dtype=float),
-        [("hexahedron", numpy.array(cells))],
+        np.array(points, dtype=float),
+        [("hexahedron", np.array(cells))],
     )
 
 
 def _ravel_grid(grid, ndim):
     """Ravel grid."""
-    return grid.ravel() if ndim == 2 else numpy.transpose(grid, axes=[1, 2, 0]).ravel()
+    return grid.ravel() if ndim == 2 else np.transpose(grid, axes=[1, 2, 0]).ravel()

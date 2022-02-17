@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numba import prange
 
 from .._common import jitted, norm3d
@@ -438,7 +438,7 @@ def sweep3d(
 def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     """Calculate traveltimes given a 3D velocity model."""
     # Parameters
-    nz, nx, ny = numpy.shape(slow)
+    nz, nx, ny = np.shape(slow)
 
     # Check inputs
     condz = 0.0 <= zsrc <= dz * nz
@@ -467,15 +467,15 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     nz += 1
     nx += 1
     ny += 1
-    tt = numpy.full((nz, nx, ny), Big, dtype=numpy.float64)
+    tt = np.full((nz, nx, ny), Big, dtype=np.float64)
 
     if grad:
-        ttgrad = numpy.zeros((nz, nx, ny, 3), dtype=numpy.float64)
-        ttsgn = numpy.zeros((nz, nx, ny, 3), dtype=numpy.int32)
+        ttgrad = np.zeros((nz, nx, ny, 3), dtype=np.float64)
+        ttsgn = np.zeros((nz, nx, ny, 3), dtype=np.int32)
 
     else:
-        ttgrad = numpy.empty((0, 0, 0, 0), dtype=numpy.float64)
-        ttsgn = numpy.empty((0, 0, 0, 0), dtype=numpy.int32)
+        ttgrad = np.empty((0, 0, 0, 0), dtype=np.float64)
+        ttsgn = np.empty((0, 0, 0, 0), dtype=np.int32)
 
     # Initialize points around source
     iterables = (
@@ -539,13 +539,13 @@ def fteik3d_vectorized(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False)
     """Calculate traveltimes in parallel for different sources."""
     nsrc = len(zsrc)
     nz, nx, ny = slow.shape
-    tt = numpy.empty((nsrc, nz + 1, nx + 1, ny + 1), dtype=numpy.float64)
+    tt = np.empty((nsrc, nz + 1, nx + 1, ny + 1), dtype=np.float64)
     ttgrad = (
-        numpy.empty((nsrc, nz + 1, nx + 1, ny + 1, 3), dtype=numpy.float64)
+        np.empty((nsrc, nz + 1, nx + 1, ny + 1, 3), dtype=np.float64)
         if grad
-        else numpy.empty((nsrc, 0, 0, 0, 0), dtype=numpy.float64)
+        else np.empty((nsrc, 0, 0, 0, 0), dtype=np.float64)
     )
-    vzero = numpy.empty(nsrc, dtype=numpy.float64)
+    vzero = np.empty(nsrc, dtype=np.float64)
     for i in prange(nsrc):
         tt[i], ttgrad[i], vzero[i] = fteik3d(
             slow, dz, dx, dy, zsrc[i], xsrc[i], ysrc[i], nsweep, grad

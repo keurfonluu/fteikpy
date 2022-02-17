@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 from ._base import BaseGrid2D, BaseGrid3D, BaseTraveltime
 from ._fteik import ray2d, ray3d
@@ -65,17 +65,17 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=numpy.asarray(origin, dtype=numpy.float64),
-            source=numpy.asarray(source, dtype=numpy.float64),
+            origin=np.asarray(origin, dtype=np.float64),
+            source=np.asarray(source, dtype=np.float64),
             gradient=(
-                numpy.asarray(gradient, dtype=numpy.float64)
+                np.asarray(gradient, dtype=np.float64)
                 if gradient is not None
                 else None
             ),
             vzero=vzero,
         )
 
-    def __call__(self, points, fill_value=numpy.nan):
+    def __call__(self, points, fill_value=np.nan):
         """
         Bilinear apparent velocity interpolation.
 
@@ -88,7 +88,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
 
         Returns
         -------
-        scalar or :class:`numpy.ndarray`
+        scalar or :class:`np.ndarray`
             Interpolated traveltime(s).
 
         """
@@ -96,7 +96,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             self.zaxis,
             self.xaxis,
             self._grid,
-            numpy.asarray(points, dtype=numpy.float64),
+            np.asarray(points, dtype=np.float64),
             self._source,
             self._vzero,
             fill_value,
@@ -119,14 +119,14 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
 
         Returns
         -------
-        :class:`numpy.ndarray` or list of :class:`numpy.ndarray`
+        :class:`np.ndarray` or list of :class:`np.ndarray`
             Raypath(s).
 
         """
         gradient = self.gradient
 
         if honor_grid or not stepsize:
-            stepsize = numpy.min(self._gridsize)
+            stepsize = np.min(self._gridsize)
 
         if not max_step:
             nz, nx = self.shape
@@ -139,7 +139,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             self.xaxis,
             gradient[0].grid,
             gradient[1].grid,
-            numpy.asarray(points, dtype=numpy.float64),
+            np.asarray(points, dtype=np.float64),
             self._source,
             stepsize,
             max_step,
@@ -184,17 +184,17 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=numpy.asarray(origin, dtype=numpy.float64),
-            source=numpy.asarray(source, dtype=numpy.float64),
+            origin=np.asarray(origin, dtype=np.float64),
+            source=np.asarray(source, dtype=np.float64),
             gradient=(
-                numpy.asarray(gradient, dtype=numpy.float64)
+                np.asarray(gradient, dtype=np.float64)
                 if gradient is not None
                 else None
             ),
             vzero=vzero,
         )
 
-    def __call__(self, points, fill_value=numpy.nan):
+    def __call__(self, points, fill_value=np.nan):
         """
         Trilinear apparent velocity interpolation.
 
@@ -207,7 +207,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
 
         Returns
         -------
-        scalar or :class:`numpy.ndarray`
+        scalar or :class:`np.ndarray`
             Interpolated traveltime(s).
 
         """
@@ -216,7 +216,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             self.xaxis,
             self.yaxis,
             self._grid,
-            numpy.asarray(points, dtype=numpy.float64),
+            np.asarray(points, dtype=np.float64),
             self._source,
             self._vzero,
             fill_value,
@@ -239,14 +239,14 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
 
         Returns
         -------
-        :class:`numpy.ndarray` or list of :class:`numpy.ndarray`
+        :class:`np.ndarray` or list of :class:`np.ndarray`
             Raypath(s).
 
         """
         gradient = self.gradient
 
         if honor_grid or not stepsize:
-            stepsize = numpy.min(self._gridsize)
+            stepsize = np.min(self._gridsize)
 
         if not max_step:
             nz, nx, ny = self.shape
@@ -261,7 +261,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             gradient[0].grid,
             gradient[1].grid,
             gradient[2].grid,
-            numpy.asarray(points, dtype=numpy.float64),
+            np.asarray(points, dtype=np.float64),
             self._source,
             stepsize,
             max_step,

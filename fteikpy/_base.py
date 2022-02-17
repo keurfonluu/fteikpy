@@ -1,6 +1,6 @@
 from abc import ABC
 
-import numpy
+import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage import gaussian_filter
 
@@ -11,9 +11,9 @@ class BaseGrid(ABC):
     def __init__(self, grid, gridsize, origin, **kwargs):
         """Base grid class."""
         super().__init__(**kwargs)
-        self._grid = numpy.asarray(grid, dtype=numpy.float64)
+        self._grid = np.asarray(grid, dtype=np.float64)
         self._gridsize = tuple(float(x) for x in gridsize)
-        self._origin = numpy.asarray(origin, dtype=numpy.float64)
+        self._origin = np.asarray(origin, dtype=np.float64)
 
     def __getitem__(self, islice):
         """Slice grid."""
@@ -53,7 +53,7 @@ class BaseGrid(ABC):
 class BaseGrid2D(BaseGrid):
     _ndim = 2
 
-    def __call__(self, points, fill_value=numpy.nan):
+    def __call__(self, points, fill_value=np.nan):
         """
         Bilinear interpolation.
 
@@ -66,7 +66,7 @@ class BaseGrid2D(BaseGrid):
 
         Returns
         -------
-        scalar or :class:`numpy.ndarray`
+        scalar or :class:`np.ndarray`
             Interpolated value(s).
 
         """
@@ -74,7 +74,7 @@ class BaseGrid2D(BaseGrid):
             self.zaxis,
             self.xaxis,
             self._grid,
-            numpy.asarray(points, dtype=numpy.float64),
+            np.asarray(points, dtype=np.float64),
             fill_value,
         )
 
@@ -92,9 +92,9 @@ class BaseGrid2D(BaseGrid):
         """
         zaxis = self.zaxis
         xaxis = self.xaxis
-        Z, X = numpy.meshgrid(
-            numpy.linspace(zaxis[0], zaxis[-1], new_shape[0]),
-            numpy.linspace(xaxis[0], xaxis[-1], new_shape[1]),
+        Z, X = np.meshgrid(
+            np.linspace(zaxis[0], zaxis[-1], new_shape[0]),
+            np.linspace(xaxis[0], xaxis[-1], new_shape[1]),
             indexing="ij",
         )
 
@@ -119,24 +119,24 @@ class BaseGrid2D(BaseGrid):
             Standard deviation in meters for Gaussian kernel.
 
         """
-        sigma = numpy.full(2, sigma) if numpy.ndim(sigma) == 0 else numpy.asarray(sigma)
+        sigma = np.full(2, sigma) if np.ndim(sigma) == 0 else np.asarray(sigma)
         self._grid = gaussian_filter(self._grid, sigma / self._gridsize)
 
     @property
     def zaxis(self):
         """Return grid Z axis."""
-        return self._origin[0] + self._gridsize[0] * numpy.arange(self.shape[0])
+        return self._origin[0] + self._gridsize[0] * np.arange(self.shape[0])
 
     @property
     def xaxis(self):
         """Return grid X axis."""
-        return self._origin[1] + self._gridsize[1] * numpy.arange(self.shape[1])
+        return self._origin[1] + self._gridsize[1] * np.arange(self.shape[1])
 
 
 class BaseGrid3D(BaseGrid):
     _ndim = 3
 
-    def __call__(self, points, fill_value=numpy.nan):
+    def __call__(self, points, fill_value=np.nan):
         """
         Trilinear interpolaton.
 
@@ -149,7 +149,7 @@ class BaseGrid3D(BaseGrid):
 
         Returns
         -------
-        scalar or :class:`numpy.ndarray`
+        scalar or :class:`np.ndarray`
             Interpolated value(s).
 
         """
@@ -158,7 +158,7 @@ class BaseGrid3D(BaseGrid):
             self.xaxis,
             self.yaxis,
             self._grid,
-            numpy.asarray(points, dtype=numpy.float64),
+            np.asarray(points, dtype=np.float64),
             fill_value,
         )
 
@@ -177,10 +177,10 @@ class BaseGrid3D(BaseGrid):
         zaxis = self.zaxis
         xaxis = self.xaxis
         yaxis = self.yaxis
-        Z, X, Y = numpy.meshgrid(
-            numpy.linspace(zaxis[0], zaxis[-1], new_shape[0]),
-            numpy.linspace(xaxis[0], xaxis[-1], new_shape[1]),
-            numpy.linspace(yaxis[0], yaxis[-1], new_shape[2]),
+        Z, X, Y = np.meshgrid(
+            np.linspace(zaxis[0], zaxis[-1], new_shape[0]),
+            np.linspace(xaxis[0], xaxis[-1], new_shape[1]),
+            np.linspace(yaxis[0], yaxis[-1], new_shape[2]),
             indexing="ij",
         )
 
@@ -208,23 +208,23 @@ class BaseGrid3D(BaseGrid):
             Standard deviation in meters for Gaussian kernel.
 
         """
-        sigma = numpy.full(3, sigma) if numpy.ndim(sigma) == 0 else numpy.asarray(sigma)
+        sigma = np.full(3, sigma) if np.ndim(sigma) == 0 else np.asarray(sigma)
         self._grid = gaussian_filter(self._grid, sigma / self._gridsize)
 
     @property
     def zaxis(self):
         """Return grid Z axis."""
-        return self._origin[0] + self._gridsize[0] * numpy.arange(self.shape[0])
+        return self._origin[0] + self._gridsize[0] * np.arange(self.shape[0])
 
     @property
     def xaxis(self):
         """Return grid X axis."""
-        return self._origin[1] + self._gridsize[1] * numpy.arange(self.shape[1])
+        return self._origin[1] + self._gridsize[1] * np.arange(self.shape[1])
 
     @property
     def yaxis(self):
         """Return grid Y axis."""
-        return self._origin[2] + self._gridsize[2] * numpy.arange(self.shape[2])
+        return self._origin[2] + self._gridsize[2] * np.arange(self.shape[2])
 
 
 class BaseTraveltime(ABC):
