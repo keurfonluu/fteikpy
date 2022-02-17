@@ -23,9 +23,7 @@ class Eikonal2D(BaseGrid2D):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin
-            if origin is not None
-            else np.zeros(2, dtype=np.float64),
+            origin=origin if origin is not None else np.zeros(2, dtype=np.float64),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):
@@ -97,9 +95,7 @@ class Eikonal3D(BaseGrid3D):
         super().__init__(
             grid=grid,
             gridsize=gridsize,
-            origin=origin
-            if origin is not None
-            else np.zeros(3, dtype=np.float64),
+            origin=origin if origin is not None else np.zeros(3, dtype=np.float64),
         )
 
     def solve(self, sources, nsweep=2, return_gradient=False):

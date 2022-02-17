@@ -68,9 +68,7 @@ class TraveltimeGrid2D(BaseGrid2D, BaseTraveltime):
             origin=np.asarray(origin, dtype=np.float64),
             source=np.asarray(source, dtype=np.float64),
             gradient=(
-                np.asarray(gradient, dtype=np.float64)
-                if gradient is not None
-                else None
+                np.asarray(gradient, dtype=np.float64) if gradient is not None else None
             ),
             vzero=vzero,
         )
@@ -187,9 +185,7 @@ class TraveltimeGrid3D(BaseGrid3D, BaseTraveltime):
             origin=np.asarray(origin, dtype=np.float64),
             source=np.asarray(source, dtype=np.float64),
             gradient=(
-                np.asarray(gradient, dtype=np.float64)
-                if gradient is not None
-                else None
+                np.asarray(gradient, dtype=np.float64) if gradient is not None else None
             ),
             vzero=vzero,
         )
