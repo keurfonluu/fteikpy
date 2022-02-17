@@ -26,8 +26,8 @@ def test_meshio_2d():
     assert mesh.cell_data["Velocity"][0].sum() == nz * nx
 
     assert len(mesh_ray.points) == len(ray)
-    assert len(mesh_ray.cells[0][1]) == len(ray) - 1
-    assert mesh_ray.cells[0][1].sum() == 64.0
+    assert len(mesh_ray.cells[0].data) == len(ray) - 1
+    assert mesh_ray.cells[0].data.sum() == 64.0
 
 
 def test_meshio_3d():
@@ -55,5 +55,5 @@ def test_meshio_3d():
     assert mesh.cell_data["Velocity"][0].sum() == nz * nx * ny
 
     assert len(mesh_ray.points) == len(ray)
-    assert len(mesh_ray.cells[0][1]) == len(ray) - 1
-    assert mesh_ray.cells[0][1].sum() == 169.0
+    assert len(mesh_ray.cells[0].data) == len(ray) - 1
+    assert mesh_ray.cells[0].data.sum() == 169.0
