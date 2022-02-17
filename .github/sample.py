@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pyvista
 
 from fteikpy import Eikonal2D, grid_to_meshio
@@ -9,14 +9,14 @@ pyvista.set_plot_theme("document")
 def ray2line(ray):
     """Convert a ray array to PolyData."""
     nr = len(ray)
-    points = numpy.column_stack((ray[:, 1], numpy.zeros(nr), -ray[:, 0]))
-    lines = numpy.column_stack((numpy.full(nr - 1, 2), numpy.arange(nr - 1), numpy.arange(1, nr)))
+    points = np.column_stack((ray[:, 1], np.zeros(nr), -ray[:, 0]))
+    lines = np.column_stack((np.full(nr - 1, 2), np.arange(nr - 1), np.arange(1, nr)))
 
     return pyvista.PolyData(points, lines=lines)
 
 
 # Import Marmousi velocity model
-vel = numpy.load("marmousi.npy")
+vel = np.load("marmousi.npy")
 
 # Calculate traveltime grid for one source point
 eik = Eikonal2D(vel * 1.0e-3, gridsize=(0.01, 0.01))
@@ -26,8 +26,8 @@ ttgrid = tt.grid.ravel()
 
 # Trace rays for 100 locations
 nrays = 100
-end_points = numpy.zeros((nrays, 2))
-end_points[:, 1] = numpy.linspace(4.4, eik.xaxis[-1], nrays)
+end_points = np.zeros((nrays, 2))
+end_points[:, 1] = np.linspace(4.4, eik.xaxis[-1], nrays)
 rays = tt.raytrace(end_points)
 trays = [tt(ray) for ray in rays]
 
@@ -96,8 +96,8 @@ p.show(
 
 # Update isochrones and rays
 nframes = 48
-nisos = numpy.linspace(1, 100, nframes)
-times = numpy.linspace(0.0, ttgrid.max(), nframes)
+nisos = np.linspace(1, 100, nframes)
+times = np.linspace(0.0, ttgrid.max(), nframes)
 
 p.open_movie("sample.mp4", framerate=12)
 for n, t in zip(nisos, times):
