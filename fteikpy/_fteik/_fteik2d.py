@@ -304,8 +304,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     xsa = xsrc / dx
 
     # Try to handle edges simply for source due to precision
-    zsa = zsa - eps if zsa > nz else zsa
-    xsa = xsa - eps if xsa > nx else xsa
+    zsa = zsa - eps if zsa >= nz else zsa
+    xsa = xsa - eps if xsa >= nx else xsa
 
     # Grid points to initialize source
     zsi = int(zsa)
