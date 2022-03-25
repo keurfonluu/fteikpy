@@ -91,12 +91,19 @@ def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
             v12 = v[i1, j2]
             v22 = v[i2, j2]
 
-        vq = d11 / v11 * np.abs((x2 - xq) * (y2 - yq))
-        vq += d21 / v21 * np.abs((x1 - xq) * (y2 - yq))
-        vq += d12 / v12 * np.abs((x2 - xq) * (y1 - yq))
-        vq += d22 / v22 * np.abs((x1 - xq) * (y1 - yq))
-        vq /= np.abs((x2 - x1) * (y2 - y1))
-        vq = dist2d(xsrc, ysrc, xq, yq) / vq
+        # If source is on a gridpoint, the first "if" may miss that query
+        # point is close to the source
+        # Only the source has zero traveltime
+        if not (v11 and v21 and v12 and v22):
+            vq = vzero * dist2d(xsrc, ysrc, xq, yq)
+
+        else:
+            vq = d11 / v11 * np.abs((x2 - xq) * (y2 - yq))
+            vq += d21 / v21 * np.abs((x1 - xq) * (y2 - yq))
+            vq += d12 / v12 * np.abs((x2 - xq) * (y1 - yq))
+            vq += d22 / v22 * np.abs((x1 - xq) * (y1 - yq))
+            vq /= np.abs((x2 - x1) * (y2 - y1))
+            vq = dist2d(xsrc, ysrc, xq, yq) / vq
 
     return vq
 

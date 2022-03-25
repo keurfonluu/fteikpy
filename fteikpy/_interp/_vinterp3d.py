@@ -240,16 +240,23 @@ def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
             v122 = v[i1, j2, k2]
             v222 = v[i2, j2, k2]
 
-        vq = d111 / v111 * np.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
-        vq += d211 / v211 * np.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
-        vq += d121 / v121 * np.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
-        vq += d221 / v221 * np.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
-        vq += d112 / v112 * np.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
-        vq += d212 / v212 * np.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
-        vq += d122 / v122 * np.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
-        vq += d222 / v222 * np.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
-        vq /= np.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
-        vq = dist3d(xsrc, ysrc, zsrc, xq, yq, zq) / vq
+        # If source is on a gridpoint, the first "if" may miss that query
+        # point is close to the source
+        # Only the source has zero traveltime
+        if not (v111 and v211 and v121 and v221 and v112 and v212 and v122 and v222):
+            vq = vzero * dist3d(xsrc, ysrc, zsrc, xq, yq, zq)
+
+        else:
+            vq = d111 / v111 * np.abs((x2 - xq) * (y2 - yq) * (z2 - zq))
+            vq += d211 / v211 * np.abs((x1 - xq) * (y2 - yq) * (z2 - zq))
+            vq += d121 / v121 * np.abs((x2 - xq) * (y1 - yq) * (z2 - zq))
+            vq += d221 / v221 * np.abs((x1 - xq) * (y1 - yq) * (z2 - zq))
+            vq += d112 / v112 * np.abs((x2 - xq) * (y2 - yq) * (z1 - zq))
+            vq += d212 / v212 * np.abs((x1 - xq) * (y2 - yq) * (z1 - zq))
+            vq += d122 / v122 * np.abs((x2 - xq) * (y1 - yq) * (z1 - zq))
+            vq += d222 / v222 * np.abs((x1 - xq) * (y1 - yq) * (z1 - zq))
+            vq /= np.abs((x2 - x1) * (y2 - y1) * (z2 - z1))
+            vq = dist3d(xsrc, ysrc, zsrc, xq, yq, zq) / vq
 
     return vq
 

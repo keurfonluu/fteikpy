@@ -20,7 +20,7 @@ def t_anad(i, j, dz, dx, zsa, xsa, vzero):
     t = t_ana(i, j, dz, dx, zsa, xsa, vzero)
 
     if t > 0.0:
-        tmp = vzero ** 2.0 / t
+        tmp = vzero**2.0 / t
         tzc = (i - zsa) * dz * tmp
         txc = (j - xsa) * dx * tmp
     else:
@@ -57,14 +57,14 @@ def delta(
         ta * dx2i + tb * dz2i
     )
     cpoly = (
-        (ta ** 2.0 * dx2i)
-        + (tb ** 2.0 * dz2i)
+        (ta**2.0 * dx2i)
+        + (tb**2.0 * dz2i)
         - 4.0 * (sgntx * txc * dxi * ta + sgntz * tzc * dzi * tb)
-        + 4.0 * (vzero ** 2.0 - vref ** 2.0)
+        + 4.0 * (vzero**2.0 - vref**2.0)
     )
-    dpoly = bpoly ** 2.0 - 4.0 * apoly * cpoly
+    dpoly = bpoly**2.0 - 4.0 * apoly * cpoly
 
-    return 0.5 * (dpoly ** 0.5 - bpoly) / apoly + t0c if dpoly >= 0.0 else t1
+    return 0.5 * (dpoly**0.5 - bpoly) / apoly + t0c if dpoly >= 0.0 else t1
 
 
 @jitted(
@@ -124,22 +124,22 @@ def sweep(
             tb = tev - te + tv
             t2d = (
                 (tb * dz2i + ta * dx2i)
-                + (4.0 * vref ** 2.0 * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) ** 2.0)
+                + (4.0 * vref**2.0 * (dz2i + dx2i) - dz2i * dx2i * (ta - tb) ** 2.0)
                 ** 0.5
             ) / (dz2i + dx2i)
 
         # Two 3 points operators
         elif (
-            te - tev <= dz ** 2.0 * vref / (dx ** 2.0 + dz ** 2.0) ** 0.5
+            te - tev <= dz**2.0 * vref / (dx**2.0 + dz**2.0) ** 0.5
             and te - tev > 0.0
         ):
-            t2d = te + dx * (vref ** 2.0 - ((te - tev) / dz) ** 2.0) ** 0.5
+            t2d = te + dx * (vref**2.0 - ((te - tev) / dz) ** 2.0) ** 0.5
 
         elif (
-            tv - tev <= dx ** 2.0 * vref / (dx ** 2.0 + dz ** 2.0) ** 0.5
+            tv - tev <= dx**2.0 * vref / (dx**2.0 + dz**2.0) ** 0.5
             and tv - tev > 0.0
         ):
-            t2d = tv + dz * (vref ** 2.0 - ((tv - tev) / dx) ** 2.0) ** 0.5
+            t2d = tv + dz * (vref**2.0 - ((tv - tev) / dx) ** 2.0) ** 0.5
 
     # Test for spherical
     else:
@@ -304,8 +304,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     xsa = xsrc / dx
 
     # Try to handle edges simply for source due to precision
-    zsa = zsa - eps if zsa > nz else zsa
-    xsa = xsa - eps if xsa > nx else xsa
+    zsa = zsa - eps if zsa >= nz else zsa
+    xsa = xsa - eps if xsa >= nx else xsa
 
     # Grid points to initialize source
     zsi = int(zsa)
