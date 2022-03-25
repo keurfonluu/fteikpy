@@ -99,7 +99,10 @@ class BaseGrid2D(BaseGrid):
         )
 
         fn = RegularGridInterpolator(
-            points=(zaxis, xaxis), values=self._grid, method=method, bounds_error=False,
+            points=(zaxis, xaxis),
+            values=self._grid,
+            method=method,
+            bounds_error=False,
         )
         self._grid = fn([[z, x] for z, x in zip(Z.ravel(), X.ravel())]).reshape(
             new_shape
