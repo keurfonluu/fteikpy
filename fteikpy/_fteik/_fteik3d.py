@@ -201,7 +201,7 @@ def sweep(
 
 
 @jitted(
-    "void(f8[:, :, :], i4[:, :, :, :], f8[:, :, :], f8, f8, f8, f8, f8, f8, i4, i4, i4, b1)"
+    "void(f8[:, :, :], i4[:, :, :, :], f8[:, :, :], f8, f8, f8, i4, i4, i4, b1)"
 )
 def sweep3d(
     tt,
@@ -210,9 +210,6 @@ def sweep3d(
     dz,
     dx,
     dy,
-    zsi,
-    xsi,
-    ysi,
     nz,
     nx,
     ny,
@@ -349,7 +346,6 @@ def sweep3d(
                 )
 
     # Sixth sweeping: Bottom -> Top; East -> West; South -> North
-    i0, j0, k0 = nz - 2, nx - 2, 1
     for k in range(1, ny):
         for j in range(nx - 2, -1, -1):
             for i in range(nz - 2, -1, -1):
@@ -495,9 +491,6 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
             dz,
             dx,
             dy,
-            zsi,
-            xsi,
-            ysi,
             nz,
             nx,
             ny,
