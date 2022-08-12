@@ -9,8 +9,7 @@ eik2d = Eikonal2D(grid=np.ones((16, 16), dtype=np.float64), gridsize=(1.0, 1.0))
 
 
 eik3d = Eikonal3D(
-    grid=np.ones((16, 16, 16), dtype=np.float64),
-    gridsize=(1.0, 1.0, 1.0),
+    grid=np.ones((16, 16, 16), dtype=np.float64), gridsize=(1.0, 1.0, 1.0),
 )
 
 
