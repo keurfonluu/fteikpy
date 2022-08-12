@@ -55,9 +55,8 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor
 
             if fac < 1.0:
                 # Handle precision issues due to fac
-                if fac < 1.0e-8:
-                    pcur[0] = np.round(pcur[0], 8)
-                    pcur[1] = np.round(pcur[1], 8)
+                pcur[0] = np.round(pcur[0], 8)
+                pcur[1] = np.round(pcur[1], 8)
 
                 i = np.searchsorted(z, pcur[0], side="right") - 1
                 j = np.searchsorted(x, pcur[1], side="right") - 1

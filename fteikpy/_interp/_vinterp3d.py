@@ -4,7 +4,7 @@ from numba import prange
 from .._common import dist3d, jitted
 
 
-@jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8)")
+@jitted("f8(f8[:], f8[:], f8[:], f8[:, :, :], f8, f8, f8, f8, f8, f8, f8, f8)", boundscheck=True)
 def _vinterp3d(x, y, z, v, xq, yq, zq, xsrc, ysrc, zsrc, vzero, fval):
     """Perform triilinear apparent velocity interpolation."""
     condx = x[0] <= xq <= x[-1]

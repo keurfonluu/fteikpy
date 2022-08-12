@@ -10,8 +10,6 @@ def jitted(*args, **kwargs):
             # Disable fast-math flag "nnan" and "reassoc"
             # <https://llvm.org/docs/LangRef.html#fast-math-flags>
             "fastmath": {"ninf", "nsz", "arcp", "contract", "afn"},
-            # "fastmath": True,
-            # "boundscheck": False,
             "cache": True,
         }
     )
