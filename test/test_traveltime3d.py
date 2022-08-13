@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pytest
 from helpers import allclose, eik3d
 
@@ -9,7 +9,7 @@ from helpers import allclose, eik3d
         ([0.0, 0.0, 0.0], 0.0),
         ([0.5, 0.5, 0.5], 0.86602540),
         ([1.5, 1.5, 1.5], 2.60631816),
-        ([-1.0, -1.0, -1.0], numpy.nan),
+        ([-1.0, -1.0, -1.0], np.nan),
         (
             [
                 [0.0, 0.0, 0.0],

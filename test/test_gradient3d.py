@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pytest
 from helpers import allclose, eik3d
 
@@ -7,7 +7,7 @@ from helpers import allclose, eik3d
     "points, gzref, gxref, gyref",
     (
         ([0.0, 0.0, 0.0], 0.0, 0.0, 0.0),
-        ([-1.0, -1.0, -1.0], numpy.nan, numpy.nan, numpy.nan),
+        ([-1.0, -1.0, -1.0], np.nan, np.nan, np.nan),
         (
             [
                 [0.0, 0.0, 0.0],
