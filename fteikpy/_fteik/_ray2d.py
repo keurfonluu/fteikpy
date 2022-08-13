@@ -55,7 +55,7 @@ def _ray2d(z, x, zgrad, xgrad, zend, xend, zsrc, xsrc, stepsize, max_step, honor
 
             if fac < 1.0:
                 # Grid magnetism: handle precision issues due to fac
-                for ix in range(3):
+                for ix in range(2):
                     if np.abs(pcur[ix] - lower[ix]) < 1.0e-8:
                         pcur[ix] = lower[ix]
 
