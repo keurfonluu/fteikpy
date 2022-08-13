@@ -4,7 +4,7 @@ from numba import prange
 from .._common import dist2d, jitted
 
 
-@jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8, f8)")
+@jitted("f8(f8[:], f8[:], f8[:, :], f8, f8, f8, f8, f8, f8)", boundscheck=True)
 def _vinterp2d(x, y, v, xq, yq, xsrc, ysrc, vzero, fval):
     """Perform bilinear apparent velocity interpolation."""
     condx = x[0] <= xq <= x[-1]

@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-import numpy
+import numpy as np
 import pytest
 from helpers import allclose, eik2d
 
@@ -25,16 +25,8 @@ def test_solve(sources, tref):
     "points, vref",
     (
         ([0.0, 0.0], 1.0),
-        ([-1.0, -1.0], numpy.nan),
-        (
-            [
-                [0.0, 0.0],
-                [15.0, 0.0],
-                [15.0, 15.0],
-                [0.0, 15.0],
-            ],
-            numpy.ones(4),
-        ),
+        ([-1.0, -1.0], np.nan),
+        ([[0.0, 0.0], [15.0, 0.0], [15.0, 15.0], [0.0, 15.0]], np.ones(4)),
     ),
 )
 def test_call(points, vref):

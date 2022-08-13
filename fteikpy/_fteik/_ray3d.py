@@ -79,10 +79,13 @@ def _ray3d(
             pcur[2] = min(max(pcur[2], y[0]), y[-1])
 
             if fac < 1.0:
-                # Handle precision issues due to fac
-                pcur[0] = np.round(pcur[0], 8)
-                pcur[1] = np.round(pcur[1], 8)
-                pcur[2] = np.round(pcur[2], 8)
+                # Grid magnetism: handle precision issues due to fac
+                for ix in range(3):
+                    if np.abs(pcur[ix] - lower[ix]) < 1.0e-8:
+                        pcur[ix] = lower[ix]
+
+                    elif np.abs(pcur[ix] - upper[ix]) < 1.0e-8:
+                        pcur[ix] = upper[ix]
 
                 i = np.searchsorted(z, pcur[0], side="right") - 1
                 j = np.searchsorted(x, pcur[1], side="right") - 1
