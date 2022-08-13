@@ -308,8 +308,8 @@ def fteik2d(slow, dz, dx, zsrc, xsrc, nsweep=2, grad=False):
     xsa = xsa - eps if xsa >= nx else xsa
 
     # Grid points to initialize source
-    zsi = int(zsa)
-    xsi = int(xsa)
+    zsi = min(int(zsa), nz - 1)
+    xsi = min(int(xsa), nx - 1)
     vzero = slow[zsi, xsi]
 
     # Allocate work array
