@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Eikonal 2D &#8212; fteikpy 2.4.0 documentation</title>
+<script>
+  document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+  document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
+</script>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Eikonal 3D" href="eikonal3d.html" />
+    <link rel="prev" title="API Reference" href="index.html" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+    <div class="bd-header-announcement container-fluid" id="banner">
+      
+
+    </div>
+
+    
+    <nav class="bd-header navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="bd-header__inner container-xl">
+
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">fteikpy 2.4.0 documentation</p>
+  
+</a>
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fas fa-bars"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="index.html">
+  API Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Eikonal 2D
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="eikonal3d.html">
+   Eikonal 3D
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="grids.html">
+   Grids
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="io.html">
+   I/O
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+  </div>
+  <div class="sidebar-end-items">
+  </div>
+</div>
+
+
+          
+
+
+<div class="bd-sidebar-secondary d-none d-xl-block col-xl-2 bd-toc">
+  
+    
+    <div class="toc-item">
+      
+
+<nav id="bd-toc-nav">
+    
+</nav>
+    </div>
+    
+    <div class="toc-item">
+      
+    </div>
+    
+  
+</div>
+
+
+          
+          
+          <div class="bd-content col-12 col-md-9 col-xl-7">
+              
+              <article class="bd-article" role="main">
+                
+  <section id="eikonal-2d">
+<h1>Eikonal 2D<a class="headerlink" href="#eikonal-2d" title="Permalink to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fteikpy.</span></span><span class="sig-name descname"><span class="pre">Eikonal2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridsize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fteikpy/_solver.html#Eikonal2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fteikpy.Eikonal2D" title="Permalink to this definition">#</a></dt>
+<dd><p>2D Eikonal solver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grid</strong> (<em>array_like</em>) – Velocity model array.</p></li>
+<li><p><strong>gridsize</strong> (<em>array_like</em>) – Grid size (dz, dx).</p></li>
+<li><p><strong>origin</strong> (<em>array_like</em><em> or </em><em>None</em><em>, </em><em>optional</em><em>, </em><em>default None</em>) – Grid origin coordinates.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fteikpy.Eikonal2D.__call__" title="Permalink to this definition">#</a></dt>
+<dd><p>Bilinear interpolation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>array_like</em>) – Query point coordinates or list of point coordinates.</p></li>
+<li><p><strong>fill_value</strong> (<em>scalar</em><em>, </em><em>optional</em><em>, </em><em>default nan</em>) – Returned value for out-of-bound query points.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Interpolated value(s).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>scalar or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.grid">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grid</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.grid" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.gridsize">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gridsize</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.gridsize" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid size.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.ndim">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ndim</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.ndim" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid number of dimensions.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.origin">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">origin</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.origin" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid origin coordinates.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.resample">
+<span class="sig-name descname"><span class="pre">resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fteikpy.Eikonal2D.resample" title="Permalink to this definition">#</a></dt>
+<dd><p>Resample grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_shape</strong> (<em>array_like</em>) – New grid shape (nz, nx).</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> (</em><em>'linear'</em><em> or </em><em>'nearest'</em><em>)</em><em>, </em><em>optional</em><em>, </em><em>default 'linear'</em>) – Interpolation method.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid shape.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">size</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.size" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid size.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.smooth">
+<span class="sig-name descname"><span class="pre">smooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fteikpy.Eikonal2D.smooth" title="Permalink to this definition">#</a></dt>
+<dd><p>Smooth grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sigma</strong> (<em>scalar</em><em> or </em><em>array_like</em>) – Standard deviation in meters for Gaussian kernel.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsweep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_gradient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fteikpy/_solver.html#Eikonal2D.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fteikpy.Eikonal2D.solve" title="Permalink to this definition">#</a></dt>
+<dd><p>Solve Eikonal for given sources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sources</strong> (<em>array_like</em>) – Source coordinates or list of source coordinates.</p></li>
+<li><p><strong>nsweep</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>default 2</em>) – Number of sweeps.</p></li>
+<li><p><strong>return_gradient</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default False</em>) – If <cite>True</cite>, directions of gradient are computed at runtime. However, this option uses more memory as the gradient grid is saved. Gradient grids are required for a posteriori ray-tracing.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Traveltime grid or list of traveltime grids.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="grids.html#fteikpy.TraveltimeGrid2D" title="fteikpy.TraveltimeGrid2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">fteikpy.TraveltimeGrid2D</span></code></a> or list of <a class="reference internal" href="grids.html#fteikpy.TraveltimeGrid2D" title="fteikpy.TraveltimeGrid2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">fteikpy.TraveltimeGrid2D</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.xaxis">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xaxis</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.xaxis" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid X axis.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fteikpy.Eikonal2D.zaxis">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">zaxis</span></span><a class="headerlink" href="#fteikpy.Eikonal2D.zaxis" title="Permalink to this definition">#</a></dt>
+<dd><p>Return grid Z axis.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+
+              
+              <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="index.html" title="previous page">
+      <i class="fas fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">API Reference</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="eikonal3d.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">Eikonal 3D</p>
+  </div>
+  <i class="fas fa-angle-right"></i>
+  </a>
+</div>
+              </footer>
+              
+          </div>
+          
+      </div>
+    </div>
+
+  
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695"></script>
+
+<footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    <p class="copyright">
+    &copy; Copyright 2022, Keurfon Luu.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.1.1.<br>
+</p>
+  </div>
+  
+</div>
+</footer>
+  </body>
+</html>

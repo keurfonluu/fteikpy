@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>fteikpy’s documentation &#8212; fteikpy 2.4.0 documentation</title>
+<script>
+  document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+  document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
+</script>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/index.html" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+    <div class="bd-header-announcement container-fluid" id="banner">
+      
+
+    </div>
+
+    
+    <nav class="bd-header navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="bd-header__inner container-xl">
+
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+    <p class="title logo__title">fteikpy 2.4.0 documentation</p>
+  
+</a>
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fas fa-bars"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="api/index.html">
+  API Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+  </div>
+  <div class="sidebar-end-items">
+  </div>
+</div>
+
+
+          
+
+
+<div class="bd-sidebar-secondary d-none d-xl-block col-xl-2 bd-toc">
+  
+    
+    <div class="toc-item">
+      
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   fteikpy’s documentation
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#fteikpy">
+   fteikpy
+  </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#features">
+     Features
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#installation">
+     Installation
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#documentation">
+     Documentation
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#usage">
+     Usage
+    </a>
+   </li>
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#contributing">
+     Contributing
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+</nav>
+    </div>
+    
+    <div class="toc-item">
+      
+    </div>
+    
+  
+</div>
+
+
+          
+          
+          <div class="bd-content col-12 col-md-9 col-xl-7">
+              
+              <article class="bd-article" role="main">
+                
+  <section id="fteikpy-s-documentation">
+<h1>fteikpy’s documentation<a class="headerlink" href="#fteikpy-s-documentation" title="Permalink to this heading">#</a></h1>
+</section>
+<section id="fteikpy">
+<h1>fteikpy<a class="headerlink" href="#fteikpy" title="Permalink to this heading">#</a></h1>
+<p><a class="reference external" href="https://github.com/keurfonluu/fteikpy/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/keurfonluu/fteikpy" /></a> <a class="reference external" href="https://github.com/keurfonluu/fteikpy"><img alt="Stars" src="https://img.shields.io/github/stars/keurfonluu/fteikpy?logo=github" /></a> <a class="reference external" href="https://pypi.org/pypi/fteikpy/"><img alt="Pyversions" src="https://img.shields.io/pypi/pyversions/fteikpy.svg?style=flat" /></a> <a class="reference external" href="https://pypi.org/project/fteikpy"><img alt="Version" src="https://img.shields.io/pypi/v/fteikpy.svg?style=flat" /></a> <a class="reference external" href="https://pepy.tech/project/fteikpy"><img alt="Downloads" src="https://pepy.tech/badge/fteikpy" /></a> <a class="reference external" href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg?style=flat" /></a> <a class="reference external" href="https://www.codacy.com/gh/keurfonluu/fteikpy/dashboard?utm_source=github.com&amp;amp;utm_medium=referral&amp;amp;utm_content=keurfonluu/fteikpy&amp;amp;utm_campaign=Badge_Grade"><img alt="Codacy Badge" src="https://img.shields.io/codacy/grade/bec3d2ad6b8c45cf9bb0da110fe04838.svg?style=flat" /></a> <a class="reference external" href="https://codecov.io/gh/keurfonluu/fteikpy"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/keurfonluu/fteikpy.svg?style=flat" /></a> <a class="reference external" href="https://github.com/keurfonluu/fteikpy"><img alt="Build" src="https://img.shields.io/github/workflow/status/keurfonluu/fteikpy/Python%20package" /></a> <a class="reference external" href="https://keurfonluu.github.io/fteikpy/"><img alt="Docs" src="https://img.shields.io/github/workflow/status/keurfonluu/fteikpy/Build%20documentation?label=docs" /></a> <a class="reference external" href="https://doi.org/10.5281/zenodo.4269352"><img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.4269352.svg?style=flat" /></a></p>
+<p><strong>fteikpy</strong> is a Python library that computes accurate first arrival traveltimes in 2D and 3D heterogeneous isotropic velocity models. The algorithm handles properly the curvature of wavefronts close to the source which can be placed without any problem between grid points.</p>
+<p>The code is based on <a class="reference external" href="https://github.com/Mark-Noble/FTeik-Eikonal-Solver">FTeik</a> implemented in Python and compiled <a class="reference external" href="https://en.wikipedia.org/wiki/Just-in-time_compilation">just-in-time</a> with <a class="reference external" href="https://numba.pydata.org/">numba</a>.</p>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="https://raw.githubusercontent.com/keurfonluu/fteikpy/master/.github/sample.gif"><img alt="sample-marmousi" src="https://raw.githubusercontent.com/keurfonluu/fteikpy/master/.github/sample.gif" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-text">Computation of traveltimes and ray-tracing on smoothed Marmousi velocity model.</span><a class="headerlink" href="#id1" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this heading">#</a></h2>
+<p>Forward modeling:</p>
+<ul class="simple">
+<li><p>Compute traveltimes in 2D and 3D Cartesian grids with the possibility to use a different grid spacing in Z, X and Y directions,</p></li>
+<li><p>Compute traveltime gradients at runtime or a posteriori,</p></li>
+<li><p>A posteriori 2D and 3D ray-tracing.</p></li>
+</ul>
+<p>Parallel:</p>
+<ul class="simple">
+<li><p>Traveltime grids are seemlessly computed in parallel for different sources,</p></li>
+<li><p>Raypaths from a given source to different locations are also evaluated in parallel.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
+<p>The recommended way to install <strong>fteikpy</strong> and all its dependencies is through the Python Package Index:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install fteikpy --user
+</pre></div>
+</div>
+<p>Otherwise, clone and extract the package, then run from the package location:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install . --user
+</pre></div>
+</div>
+<p>To test the integrity of the installed package, check out this repository and run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest
+</pre></div>
+</div>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this heading">#</a></h2>
+<p>Refer to the online <a class="reference external" href="https://keurfonluu.github.io/fteikpy/">documentation</a> for detailed description of the API and examples.</p>
+<p>Alternatively, the documentation can be built using <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install -r doc/requirements.txt
+sphinx-build -b html doc/source doc/build
+</pre></div>
+</div>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
+<p>The following example computes the traveltime grid in a 3D homogeneous velocity model:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">fteikpy</span> <span class="kn">import</span> <span class="n">Eikonal3D</span>
+
+<span class="c1"># Velocity model</span>
+<span class="n">velocity_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">dz</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span>
+
+<span class="c1"># Solve Eikonal at source</span>
+<span class="n">eik</span> <span class="o">=</span> <span class="n">Eikonal3D</span><span class="p">(</span><span class="n">velocity_model</span><span class="p">,</span> <span class="n">gridsize</span><span class="o">=</span><span class="p">(</span><span class="n">dz</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">))</span>
+<span class="n">tt</span> <span class="o">=</span> <span class="n">eik</span><span class="o">.</span><span class="n">solve</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+
+<span class="c1"># Get traveltime at specific grid point</span>
+<span class="n">t1</span> <span class="o">=</span> <span class="n">tt</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+
+<span class="c1"># Or get traveltime at any point in the grid</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="n">tt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mf">7.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading">#</a></h2>
+<p>Please refer to the <a class="reference external" href="https://github.com/keurfonluu/fteikpy/blob/master/CONTRIBUTING.rst">Contributing
+Guidelines</a> to see how you can help. This project is released with a <a class="reference external" href="https://github.com/keurfonluu/fteikpy/blob/master/CODE_OF_CONDUCT.rst">Code of Conduct</a> which you agree to abide by when contributing.</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+              </article>
+              
+
+              
+              <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='right-next' id="next-link" href="api/index.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">API Reference</p>
+  </div>
+  <i class="fas fa-angle-right"></i>
+  </a>
+</div>
+              </footer>
+              
+          </div>
+          
+      </div>
+    </div>
+
+  
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695"></script>
+
+<footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    <p class="copyright">
+    &copy; Copyright 2022, Keurfon Luu.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.1.1.<br>
+</p>
+  </div>
+  
+</div>
+</footer>
+  </body>
+</html>
