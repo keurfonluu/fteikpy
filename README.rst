@@ -1,7 +1,7 @@
 fteikpy
 =======
 
-|License| |Stars| |Pyversions| |Version| |Downloads| |Code style: black| |Codacy Badge| |Codecov| |Build| |Travis| |DOI|
+|License| |Stars| |Pyversions| |Version| |Downloads| |Code style: black| |Codacy Badge| |Codecov| |Build| |Docs| |DOI|
 
 **fteikpy** is a Python library that computes accurate first arrival traveltimes in 2D and 3D heterogeneous isotropic velocity models. The algorithm handles properly the curvature of wavefronts close to the source which can be placed without any problem between grid points.
 
@@ -121,5 +121,5 @@ Guidelines <https://github.com/keurfonluu/fteikpy/blob/master/CONTRIBUTING.rst>`
 .. |Build| image:: https://img.shields.io/github/workflow/status/keurfonluu/fteikpy/Python%20package
    :target: https://github.com/keurfonluu/fteikpy
 
-.. |Travis| image:: https://img.shields.io/travis/com/keurfonluu/fteikpy/master?label=docs
+.. |Docs| image:: https://img.shields.io/github/workflow/status/keurfonluu/fteikpy/Build%20documentation?label=docs
    :target: https://keurfonluu.github.io/fteikpy/

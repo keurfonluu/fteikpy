@@ -417,9 +417,9 @@ def fteik3d(slow, dz, dx, dy, zsrc, xsrc, ysrc, nsweep=2, grad=False):
     ysa = ysa - eps if ysa >= ny else ysa
 
     # Grid points to initialize source
-    zsi = int(zsa)
-    xsi = int(xsa)
-    ysi = int(ysa)
+    zsi = min(int(zsa), nz - 1)
+    xsi = min(int(xsa), nx - 1)
+    ysi = min(int(ysa), ny - 1)
     vzero = slow[zsi, xsi, ysi]
 
     # Allocate work array
