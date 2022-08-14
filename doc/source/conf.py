@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(".../"))
 import fteikpy
 
 project = "fteikpy"
-copyright = "2021, Keurfon Luu"
+copyright = "2022, Keurfon Luu"
 author = "Keurfon Luu"
 
 version = fteikpy.__version__
